@@ -25,7 +25,14 @@ const SEMILLA = {
   ]
 };
 
-const LLAVE = 'amber.memoria.v1';
+// Subir esta versión invalida la memoria guardada de todos los que ya entraron,
+// y hace que reciban la semilla nueva sin tener que limpiar nada a mano.
+const LLAVE = 'amber.memoria.v2';
+
+// ?reset borra lo guardado y arranca de cero. Sirve para demostrar dos veces seguidas.
+if (new URLSearchParams(location.search).has('reset')) {
+  try { localStorage.removeItem('amber.memoria.v1'); localStorage.removeItem(LLAVE); } catch (e) {}
+}
 const DEMO_MEMORIA = new URLSearchParams(location.search).get('memoria') === 'demo';
 
 // Sin memoria guardada y sin ?memoria=demo, no hay nada que mostrar: arranca el onboarding.
