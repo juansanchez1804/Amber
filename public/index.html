@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Amber">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="apple-touch-icon" href="icono.png">
+<title>Amber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="marco"><div id="tel">
+  <div id="estado">
+    <span id="hora">9:41</span>
+    <span id="iconos">
+      <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true">
+        <rect x="0"  y="8"   width="3" height="4"  rx="1"/><rect x="5"  y="5.5" width="3" height="6.5" rx="1"/>
+        <rect x="10" y="3"   width="3" height="9"  rx="1"/><rect x="15" y="0"   width="3" height="12" rx="1"/>
+      </svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="none" aria-hidden="true">
+        <path d="M1 3.6a11.4 11.4 0 0 1 15 0"  stroke-width="1.9" stroke-linecap="round"/>
+        <path d="M3.9 6.7a7.2 7.2 0 0 1 9.2 0" stroke-width="1.9" stroke-linecap="round"/>
+        <path d="M6.9 9.7a3 3 0 0 1 3.2 0"     stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+      <svg width="26" height="13" viewBox="0 0 26 13" aria-hidden="true">
+        <rect x="0.6" y="0.6" width="21" height="11.8" rx="3.4" fill="none" stroke-width="1.1" opacity=".38"/>
+        <rect x="2.2" y="2.2" width="17" height="8.6"  rx="2.2"/>
+        <path d="M23.4 4.6v3.8a2.2 2.2 0 0 0 0-3.8z" opacity=".45"/>
+      </svg>
+    </span>
+  </div>
+  <div id="isla"></div>
+
+  <!-- ENTRADA -->
+  <section class="p on" id="entrada">
+    <div class="barra">
+      <div class="marca">amber</div>
+      <button class="ico" data-ir="mem" aria-label="Menú">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
+      </button>
+    </div>
+    <div class="crece"></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="cap" id="fecha"></div>
+      <h1 id="saludo">Hola.</h1>
+      <div class="sabe" id="sabe"></div>
+    </div>
+    <div class="crece" style="flex-grow:1.4"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0">
+      <button class="btn btn-1" data-ir="conv">Hablar</button>
+      <button class="btn btn-2" data-ir="calma">Necesito calmarme</button>
+    </div>
+  </section>
+
+  <!-- CONVERSACIÓN -->
+  <section class="p" id="conv">
+    <div class="barra">
+      <button class="ico" data-ir="entrada" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="pill" data-ir="calma">Calmarme</button>
+        <button class="ico" data-ir="mem" aria-label="Menú">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="hilo"></div>
+    <div class="comp">
+      <div class="fila">
+        <div class="caret"></div>
+        <textarea id="txt" rows="1" placeholder="Escribí lo que quieras"></textarea>
+        <button id="enviar" aria-label="Enviar">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg>
+        </button>
+      </div>
+      <div class="disc">Amber es una inteligencia artificial. No reemplaza atención profesional.</div>
+    </div>
+  </section>
+
+  <!-- CALMARME -->
+  <section class="p" id="calma">
+    <div class="crece"></div>
+    <div class="orbe">
+      <div class="o1"></div><div class="o2"></div>
+      <div class="pal"><span class="w1">Inhalá</span><span class="w2">Soltá</span></div>
+    </div>
+    <div style="height:48px"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+      <div style="font-size:14px;line-height:1.6;color:var(--gris);text-align:center;max-width:280px">Noventa segundos. Podés parar cuando quieras.</div>
+      <div class="barrita"><i></i></div>
+    </div>
+    <div class="crece" style="flex-grow:1.2"></div>
+    <button class="link" id="salir-calma">Volver</button>
+  </section>
+
+  <!-- MEMORIA -->
+  <section class="p" id="mem">
+    <div class="barra">
+      <button class="ico" id="salir-mem" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2>Lo que recuerdo</h2>
+      <div class="sub">Esto es lo que tengo presente cuando hablamos.</div>
+    </div>
+    <div class="cuerpo" id="mem-cuerpo"></div>
+    <div style="padding-top:16px;flex-shrink:0">
+      <button class="btn btn-2" id="toggle-mem">Desactivar la memoria</button>
+    </div>
+  </section>
+
+</div></div>
+<script src="app.js"></script>
+</body>
+</html>

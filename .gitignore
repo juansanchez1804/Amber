@@ -1,0 +1,9 @@
+# La API key nunca va al repositorio.
+.env
+.env.*
+
+# Config local de Vercel
+.vercel
+
+.DS_Store
+node_modules
