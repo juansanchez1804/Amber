@@ -1,3 +1,6 @@
+const TEMA = new URLSearchParams(location.search).get('tema');
+if (TEMA === 'ambar') document.documentElement.dataset.tema = 'ambar';
+
 const $ = s => document.querySelector(s);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
 
@@ -88,19 +91,10 @@ function turno(quien, texto) {
   const n = el('div', quien === 'user' ? 'yo' : 'am', texto);
   hilo.appendChild(n); scroll(); return n;
 }
-function espera() {
-  const n = el('div', 'espera');
-  n.innerHTML = '<i class="punto"></i>';
+function puntos() {
+  const n = el('div', 'puntos');
+  n.innerHTML = '<i class="pt"></i><i class="pt"></i><i class="pt"></i>';
   hilo.appendChild(n); scroll(); return n;
-}
-
-// ── estado emocional de la pantalla ─────────────────────────────────────────
-const ESTADO_POR_RIESGO = { ninguno: null, atencion: 'denso', alto: 'agudo' };
-function aplicarEstado(riesgo) {
-  const tel = document.getElementById('tel');
-  tel.classList.remove('denso', 'agudo');
-  const clase = ESTADO_POR_RIESGO[riesgo];
-  if (clase) tel.classList.add(clase);
 }
 
 const RECURSOS = [
@@ -112,31 +106,32 @@ function recursos() {
   const c = el('div', 'rec');
   for (const [num, desc, pri] of RECURSOS) {
     const f = el('div', 'rec-f' + (pri ? ' pri' : ''));
-    const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:var(--e1)';
+    const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:3px';
     izq.append(el('div', 'rec-n', num), el('div', 'rec-d', desc));
     f.append(izq); c.append(f);
   }
   hilo.appendChild(c); scroll();
 }
 
-const txt = $('#txt');
+const txt = $('#txt'), enviar = $('#enviar');
 txt.addEventListener('input', () => {
   txt.style.height = 'auto'; txt.style.height = Math.min(txt.scrollHeight, 96) + 'px';
-  txt.classList.toggle('lleno', txt.value.trim().length > 0);
+  enviar.classList.toggle('listo', txt.value.trim().length > 0);
 });
 txt.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); mandar(); }
 });
+enviar.onclick = mandar;
 
 let ocupado = false;
 async function mandar() {
   const t = txt.value.trim();
   if (!t || ocupado) return;
   ocupado = true;
-  txt.value = ''; txt.style.height = 'auto'; txt.classList.remove('lleno');
+  txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo');
   turno('user', t);
   mensajes.push({ role: 'user', content: t });
-  const p = espera();
+  const p = puntos();
   try {
     const r = await fetch('/api/chat', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -148,11 +143,7 @@ async function mandar() {
     else {
       turno('assistant', d.texto);
       mensajes.push({ role: 'assistant', content: d.texto });
-      aplicarEstado(d.riesgo);
-      if (d.riesgo === 'alto') {
-        recursos();
-        setTimeout(() => { if ($('#conv').classList.contains('on')) ir('calma'); }, 2600);
-      }
+      if (d.riesgo === 'alto') recursos();
     }
   } catch (e) {
     p.remove(); turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); console.error(e);
@@ -161,12 +152,12 @@ async function mandar() {
 }
 
 // ── memoria ───────────────────────────────────────────────────────────────
-const LAPIZ = '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>';
-const CRUZ  = '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>';
+const LAPIZ = '<svg width="18" height="18" viewBox="0 0 24 24" stroke="#9B9189"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>';
+const CRUZ  = '<svg width="18" height="18" viewBox="0 0 24 24" stroke="#6E675E"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>';
 
 function entrada(texto, alBorrar, alEditar, nota) {
   const f = el('div', 'ent');
-  const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:var(--e2);flex-grow:1';
+  const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex-grow:1';
   const s = el('span', null, texto);
   s.contentEditable = 'plaintext-only';
   s.addEventListener('blur', () => alEditar(s.textContent.trim()));
@@ -216,7 +207,6 @@ $('#toggle-mem').onclick = () => {
 const obNombre = $('#ob-nombre'), obSeguir = $('#ob-seguir');
 obNombre.addEventListener('input', () => {
   obSeguir.disabled = obNombre.value.trim().length < 2;
-  obNombre.classList.toggle('lleno', obNombre.value.trim().length > 0);
 });
 obSeguir.onclick = () => {
   apodoOnboarding = obNombre.value.trim();
