@@ -6,23 +6,23 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
 
 const SEMILLA = {
   "activa": true,
-  "apodo": "Valle",
+  "apodo": "Nico",
+  "genero": "masculino",
   "objetivos": [
-    "La ansiedad antes de los parciales",
+    "La ansiedad antes de los finales",
     "Volver a dormir bien"
   ],
   "estrategias": [
     "Escribir de noche en vez de dar vueltas"
   ],
   "sensibles": [
-    "Lo de tu papá"
+    "Lo de tu ex"
   ],
   "resumenes": [
-    "Hace dos semanas dormiste mal varios días por el final de Macro, que al final aprobaste.",
+    "Hace dos semanas dormiste mal varios días por el final de Análisis, que al final aprobaste.",
     "La semana pasada, un jueves cerca de medianoche, estuviste dándole vueltas a si seguís en la carrera.",
     "Escribir un rato antes de dormir te bajó la cabeza dos noches seguidas."
-  ],
-  "genero": "masculino"
+  ]
 };
 
 const LLAVE = 'amber.memoria.v1';
