@@ -1,4 +1,10 @@
-import { SYSTEM, CLASIF } from './prompts.mjs';
+import { readFileSync } from 'node:fs';
+
+// Se leen los .md directamente: así, editar prompts/system.md desde GitHub
+// cambia la voz de Amber sin ningún paso intermedio.
+const leer = (n) => readFileSync(new URL(`../prompts/${n}`, import.meta.url), 'utf8');
+const SYSTEM = leer('system.md');
+const CLASIF = leer('clasificador.md');
 
 const MODELO_CHARLA = 'claude-sonnet-5';
 const MODELO_CLASIF = 'claude-haiku-4-5-20251001';
