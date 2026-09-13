@@ -147,3 +147,20 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .nota{font-size:14px;line-height:1.5;color:var(--gris)}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+
+/* ── pantalla de arranque ──────────────────────────────────────────────────
+   Puro CSS: aparece con la página, se apaga sola y deja de existir.
+   La barra de estado y la isla quedan por encima, como en una app real. */
+#splash{position:absolute;inset:0;z-index:4;background:var(--fondo);
+  display:flex;align-items:center;justify-content:center;
+  animation:splashFuera .45s ease-in .95s forwards}
+#splash span{font-family:var(--serif);font-size:38px;font-weight:400;
+  letter-spacing:.20em;color:var(--ambar);opacity:0;
+  animation:splashDentro .55s cubic-bezier(.22,.61,.36,1) forwards}
+@keyframes splashDentro{from{opacity:0;transform:scale(.965)}to{opacity:1;transform:scale(1)}}
+@keyframes splashFuera{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){
+  #splash{animation:splashFuera .3s linear .7s forwards}
+  #splash span{opacity:1;animation:none}
+}
