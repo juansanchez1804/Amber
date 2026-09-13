@@ -22,16 +22,7 @@ Prototipo funcional del acompañante emocional. Node sin dependencias, desplegad
 `prompts/*.md` no se leen en producción. Después de editarlos hay que regenerar:
 
 ```bash
-python3 -c "
-import json, pathlib
-h = pathlib.Path('.')
-s = (h/'prompts/system.md').read_text()
-c = (h/'prompts/clasificador.md').read_text()
-(h/'api/prompts.mjs').write_text(
-  '// Generado desde prompts/*.md — no editar acá.\n'
-  f'export const SYSTEM = {json.dumps(s, ensure_ascii=False)};\n\n'
-  f'export const CLASIF = {json.dumps(c, ensure_ascii=False)};\n')
-"
+node regenerar.mjs
 ```
 
 ## Desplegar
