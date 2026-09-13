@@ -26,9 +26,12 @@ const SEMILLA = {
 };
 
 const LLAVE = 'amber.memoria.v1';
+const DEMO_MEMORIA = new URLSearchParams(location.search).get('memoria') === 'demo';
+
+// Sin memoria guardada y sin ?memoria=demo, no hay nada que mostrar: arranca el onboarding.
 function cargarMemoria() {
   try { const g = localStorage.getItem(LLAVE); if (g) return JSON.parse(g); } catch (e) {}
-  return structuredClone(SEMILLA);
+  return DEMO_MEMORIA ? structuredClone(SEMILLA) : null;
 }
 function guardarMemoria() {
   try { localStorage.setItem(LLAVE, JSON.stringify(memoria)); } catch (e) {}
@@ -36,6 +39,7 @@ function guardarMemoria() {
 
 let memoria = cargarMemoria();
 let mensajes = [];   // historial que va a la API
+let apodoOnboarding = '';
 
 // ── navegación ────────────────────────────────────────────────────────────
 function ir(id) {
@@ -43,6 +47,7 @@ function ir(id) {
   if (id === 'conv') { $('#txt').focus(); scroll(); }
   if (id === 'calma') reiniciarCalma();
   if (id === 'mem') pintarMemoria();
+  if (id === 'ob2') $('#ob-nombre').focus();
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ir]');
@@ -66,7 +71,9 @@ function pintarEntrada() {
   $('#fecha').textContent = `${DIAS[d.getDay()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   $('#saludo').textContent = memoria?.activa && memoria.apodo ? `Hola, ${memoria.apodo}.` : 'Hola.';
   const r = memoria?.activa ? memoria.resumenes?.[1] ?? memoria.resumenes?.[0] : null;
-  $('#sabe').textContent = r ?? '';
+  const sabe = $('#sabe');
+  sabe.classList.toggle('acento', !!memoria?.activa && !r);
+  sabe.textContent = r ?? (memoria?.activa ? '¿Cómo venís?' : '');
 }
 
 // ── conversación ──────────────────────────────────────────────────────────
@@ -189,8 +196,27 @@ $('#toggle-mem').onclick = () => {
   guardarMemoria(); pintarMemoria(); pintarEntrada();
 };
 
+// ── onboarding ────────────────────────────────────────────────────────────
+const obNombre = $('#ob-nombre'), obSeguir = $('#ob-seguir');
+obNombre.addEventListener('input', () => {
+  obSeguir.disabled = obNombre.value.trim().length < 2;
+});
+obSeguir.onclick = () => {
+  apodoOnboarding = obNombre.value.trim();
+  ir('ob3');
+};
+
+const obCheck = $('#ob-check'), obEntrar = $('#ob-entrar');
+obCheck.addEventListener('change', () => { obEntrar.disabled = !obCheck.checked; });
+obEntrar.onclick = () => {
+  memoria = { activa: true, apodo: apodoOnboarding, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  guardarMemoria();
+  pintarEntrada();
+  ir('entrada');
+};
+
 // ── arranque ──────────────────────────────────────────────────────────────
-pintarEntrada();
+if (memoria) { pintarEntrada(); ir('entrada'); } else { ir('ob1'); }
 
 
 // El marco mide 884px de alto: en una laptop no entra. En vez de esconderlo,

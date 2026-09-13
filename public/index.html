@@ -39,8 +39,48 @@
   <div id="isla"></div>
   <div id="splash" aria-hidden="true"><span>amber</span></div>
 
+  <!-- ONBOARDING 1: BIENVENIDA -->
+  <section class="p" id="ob1">
+    <div class="crece" style="flex-grow:1.4"></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h1>Un espacio para hablar<br><span class="acento">de lo que te pasa.</span></h1>
+      <div class="sub">Cuando lo necesites. Sin turno, sin explicar de nuevo quién sos.</div>
+    </div>
+    <div class="crece" style="flex-grow:1.4"></div>
+    <button class="btn btn-1" data-ir="ob2">Empezar</button>
+  </section>
+
+  <!-- ONBOARDING 2: NOMBRE -->
+  <section class="p" id="ob2">
+    <div class="crece" style="flex-grow:1.4"></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h2>¿Cómo te gusta que te digan?</h2>
+      <div>
+        <input class="campo" id="ob-nombre" type="text" placeholder="Tu nombre o apodo" autocomplete="off">
+        <div class="terciario">Así te voy a llamar.</div>
+      </div>
+    </div>
+    <div class="crece" style="flex-grow:1.4"></div>
+    <button class="btn btn-1" id="ob-seguir" disabled>Seguir</button>
+  </section>
+
+  <!-- ONBOARDING 3: LÍMITES -->
+  <section class="p" id="ob3">
+    <div class="crece" style="flex-grow:1.4"></div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <h2>Antes de empezar.</h2>
+      <div class="sub" style="max-width:320px">Amber no es un servicio de emergencia. Si estás en riesgo, llamá al 135 desde CABA y Gran Buenos Aires, o al 0800 345 1435 desde el resto del país.</div>
+      <label class="check">
+        <input type="checkbox" id="ob-check">
+        <span>Tengo 18 años o más.</span>
+      </label>
+    </div>
+    <div class="crece" style="flex-grow:1.4"></div>
+    <button class="btn btn-1" id="ob-entrar" disabled>Entrar</button>
+  </section>
+
   <!-- ENTRADA -->
-  <section class="p on" id="entrada">
+  <section class="p" id="entrada">
     <div class="barra">
       <div class="marca">amber</div>
       <button class="ico" data-ir="mem" aria-label="Menú">
