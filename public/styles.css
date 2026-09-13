@@ -79,7 +79,17 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   font-size:16px;font-family:var(--sans);cursor:pointer;border:0;width:100%}
 .btn-1{background:var(--ambar);color:var(--texto);font-weight:500}
 .btn-2{background:none;border:1px solid var(--borde);color:var(--ambar-claro)}
+.btn:disabled{opacity:.4;cursor:default}
 .link{background:none;border:0;color:var(--gris);font-size:15px;font-family:var(--sans);cursor:pointer;height:48px}
+.acento{color:var(--ambar-claro)}
+
+/* onboarding */
+.campo{width:100%;background:none;border:0;border-bottom:1px solid var(--borde);color:var(--texto);
+  font-size:18px;font-family:var(--sans);padding:10px 0;outline:none}
+.campo::placeholder{color:var(--gris)}
+.terciario{font-size:13px;color:var(--gris2);margin-top:8px}
+.check{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--beige);cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--ambar);cursor:pointer}
 
 /* conversación */
 #hilo{flex-grow:1;display:flex;flex-direction:column;gap:30px;padding-top:28px;overflow-y:auto;min-height:0;scrollbar-width:none}
