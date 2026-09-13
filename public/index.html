@@ -7,12 +7,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Amber">
-<meta name="theme-color" content="#FFFFFF">
+<meta name="theme-color" content="#0F0C09">
 <link rel="apple-touch-icon" href="icono.png">
 <title>Amber</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;1,400&family=Hanken+Grotesk:wght@400;500&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -42,7 +42,7 @@
   <!-- ONBOARDING 1: BIENVENIDA -->
   <section class="p" id="ob1">
     <div class="crece" style="flex-grow:1.4"></div>
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:var(--e4)">
       <h1>Un espacio para hablar<br><span class="acento">de lo que te pasa.</span></h1>
       <div class="sub">Cuando lo necesites. Sin turno, sin explicar de nuevo quién sos.</div>
     </div>
@@ -53,7 +53,7 @@
   <!-- ONBOARDING 2: NOMBRE -->
   <section class="p" id="ob2">
     <div class="crece" style="flex-grow:1.4"></div>
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:var(--e4)">
       <h2>¿Cómo te gusta que te digan?</h2>
       <div>
         <input class="campo" id="ob-nombre" type="text" placeholder="Tu nombre o apodo" autocomplete="off">
@@ -67,9 +67,9 @@
   <!-- ONBOARDING 3: LÍMITES -->
   <section class="p" id="ob3">
     <div class="crece" style="flex-grow:1.4"></div>
-    <div style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;flex-direction:column;gap:var(--e4)">
       <h2>Antes de empezar.</h2>
-      <div class="sub" style="max-width:320px">Amber no es un servicio de emergencia. Si estás en riesgo, llamá al 135 desde CABA y Gran Buenos Aires, o al 0800 345 1435 desde el resto del país.</div>
+      <div class="sub">Amber no es un servicio de emergencia. Si estás en riesgo, llamá al 135 desde CABA y Gran Buenos Aires, o al 0800 345 1435 desde el resto del país.</div>
       <label class="check">
         <input type="checkbox" id="ob-check">
         <span>Tengo 18 años o más.</span>
@@ -83,18 +83,16 @@
   <section class="p" id="entrada">
     <div class="barra">
       <div class="marca">amber</div>
-      <button class="ico" data-ir="mem" aria-label="Menú">
-        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
-      </button>
+      <button class="pill" data-ir="mem">Recuerdos</button>
     </div>
     <div class="crece"></div>
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:var(--e4)">
       <div class="cap" id="fecha"></div>
       <h1 id="saludo">Hola.</h1>
       <div class="sabe" id="sabe"></div>
     </div>
     <div class="crece" style="flex-grow:1.4"></div>
-    <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0">
+    <div style="display:flex;flex-direction:column;gap:var(--e2);flex-shrink:0">
       <button class="btn btn-1" data-ir="conv">Hablar</button>
       <button class="btn btn-2" data-ir="calma">Necesito calmarme</button>
     </div>
@@ -106,23 +104,14 @@
       <button class="ico" data-ir="entrada" aria-label="Volver">
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="pill" data-ir="calma">Calmarme</button>
-        <button class="ico" data-ir="mem" aria-label="Menú">
-          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
-        </button>
-      </div>
+      <button class="pill" data-ir="calma">Calmarme</button>
     </div>
     <div id="hilo"></div>
     <div class="comp">
       <div class="fila">
-        <div class="caret"></div>
-        <textarea id="txt" rows="1" placeholder="Escribí lo que quieras"></textarea>
-        <button id="enviar" aria-label="Enviar">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg>
-        </button>
+        <textarea id="txt" class="campo" rows="1" placeholder="Escribí lo que quieras" enterkeyhint="send"></textarea>
       </div>
-      <div class="disc">Amber es una inteligencia artificial. No reemplaza atención profesional.</div>
+      <div class="disc">Amber no es un servicio de emergencia. En riesgo, llamá al 135 o al 0800 345 1435.</div>
     </div>
   </section>
 
@@ -133,9 +122,9 @@
       <div class="o1"></div><div class="o2"></div>
       <div class="pal"><span class="w1">Inhalá</span><span class="w2">Soltá</span></div>
     </div>
-    <div style="height:48px"></div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
-      <div style="font-size:14px;line-height:1.6;color:var(--gris);text-align:center;max-width:280px">Noventa segundos. Podés parar cuando quieras.</div>
+    <div style="height:var(--e7)"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:var(--e4)">
+      <div class="sub centro">Noventa segundos. Podés parar cuando quieras.</div>
       <div class="barrita"><i></i></div>
     </div>
     <div class="crece" style="flex-grow:1.2"></div>
@@ -149,12 +138,12 @@
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+    <div style="display:flex;flex-direction:column;gap:var(--e3);padding-top:var(--e4);flex-shrink:0">
       <h2>Lo que recuerdo</h2>
       <div class="sub">Esto es lo que tengo presente cuando hablamos.</div>
     </div>
     <div class="cuerpo" id="mem-cuerpo"></div>
-    <div style="padding-top:16px;flex-shrink:0">
+    <div style="padding-top:var(--e4);flex-shrink:0">
       <button class="btn btn-2" id="toggle-mem">Desactivar la memoria</button>
     </div>
   </section>
