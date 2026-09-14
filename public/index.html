@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -119,6 +119,9 @@
       <button class="pill" data-ir="calma">Calmarme</button>
     </div>
     <div id="hilo"></div>
+    <!-- Lo que Amber dice se revela palabra por palabra: anunciar eso mientras
+         crece sería un balbuceo. Se anuncia una vez, entero, recién al terminar. -->
+    <p id="aviso" class="solo-lector" role="status" aria-live="polite"></p>
     <div class="comp">
       <button id="bajar" aria-label="Ir al último mensaje" hidden>
         <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 5v13"/><path d="M6 12l6 6 6-6"/></svg>

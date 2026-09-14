@@ -100,7 +100,9 @@ function pintarEntrada() {
 }
 
 // ── conversación ──────────────────────────────────────────────────────────
-const hilo = $('#hilo'), bajar = $('#bajar');
+const hilo = $('#hilo'), bajar = $('#bajar'), aviso = $('#aviso');
+// Un solo canal de anuncios: dos zonas vivas compitiendo se pisan entre ellas.
+const anunciar = t => { aviso.textContent = ''; setTimeout(() => { aviso.textContent = t; }, 60); };
 
 // Colchón al pie: sin él, el último mensaje no puede subir al tope de la pantalla.
 const COLCHON_MIN = 160;
@@ -280,6 +282,7 @@ function abrirVoz() {
   micro.setAttribute('aria-label', 'Dejar de hablar');
   txt.readOnly = true;              // mientras el micrófono escribe, los dedos no pelean
   txt.placeholder = 'Te escucho';
+  anunciar('Micrófono abierto. Te escucho.');
 }
 
 function pararVoz() {
@@ -298,6 +301,7 @@ function cerrarVoz() {
   txt.readOnly = false;
   if (!cortado) txt.placeholder = 'Escribí lo que quieras';
   escribir(dictado.trim());         // se cae lo tanteado, queda lo firme
+  anunciar('Micrófono cerrado. Podés revisar el texto antes de mandarlo.');
   txt.focus();
 }
 
@@ -392,6 +396,7 @@ async function leerStream(r, p) {
   if (rev) await rev.terminar();
   if (!nodo) { turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); return; }
   mensajes.push({ role: 'assistant', content: texto });
+  anunciar(texto);
   accesoMemoria();
   if (riesgo === 'alto') recursos();
   if (fin) cortar();

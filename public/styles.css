@@ -259,3 +259,16 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   #splash{animation:splashFuera .3s linear .7s forwards}
   #splash span{opacity:1;animation:none}
 }
+
+/* Prioridad 1 del checklist: quien navega con teclado tiene que ver dónde está.
+   :focus-visible en vez de :focus deja el anillo para el teclado y no para el
+   mouse, así que no ensucia el uso normal. Va al final para ganarle a los
+   outline:none de arriba. */
+:focus-visible{outline:2px solid var(--ambar);outline-offset:3px;border-radius:6px}
+#txt:focus-visible,.ent span[contenteditable]:focus-visible{outline:2px solid var(--ambar);outline-offset:4px}
+/* El botón atenuado atenúa también su anillo de foco: al enfocarlo, opacidad plena. */
+#enviar:focus-visible,#micro:focus-visible{opacity:1}
+
+/* Existe para el lector de pantalla y para nadie más. */
+.solo-lector{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
