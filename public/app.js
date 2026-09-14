@@ -175,7 +175,12 @@ function senalarDia() {
   diaInput.focus({ preventScroll: true });
 }
 
+// Contestar la barra ES entrar a hablar: marcar cómo estuvo el día y después
+// tener que tocar otro botón para contarlo parte en dos un solo gesto.
+let entrando = null;
+
 diaInput.addEventListener('input', () => {
+  clearTimeout(entrando);       // si la seguís moviendo, todavía no terminaste
   diaCaja.classList.remove('sin-tocar');
   diaValor.textContent = DIA_PALABRA[diaInput.value];
 });
@@ -190,11 +195,20 @@ function memoriaParaEnviar() {
 
 diaInput.addEventListener('change', () => {
   if (!memoria) return;
+  // Corregir una respuesta ya dada no te manda a ningún lado: si tocaste
+  // "Cambiar" fue para arreglar el dato, no para abrir una conversación.
+  const primeraDeHoy = !diaDeHoy();
   memoria.dia = { valor: Number(diaInput.value), fecha: hoyISO() };
   guardarMemoria();
   diaEditando = false;
   pintarDia();
-  anunciar(`Tu día quedó anotado como ${DIA_PALABRA[diaInput.value].toLowerCase()}.`);
+  const palabra = DIA_PALABRA[diaInput.value].toLowerCase();
+  if (!primeraDeHoy) { anunciar(`Tu día quedó anotado como ${palabra}.`); return; }
+  // Un respiro antes de entrar: alcanza para ver qué quedó marcado, y para
+  // arrepentirse y moverla de nuevo sin que la pantalla se te vaya de abajo.
+  anunciar(`Tu día quedó anotado como ${palabra}. Abro la conversación.`);
+  clearTimeout(entrando);
+  entrando = setTimeout(() => ir('conv'), 750);
 });
 
 // ── conversación ──────────────────────────────────────────────────────────
@@ -604,6 +618,13 @@ function grupo(rotulo, hijos) {
   g.append(t); return g;
 }
 
+const VACIO = {
+  objetivos:   'Todavía nada. Acá va apareciendo lo que venís trabajando.',
+  estrategias: 'Todavía nada. Acá guardo lo que te haya servido alguna vez.',
+  sensibles:   'Todavía nada. Acá van los temas que no traigo yo.',
+  resumenes:   'Todavía nada. Cada vez que cerrás una conversación queda una línea acá.',
+};
+
 const REGISTROS = [
   ['escuchar', 'Escuchame', 'Quedate en lo que te digo. No me tires ideas si no te las pido.'],
   ['devolver', 'Decime lo que ves', 'Si algo se repite o no cierra, nombralo aunque incomode.'],
@@ -636,10 +657,15 @@ function pintarMemoria() {
   }
   c.append(grupo('Cómo te hablo', [opciones]));
 
-  if (memoria.objetivos.length)   c.append(grupo('Lo que venís trabajando', lista('objetivos')));
-  if (memoria.estrategias.length) c.append(grupo('Lo que te ayuda', lista('estrategias')));
-  if (memoria.sensibles.length)   c.append(grupo('Temas sensibles', lista('sensibles')));
-  if (memoria.resumenes?.length)  c.append(grupo('Lo que me contaste', memoria.resumenes.map((v, i) =>
+  // Los grupos vacíos se muestran igual, con una línea que dice qué va adentro.
+  // Esconderlos dejaba la pantalla casi en blanco los primeros días y no se
+  // entendía qué es lo que Amber llega a tener presente cuando hablan.
+  const conVacio = (clave, hijos) => (hijos.length ? hijos : [el('div', 'vacio', VACIO[clave])]);
+
+  c.append(grupo('Lo que venís trabajando', conVacio('objetivos', lista('objetivos'))));
+  c.append(grupo('Lo que te ayuda',         conVacio('estrategias', lista('estrategias'))));
+  c.append(grupo('Temas sensibles',         conVacio('sensibles', lista('sensibles'))));
+  c.append(grupo('Lo que me contaste', conVacio('resumenes', (memoria.resumenes ?? []).map((v, i) =>
     entrada(textoResumen(v),
       () => { memoria.resumenes.splice(i, 1); guardar(); },
       (nuevo) => {
@@ -647,7 +673,7 @@ function pintarMemoria() {
         // Si lo editás a mano queda como lo escribiste, con la fecha que ya tenía.
         memoria.resumenes[i] = typeof v === 'string' ? nuevo : { ...v, t: nuevo };
         guardar();
-      })).reverse()));
+      })).reverse())));
 
 }
 
@@ -669,12 +695,12 @@ $('#cerrar-sesion').onclick = () => {
 };
 
 // Borrar todo pide confirmación en el mismo botón: sin diálogos, sin sustos.
-const ROTULO_BORRAR = 'Borrar todo lo que recuerdo';
+const ROTULO_BORRAR = 'Borrar memoria';
 let confirmando = null;
 $('#borrar-mem').onclick = () => {
   const b = $('#borrar-mem');
   if (!confirmando) {
-    b.textContent = 'Tocá de nuevo para borrar todo';
+    b.textContent = 'Tocá de nuevo para borrar la memoria';
     confirmando = setTimeout(() => { confirmando = null; b.textContent = ROTULO_BORRAR; }, 4000);
     return;
   }

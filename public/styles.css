@@ -361,3 +361,6 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   border-bottom:1px solid var(--borde)}
 .dia.cerrada .dia-cambiar{display:block}
 .dia.cerrada .dia-v{color:var(--ambar-claro)}
+
+/* Un grupo vacío dice qué va a ir adentro, en vez de no existir. */
+.vacio{font-size:13px;line-height:1.5;color:var(--gris2)}
