@@ -165,7 +165,7 @@ export default async function handler(req, res) {
     // La regla de género está en el prompt, pero se escapa justo en los momentos
     // difíciles ("no estás solo"). Recordarla al final, cerca de la respuesta, la sostiene.
     const genero = memoria?.activa && memoria.genero ? ''
-      : '\n\nNo sabés el género de esta persona. Antes de mandar, revisá cada palabra que la describe: si termina en -o o en -a, decilo de otra forma: "no estás solo" → "acá estoy"; "cargarlo solo" → "cargarlo por tu cuenta"; "vos mismo" → "vos"; "cansado" → "con todo encima"; "encerrada" → "sin salir"; "estás parada" → "estás"; "reventado" → "sin resto". No copies estos ejemplos: son para que veas la trampa.';
+      : '\n\nNo sabés el género de esta persona. Antes de mandar, revisá cada palabra que la describe: si termina en -o o en -a, decilo de otra forma: "no estás solo" → "acá estoy"; "cargarlo solo" → "cargarlo por tu cuenta"; "vos mismo" → "vos"; "cansado" → "con todo encima"; "encerrada" → "sin salir"; "estás parada" → "estás"; "reventado" → "sin resto". No copies estos ejemplos: son para que veas la trampa. La trampa peor está en las respuestas de riesgo, donde la frase sale sola: "no podés sola con esto", "no te voy a dejar solo", "no estás sola en esto". Ahí no hace falta el adjetivo: "no tenés que poder con esto", "no te dejo con eso", "acá estoy".';
 
     const sinSenal = clasificadorFallo && riesgo.nivel === 'ninguno'
       ? '\n\nEl clasificador de riesgo no respondió en este mensaje: esa señal no es confiable. Si la persona habla de querer morirse, lastimarse o de que estarían mejor sin ella, aplicá el protocolo de alto igual.'

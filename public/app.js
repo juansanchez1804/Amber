@@ -976,6 +976,22 @@ function pintarMemoria() {
   c.append(grupo('Cómo te digo', [
     entrada(memoria.apodo ?? '', () => { memoria.apodo = ''; guardar(); },
       n => { if (n !== memoria.apodo) { memoria.apodo = n; guardar(); } })]));
+  const GENEROS = [['masculino','En masculino','cansado, solo, tranquilo'],
+                   ['femenino','En femenino','cansada, sola, tranquila'],
+                   [null,'Ninguno de los dos','lo digo de otra forma, sin -o ni -a']];
+  const og = el('div', 'opciones');
+  og.style.padding = '12px';
+  og.setAttribute('role', 'radiogroup');
+  for (const [k, t, d] of GENEROS) {
+    const b = el('button', 'opcion');
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String((memoria.genero ?? null) === k));
+    b.append(el('span', 'opcion-t', t), el('span', 'opcion-s', d));
+    b.onclick = () => { memoria.genero = k; vibrar(10); guardar(); };
+    og.append(b);
+  }
+  c.append(grupo('Cómo te nombro', [og]));
+
   // Los grupos vacíos se muestran igual, con una línea que dice qué va adentro.
   // Esconderlos dejaba la pantalla casi en blanco los primeros días y no se
   // entendía qué es lo que Amber llega a tener presente cuando hablan.
@@ -1143,8 +1159,24 @@ obNombre.addEventListener('input', () => {
 });
 obSeguir.onclick = () => {
   apodoOnboarding = obNombre.value.trim();
-  ir('ob2b');
+  ir('ob2a');
 };
+
+// En castellano no hay forma de escribir "cansado" sin elegir. Sin preguntarlo,
+// Amber esquiva el género en cada frase, y en las respuestas de crisis se le
+// escapaba igual ("no podés sola con esto"). Se pregunta una vez.
+let generoOnboarding = null;
+const obGenSeguir = $('#ob-gen-seguir');
+document.querySelectorAll('#ob2a .opcion').forEach(b => {
+  b.onclick = () => {
+    generoOnboarding = b.dataset.genero === 'ninguno' ? null : b.dataset.genero;
+    document.querySelectorAll('#ob2a .opcion').forEach(o =>
+      o.setAttribute('aria-checked', String(o === b)));
+    obGenSeguir.disabled = false;
+    vibrar(10);
+  };
+});
+obGenSeguir.onclick = () => ir('ob2b');
 
 // El registro no es una preferencia cosmética: la voz es el producto. Se elige
 // una vez, se guarda con todo lo demás y se cambia desde la memoria.
@@ -1166,7 +1198,7 @@ $('#ob-reg-saltar').onclick = () => { registroOnboarding = null; ir('ob3'); };
 const obCheck = $('#ob-check'), obEntrar = $('#ob-entrar');
 obCheck.addEventListener('change', () => { obEntrar.disabled = !obCheck.checked; });
 obEntrar.onclick = () => {
-  memoria = { activa: true, apodo: apodoOnboarding, registro: registroOnboarding,
+  memoria = { activa: true, apodo: apodoOnboarding, genero: generoOnboarding, registro: registroOnboarding,
               objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria();
   pintarEntrada();
