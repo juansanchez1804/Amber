@@ -87,6 +87,7 @@ function ir(id) {
   if (id !== 'conv') pararVoz?.();
   if (id === 'conv') { ajustarColchon(); abrirConversacion(); $('#txt').focus(); seguir(false); }
   if (id === 'calma') empezarRespiracion(); else pararRespiracion();
+  if (id === 'entrada') animarSaludo();
   if (id === 'mem') pintarMemoria();
   if (id === 'historia') pintarHistoria();
   if (id === 'pers') pintarPersonalizacion();
@@ -247,7 +248,10 @@ function cerrarAudio(a, ms) {
   setTimeout(() => a.ctx.close().catch(() => {}), ms + 150);
 }
 
-function pintarSonido() { botonSonido.setAttribute('aria-pressed', String(!!prefs.sonidoResp)); }
+function pintarSonido() {
+  botonSonido.setAttribute('aria-pressed', String(!!prefs.sonidoResp));
+  botonSonido.title = prefs.sonidoResp ? 'Silenciar' : 'Activar sonido';
+}
 botonSonido.onclick = () => {
   prefs.sonidoResp = !prefs.sonidoResp; guardarPrefs(); pintarSonido();
   if (!resp || !resp.timer) return;
@@ -269,6 +273,34 @@ function saludoDeLaHora(h) {
   return 'Buenas noches';
 }
 
+// El saludo se arma letra por letra para poder escribirlo de a poco. El lector de
+// pantalla lee la frase entera, no las letras sueltas.
+function escribirSaludo(texto) {
+  const h = $('#saludo');
+  if (h.dataset.texto === texto) return;
+  h.dataset.texto = texto;
+  h.setAttribute('aria-label', texto);
+  h.textContent = '';
+  let i = 0;
+  texto.split(' ').forEach((palabra, k) => {
+    if (k) { h.append(' '); i++; }
+    const p = el('span', 'sal-p'); p.setAttribute('aria-hidden', 'true');
+    for (const letra of palabra) { const l = el('span', 'sal-l', letra); l.style.setProperty('--i', i++); p.append(l); }
+    h.append(p);
+  });
+}
+// Se anima al abrir la app y cuando el saludo cambió, no cada vez que se vuelve a la
+// home: repetido todo el tiempo deja de ser un detalle y pasa a ser una espera. Al
+// abrir espera al splash, que si no lo taparía.
+let saludoAnimado = null;
+function animarSaludo() {
+  const h = $('#saludo');
+  if (h.dataset.texto === saludoAnimado) return;
+  saludoAnimado = h.dataset.texto;
+  h.style.setProperty('--base', Math.max(120, 1250 - performance.now()) + 'ms');
+  h.classList.remove('aparece'); void h.offsetWidth; h.classList.add('aparece');
+}
+
 function pintarEntrada() {
   const d = new Date();
   // La hora ya está arriba en la barra del teléfono, y repetirla acá convertía
@@ -276,7 +308,7 @@ function pintarEntrada() {
   $('#fecha').textContent = `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`;
   const apodo = memoria?.apodo;
   const saludo = saludoDeLaHora(d.getHours());
-  $('#saludo').textContent = memoria?.activa && apodo ? `${saludo}, ${capitalizar(apodo)}.` : `${saludo}.`;
+  escribirSaludo(memoria?.activa && apodo ? `${saludo}, ${capitalizar(apodo)}.` : `${saludo}.`);
   // Sin memoria previa no hay línea: el saludo queda solo. Se muestra el último,
   // que desde que existe el cierre es el de la conversación que acaba de pasar.
   const rs = memoria?.activa ? memoria.resumenes : null;

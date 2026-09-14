@@ -109,9 +109,11 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .acceso-2 .acceso-t{font-size:17px;line-height:1.15;color:var(--texto)}
 .acceso-2 .acceso-s{font-size:12px;line-height:1.3;color:var(--gris)}
 
-.ayuda-link{align-self:center;margin-top:24px;flex-shrink:0;background:none;border:0;cursor:pointer;
-  font-family:var(--sans);font-size:13px;color:var(--gris);text-decoration:underline;
-  text-underline-offset:3px;text-decoration-color:var(--borde);padding:4px}
+/* La salida a una persona de verdad, dicha con la voz de quien la necesita. No es
+   letra chica: se ve y se toca fácil, pero no grita. */
+.ayuda-boton{align-self:center;margin-top:24px;flex-shrink:0;min-height:44px;padding:0 18px;border-radius:12px;cursor:pointer;
+  background:var(--tarjeta);border:1px solid color-mix(in srgb,var(--ambar) 20%,transparent);
+  font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ambar-claro)}
 
 /* onboarding */
 .campo{width:100%;background:none;border:0;border-bottom:1px solid var(--borde);color:var(--texto);
@@ -226,13 +228,23 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #tel:has(#calma.on) #estado svg{fill:var(--sobre-acento);stroke:var(--sobre-acento)}
 
 .calma-barra{align-self:stretch}
-.calma-sonido{height:34px;padding:0 14px;border-radius:10px;cursor:pointer;font-family:var(--sans);font-size:13px;
-  background:none;color:var(--sobre-acento);border:1px solid color-mix(in srgb,var(--sobre-acento) 30%,transparent);
-  transition:background .3s ease,color .3s ease}
-/* Prendido se nota, pero no encandila: en plena respiración nada debería brillar más que el orbe. */
-.calma-sonido{opacity:.72}
-.calma-sonido[aria-pressed="true"]{opacity:1;background:color-mix(in srgb,var(--sobre-acento) 14%,transparent);
-  border-color:color-mix(in srgb,var(--sobre-acento) 60%,transparent)}
+/* Sonido: un parlante. Apagado lleva una cruz; al prenderlo la cruz se borra y
+   salen las ondas, de a una. Prendido se nota, pero no encandila: en plena
+   respiración nada debería brillar más que el orbe. */
+.calma-sonido{width:40px;height:40px;padding:0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  background:none;color:var(--sobre-acento);border:1px solid color-mix(in srgb,var(--sobre-acento) 26%,transparent);
+  opacity:.72;transition:opacity .3s ease,background-color .3s ease,border-color .3s ease}
+.calma-sonido svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.calma-sonido .parlante{fill:currentColor;fill-opacity:.14}
+.calma-sonido .onda{opacity:0;transform:scale(.8);transform-origin:12px 12px;transition:opacity .35s ease,transform .35s ease}
+.calma-sonido .cruz{stroke-dasharray:1;stroke-dashoffset:0;transition:stroke-dashoffset .35s ease .1s,opacity .2s ease .1s}
+.calma-sonido[aria-pressed="true"]{opacity:1;background:color-mix(in srgb,var(--sobre-acento) 12%,transparent);
+  border-color:color-mix(in srgb,var(--sobre-acento) 55%,transparent)}
+.calma-sonido[aria-pressed="true"] .onda{opacity:1;transform:none}
+.calma-sonido[aria-pressed="true"] .onda-1{transition-delay:.12s}
+.calma-sonido[aria-pressed="true"] .onda-2{transition-delay:.24s}
+.calma-sonido[aria-pressed="true"] .cruz{stroke-dashoffset:1;opacity:0;transition-delay:0s}
+@media (hover:hover){ .calma-sonido:hover{opacity:1} }
 
 /* El orbe no tiene animación propia: lo mueve la fase que pone el código, con la
    misma duración que la fase. Así la palabra, la luz y el sonido van juntos. */
@@ -272,7 +284,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @media (prefers-reduced-motion:reduce){
   #calma[data-fase="inhala"] .o1,#calma[data-fase="inhala"] .o2{transform:scale(.84)}
   #calma::before{transition:none;opacity:.35}
-  .calma-sonido,.calma-fin{transition:none}
+  .calma-sonido,.calma-fin,.calma-sonido .onda,.calma-sonido .cruz{transition:none}
 }
 
 /* memoria */
@@ -461,3 +473,28 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .texto-largo strong{color:var(--texto);font-weight:500}
 
 @media (prefers-reduced-motion:reduce){ .llave,.llave::after{transition:none} }
+
+/* El saludo se escribe de a poco: las letras se asoman, no saltan. Cada palabra
+   va entera para que el renglón no se corte a la mitad de una. */
+#saludo .sal-p{white-space:nowrap}
+#saludo.aparece .sal-l{animation:asoma .55s ease-out both;animation-delay:calc(var(--base,0ms) + var(--i) * 34ms)}
+@keyframes asoma{from{opacity:0;filter:blur(4px)}to{opacity:1;filter:blur(0)}}
+@media (prefers-reduced-motion:reduce){ #saludo.aparece .sal-l{animation:none} }
+
+/* Al pasar el mouse, una respuesta chica: sube un píxel y se afirma el borde.
+   Solo donde hay mouse: en el celular el hover queda pegado después de tocar. */
+.acceso,.btn,.pill,.ayuda-boton,.volver-inicio,.opcion,.apertura{
+  transition-property:transform,background-color,border-color,filter,opacity;transition-duration:.18s;transition-timing-function:ease-out}
+@media (hover:hover){
+  .acceso:not([aria-disabled="true"]):hover,.btn:not(:disabled):hover,.pill:hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:hover{transform:translateY(-1px)}
+  .acceso-1:not([aria-disabled="true"]):hover,.btn-1:not(:disabled):hover{filter:brightness(1.07)}
+  .acceso-2:hover,.btn-2:not(:disabled):hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:not([aria-checked="true"]):hover{
+    border-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
+}
+.acceso:not([aria-disabled="true"]):active,.btn:not(:disabled):active,.pill:active,.ayuda-boton:active,.volver-inicio:active,.opcion:active{
+  transform:scale(.985)}
+@media (prefers-reduced-motion:reduce){
+  .acceso,.btn,.pill,.ayuda-boton,.volver-inicio,.opcion,.apertura{transition-property:background-color,border-color,filter,opacity}
+  .acceso:hover,.btn:hover,.pill:hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:hover,
+  .acceso:active,.btn:active,.pill:active,.ayuda-boton:active,.volver-inicio:active,.opcion:active{transform:none}
+}

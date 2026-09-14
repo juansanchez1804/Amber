@@ -137,7 +137,7 @@
         <button class="dia-cambiar" id="dia-cambiar">Cambiar</button>
       </div>
     </div>
-    <button class="ayuda-link" data-ir="ayuda">Si necesitás ayuda ahora</button>
+    <button class="ayuda-boton" data-ir="ayuda">Necesito hablar con una persona ya</button>
   </section>
 
   <!-- CONVERSACIÓN -->
@@ -197,7 +197,14 @@
   <section class="p" id="calma" data-fase="quieto">
     <div class="barra calma-barra">
       <span></span>
-      <button class="calma-sonido" id="calma-sonido" aria-pressed="false">Sonido</button>
+      <button class="calma-sonido" id="calma-sonido" aria-pressed="false" aria-label="Sonido" title="Activar sonido">
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+          <path class="parlante" d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/>
+          <path class="onda onda-1" d="M15.4 9.3a3.8 3.8 0 0 1 0 5.4"/>
+          <path class="onda onda-2" d="M18.2 6.7a7.5 7.5 0 0 1 0 10.6"/>
+          <path class="cruz" pathLength="1" d="M16 9.5l5 5M21 9.5l-5 5"/>
+        </svg>
+      </button>
     </div>
     <div class="crece"></div>
     <div class="orbe" aria-hidden="true">
