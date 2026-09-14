@@ -92,10 +92,11 @@ function pintarEntrada() {
   $('#fecha').textContent = `${DIAS[d.getDay()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   const apodo = memoria?.apodo;
   $('#saludo').textContent = memoria?.activa && apodo ? `Hola, ${capitalizar(apodo)}.` : 'Hola.';
+  // Sin memoria previa no hay línea: el saludo queda solo.
   const r = memoria?.activa ? memoria.resumenes?.[1] ?? memoria.resumenes?.[0] : null;
   const sabe = $('#sabe');
-  sabe.classList.toggle('acento', !!memoria?.activa && !r);
-  sabe.textContent = r ?? (memoria?.activa ? '¿Cómo venís?' : '');
+  sabe.textContent = r ?? '';
+  sabe.hidden = !r;
 }
 
 // ── conversación ──────────────────────────────────────────────────────────

@@ -71,7 +71,7 @@ body{font-family:var(--sans);display:flex;align-items:center;justify-content:cen
 h1{font-family:var(--serif);font-size:46px;font-weight:400;line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
 h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;letter-spacing:-.015em;margin:0}
 .cap{font-size:13px;letter-spacing:.06em;color:var(--gris)}
-.sabe{font-size:17px;line-height:1.62;color:var(--beige);max-width:300px}
+.sabe{font-size:15px;line-height:1.62;color:var(--gris);max-width:300px}
 .sub{font-size:15px;line-height:1.62;color:var(--gris);max-width:300px}
 .rot{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris)}
 
@@ -82,6 +82,26 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .btn:disabled{opacity:.4;cursor:default}
 .link{background:none;border:0;color:var(--gris);font-size:15px;font-family:var(--sans);cursor:pointer;height:48px}
 .acento{color:var(--ambar-claro)}
+
+/* home: saludo arriba, tres accesos con jerarquía abajo */
+.saludo-bloque{display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+#saludo{font-size:34px}
+
+.accesos{display:flex;flex-direction:column;gap:12px;margin-top:32px;flex-shrink:0}
+.accesos-fila{display:flex;gap:12px}
+.acceso{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;
+  text-align:left;border-radius:16px;cursor:pointer;width:100%;font-family:var(--sans)}
+.acceso-t{font-family:var(--serif);font-weight:400;text-wrap:balance}
+.acceso-1{height:96px;padding:20px;background:var(--ambar);border:0}
+.acceso-1 .acceso-t{font-size:22px;line-height:1.2;color:var(--sobre-acento)}
+.acceso-1 .acceso-s{font-size:13px;line-height:1.3;color:var(--sobre-acento);opacity:.75}
+.acceso-2{flex:1;min-height:88px;padding:16px;background:var(--fondo);border:1px solid var(--borde)}
+.acceso-2 .acceso-t{font-size:17px;line-height:1.15;color:var(--texto)}
+.acceso-2 .acceso-s{font-size:12px;line-height:1.3;color:var(--gris)}
+
+.ayuda-link{align-self:center;margin-top:24px;flex-shrink:0;background:none;border:0;cursor:pointer;
+  font-family:var(--sans);font-size:13px;color:var(--gris);text-decoration:underline;
+  text-underline-offset:3px;text-decoration-color:var(--borde);padding:4px}
 
 /* onboarding */
 .campo{width:100%;background:none;border:0;border-bottom:1px solid var(--borde);color:var(--texto);

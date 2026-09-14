@@ -85,17 +85,29 @@
       <div class="marca">amber</div>
     </div>
     <div class="crece"></div>
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="saludo-bloque">
       <div class="cap" id="fecha"></div>
       <h1 id="saludo">Hola.</h1>
       <div class="sabe" id="sabe"></div>
     </div>
-    <div class="crece" style="flex-grow:1.4"></div>
-    <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0">
-      <button class="btn btn-1" data-ir="conv">Hablar</button>
-      <button class="btn btn-2" data-ir="calma">Necesito calmarme</button>
-      <button class="link" data-ir="ayuda">Si necesitás ayuda ahora</button>
+    <div class="crece" style="flex-grow:2"></div>
+    <div class="accesos">
+      <button class="acceso acceso-1" data-ir="conv">
+        <span class="acceso-t">Hablar</span>
+        <span class="acceso-s">Contame lo que quieras</span>
+      </button>
+      <div class="accesos-fila">
+        <button class="acceso acceso-2" data-ir="calma">
+          <span class="acceso-t">Respirar</span>
+          <span class="acceso-s">Noventa segundos</span>
+        </button>
+        <button class="acceso acceso-2" data-ir="conv">
+          <span class="acceso-t">Cómo estuvo el día</span>
+          <span class="acceso-s">Una línea alcanza</span>
+        </button>
+      </div>
     </div>
+    <button class="ayuda-link" data-ir="ayuda">Si necesitás ayuda ahora</button>
   </section>
 
   <!-- CONVERSACIÓN -->
