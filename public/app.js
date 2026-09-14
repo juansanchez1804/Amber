@@ -46,6 +46,7 @@ function guardarMemoria() {
 
 let memoria = cargarMemoria();
 let mensajes = [];   // historial que va a la API
+let ambiguos = 0;    // frases de hacerse daño dichas de bronca en esta conversación
 let apodoOnboarding = '';
 
 const capitalizar = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
@@ -198,7 +199,10 @@ bajar.onclick = () => {
 };
 
 function turno(quien, texto) {
-  const n = el('div', quien === 'user' ? 'yo' : 'am', texto);
+  const n = el('div', quien === 'user' ? 'yo' : 'am');
+  // Lo que se mandó en tandas (renglones, pausas al dictar) no se pega en un párrafo corrido.
+  if (quien === 'user') for (const l of texto.split(/\n+/).map(x => x.trim()).filter(Boolean)) n.append(el('p', null, l));
+  else n.textContent = texto;
   hilo.appendChild(n);
   if (quien !== 'user') seguir(true);
   return n;
@@ -300,7 +304,7 @@ function escribir(v) {
 }
 txt.addEventListener('input', () => escribir(txt.value));
 txt.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); mandar(); }
+  if (e.key === 'Enter' && !e.shiftKey && !ocupado) { e.preventDefault(); mandar(); }
 });
 enviar.onclick = () => mandar();
 
@@ -325,7 +329,7 @@ function pintarReloj() {
 function abrirVoz() {
   if (grabando || cortado || ocupado || !Reconocimiento) return;
   // Lo que ya estaba escrito no se pisa: la voz sigue desde ahí.
-  dictado = txt.value.trim() ? txt.value.trim() + ' ' : '';
+  dictado = txt.value.trim();
   grabando = true; cerrando = false;
 
   rec = new Reconocimiento();
@@ -333,14 +337,17 @@ function abrirVoz() {
   rec.continuous = true;
   rec.interimResults = true;
 
+  // Cada pausa cierra un segmento. Unirlos con un espacio pegaba dos cosas dichas
+  // por separado en un párrafo corrido sin puntuación: van en renglones distintos.
   rec.onresult = e => {
-    let firme = '', tanteo = '';
+    let tanteo = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      const r = e.results[i];
-      if (r.isFinal) firme += r[0].transcript; else tanteo += r[0].transcript;
+      const r = e.results[i], frase = r[0].transcript.trim();
+      if (!frase) continue;
+      if (r.isFinal) dictado += (dictado ? '\n' : '') + frase;
+      else tanteo += (tanteo ? ' ' : '') + frase;
     }
-    if (firme) dictado += firme.replace(/^\s*/, dictado && !/\s$/.test(dictado) ? ' ' : '');
-    escribir(dictado + tanteo);
+    escribir(dictado + (tanteo ? (dictado ? '\n' : '') + tanteo : ''));
   };
 
   // El navegador corta solo después de un silencio. Acá el silencio es parte de
@@ -393,10 +400,10 @@ function cerrarVoz() {
 
 micro.onclick = () => grabando ? pararVoz() : abrirVoz();
 
-// El modelo escribe diez veces más rápido de lo que se lee. El texto se revela
-// a ritmo de lectura (~7 palabras/seg) y de a palabras enteras, nunca letra por
-// letra. Si se acumula demasiado, acelera: no queda colgado atrás del modelo.
-const MS_POR_PALABRA = 140;
+// El texto se revela de a palabras enteras, nunca letra por letra, a ~14 por
+// segundo: más lento que el modelo, pero sin hacer esperar. A 7 por segundo una
+// respuesta corta tardaba tres segundos en terminar de aparecer.
+const MS_POR_PALABRA = 70;
 function revelador(nodo) {
   let pendiente = '', abierto = true, avisar = null;
   const id = setInterval(() => {
@@ -443,7 +450,7 @@ async function mandar(textoDirecto) {
   try {
     const r = await fetch('/api/chat', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mensajes, memoria: memoriaParaEnviar() }),
+      body: JSON.stringify({ mensajes, memoria: memoriaParaEnviar(), ambiguos }),
     });
     if ((r.headers.get('content-type') ?? '').includes('text/event-stream')) await leerStream(r, p);
     else {
@@ -471,7 +478,7 @@ async function leerStream(r, p) {
       const linea = parte.split('\n').find(l => l.startsWith('data: '));
       if (!linea) continue;
       let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
-      if (d.tipo === 'riesgo') riesgo = d.nivel;
+      if (d.tipo === 'riesgo') { riesgo = d.nivel; if (d.ambiguo) ambiguos++; }
       else if (d.tipo === 'texto') {
         if (!nodo) { p.remove(); nodo = turno('assistant', ''); rev = revelador(nodo); }
         texto += d.t; rev.empujar(d.t);

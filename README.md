@@ -10,20 +10,29 @@ Prototipo funcional del acompañante emocional. Node sin dependencias, desplegad
 | Archivo | Qué es |
 |---|---|
 | `prompts/system.md` | **La voz de Amber.** Lo más importante del proyecto. |
-| `prompts/clasificador.md` | Detecta riesgo. Devuelve `ninguno` / `atencion` / `alto`. |
-| `api/prompts.mjs` | Copia generada de los dos anteriores, es lo que lee el servidor. |
-| `api/chat.mjs` | El servidor: clasifica, arma el contexto, llama a Claude. |
+| `prompts/clasificador.md` | Detecta riesgo. Devuelve `ninguno` / `ambiguo` / `atencion` / `alto`. |
+| `api/chat.mjs` | El servidor: lee los prompts, clasifica, arma el contexto, llama a Claude. |
 | `public/` | La app: `index.html`, `styles.css`, `app.js`. |
 | `memoria.json` | Memoria de arranque. Se copia al navegador de cada visitante. |
-| `set-de-prueba.md` | Veinte situaciones para probar cada cambio de prompt. |
+| `set-de-prueba.md` | Las situaciones fijas para probar cada cambio de prompt. |
+| `probar.mjs` | Corre el set de prueba y deja un informe en `pruebas/`. |
 
 ## Si tocás un prompt
 
-`prompts/*.md` no se leen en producción. Después de editarlos hay que regenerar:
+El servidor lee `prompts/*.md` directo: editarlos cambia la voz, sin paso intermedio.
+Pero no se sabe si un cambio mejoró hasta medirlo:
 
 ```bash
-node regenerar.mjs
+node --env-file=.env probar.mjs            # antes de tocar: la línea de base
+# ...editar prompts/system.md o prompts/clasificador.md...
+node --env-file=.env probar.mjs            # después: comparar los dos informes de pruebas/
+node --env-file=.env probar.mjs 07 21 24   # solo algunos casos
 ```
+
+El script marca solo lo que se puede medir: nivel de riesgo, largo, aperturas y
+frases prohibidas, género, evaluar lo que dijo la persona. El eco no lo detecta:
+hay que leer las respuestas del informe. Y el modelo varía entre corridas, así que
+un caso que importa se corre más de una vez.
 
 ## Desplegar
 
@@ -36,5 +45,8 @@ Para correr local hace falta un `.env` propio con esa variable.
 
 ## Regla
 
-Antes de dar por buena cualquier corrección de prompt, correr las veinte situaciones
-de `set-de-prueba.md`. Sin eso no se sabe si un cambio mejoró o empeoró.
+Antes de dar por buena cualquier corrección de prompt, correr `probar.mjs` antes y
+después. Sin eso no se sabe si un cambio mejoró o empeoró.
+
+Cuando algo falla en una conversación real y no estaba contemplado, se agrega como
+caso nuevo en `set-de-prueba.md` antes de arreglarlo.
