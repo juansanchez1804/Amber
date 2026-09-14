@@ -192,20 +192,29 @@
     <div class="cuerpo" id="ayuda-cuerpo"></div>
   </section>
 
-  <!-- CALMARME -->
-  <section class="p" id="calma">
+  <!-- RESPIRAR: a oscuras siempre, sea cual sea el tema. Es el único lugar de la app
+       que se usa con los ojos cerrados. -->
+  <section class="p" id="calma" data-fase="quieto">
+    <div class="barra calma-barra">
+      <span></span>
+      <button class="calma-sonido" id="calma-sonido" aria-pressed="false">Sonido</button>
+    </div>
     <div class="crece"></div>
-    <div class="orbe">
+    <div class="orbe" aria-hidden="true">
       <div class="o1"></div><div class="o2"></div>
-      <div class="pal"><span class="w1">Inhalá</span><span class="w2">Soltá</span></div>
+      <div class="pal"><span class="w-inhala">Inhalá</span><span class="w-suelta">Soltá</span></div>
     </div>
-    <div style="height:48px"></div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
-      <div style="font-size:14px;line-height:1.6;color:var(--gris);text-align:center;max-width:280px">Noventa segundos. Podés parar cuando quieras.</div>
-      <div class="barrita"><i></i></div>
+    <div class="calma-texto">
+      <p class="calma-t" id="calma-t">Acomodate como estés.</p>
+      <p class="calma-s" id="calma-s">Seguí el círculo. No hace falta respirar hondo.</p>
     </div>
+    <div class="barrita" aria-hidden="true"><i id="calma-progreso"></i></div>
     <div class="crece" style="flex-grow:1.2"></div>
-    <button class="link" id="salir-calma">Volver</button>
+    <div class="calma-fin" id="calma-fin">
+      <button class="btn btn-noche" id="calma-otro">Otro rato</button>
+    </div>
+    <button class="link calma-link" id="salir-calma">Terminar</button>
+    <p class="solo-lector" id="calma-aviso" role="status" aria-live="polite"></p>
   </section>
 
   <!-- MEMORIA -->

@@ -86,7 +86,7 @@ function ir(id) {
   document.querySelectorAll('.p').forEach(p => p.classList.toggle('on', p.id === id));
   if (id !== 'conv') pararVoz?.();
   if (id === 'conv') { ajustarColchon(); abrirConversacion(); $('#txt').focus(); seguir(false); }
-  if (id === 'calma') reiniciarCalma();
+  if (id === 'calma') empezarRespiracion(); else pararRespiracion();
   if (id === 'mem') pintarMemoria();
   if (id === 'historia') pintarHistoria();
   if (id === 'pers') pintarPersonalizacion();
@@ -113,13 +113,150 @@ function pintarAyuda() {
   c.append(tarjetasRecursos());
 }
 
-// reinicia la animación de respiración cada vez que se entra
-function reiniciarCalma() {
-  ['.o1', '.o2', '.w1', '.w2', '.barrita i'].forEach(s => {
-    const n = $(s); const a = n.style.animation; n.style.animation = 'none';
-    void n.offsetWidth; n.style.animation = a || '';
-  });
+// ── respirar ──────────────────────────────────────────────────────────────
+// Seis respiraciones por minuto, con la exhalación más larga que la inhalación y
+// sin retener el aire: es el ritmo donde la variabilidad cardíaca llega a su
+// máximo, y retener o respirar "hondo" puede disparar sobrerrespiración en
+// alguien con ansiedad. Nueve ciclos de diez segundos: los noventa de la home.
+const RESP = { acomodo: 4000, inhala: 4000, suelta: 6000, ciclos: 9 };
+const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calmaAviso = $('#calma-aviso'),
+      progreso = $('#calma-progreso'), botonSonido = $('#calma-sonido');
+let resp = null, bloqueo = null;
+
+function fase(nombre, ms) {
+  calma.style.setProperty('--dur', ms + 'ms');
+  calma.dataset.fase = nombre;
 }
+const avisarCalma = t => { calmaAviso.textContent = ''; setTimeout(() => { calmaAviso.textContent = t; }, 50); };
+
+function empezarRespiracion() {
+  pararRespiracion();
+  resp = { ciclo: 0, timer: null, audio: null, pausada: false };
+  delete calma.dataset.terminado;
+  $('#salir-calma').textContent = 'Terminar';
+  calmaT.textContent = 'Acomodate como estés.';
+  calmaS.textContent = 'Seguí el círculo. No hace falta respirar hondo.';
+  progreso.style.transition = 'none'; progreso.style.width = '0';
+  fase('quieto', 1200);
+  pintarSonido();
+  // Tiene que crearse dentro del toque que abrió la pantalla: el navegador no deja
+  // arrancar sonido sin un gesto de la persona.
+  if (prefs.sonidoResp) resp.audio = crearAudio();
+  mantenerPantalla();
+  avisarCalma('Noventa segundos de respiración. Acomodate como estés.');
+  resp.timer = setTimeout(inhalar, RESP.acomodo);
+}
+
+function inhalar() {
+  if (!resp) return;
+  fase('inhala', RESP.inhala); ola('inhala', RESP.inhala); vibrar(24);
+  avisarCalma('Inhalá');
+  progreso.style.transition = `width ${RESP.inhala + RESP.suelta}ms linear`;
+  progreso.style.width = `${(resp.ciclo + 1) / RESP.ciclos * 100}%`;
+  resp.timer = setTimeout(soltar, RESP.inhala);
+}
+
+function soltar() {
+  if (!resp) return;
+  fase('suelta', RESP.suelta); ola('suelta', RESP.suelta); vibrar(12);
+  avisarCalma('Soltá');
+  resp.timer = setTimeout(() => { resp.ciclo++; resp.ciclo < RESP.ciclos ? inhalar() : terminarRespiracion(); }, RESP.suelta);
+}
+
+function terminarRespiracion() {
+  clearTimeout(resp.timer); resp.timer = null;
+  fase('quieto', 2400);
+  cerrarAudio(resp.audio, 2400); resp.audio = null;
+  soltarPantalla();
+  calmaT.textContent = 'Ya está.';
+  calmaS.textContent = 'Quedate un momento así. Si querés, seguimos un rato más.';
+  calma.dataset.terminado = '';
+  $('#salir-calma').textContent = 'Volver';
+  avisarCalma('Terminó. Podés seguir un rato más o volver.');
+}
+
+function pararRespiracion() {
+  if (!resp) return;
+  clearTimeout(resp.timer);
+  cerrarAudio(resp.audio, 400);
+  soltarPantalla();
+  resp = null;
+  fase('quieto', 600);
+  delete calma.dataset.terminado;
+}
+
+// Si la app pasa a segundo plano, el navegador frena los relojes y la guía se
+// desfasa. Se pausa, y al volver retoma desde una inhalación.
+document.addEventListener('visibilitychange', () => {
+  if (!resp || (!resp.timer && !resp.pausada)) return;
+  if (document.hidden) {
+    clearTimeout(resp.timer); resp.timer = null; resp.pausada = true;
+    progreso.style.transition = 'none'; progreso.style.width = getComputedStyle(progreso).width;
+    ola('fin', 300); fase('quieto', 600);
+  } else if (resp.pausada) {
+    resp.pausada = false; mantenerPantalla();
+    resp.timer = setTimeout(inhalar, 1200);
+  }
+});
+
+async function mantenerPantalla() {
+  try { bloqueo = await navigator.wakeLock?.request('screen') ?? null; } catch (e) { bloqueo = null; }
+}
+function soltarPantalla() { bloqueo?.release?.().catch(() => {}); bloqueo = null; }
+
+// Sonido de ola: ruido marrón filtrado que sube al inhalar y se retira al soltar.
+// Se genera en el momento, sin archivos, y es la guía para quien cierra los ojos
+// en un iPhone, donde la web no puede vibrar.
+function crearAudio() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  try {
+    const ctx = new Ctx(), n = ctx.sampleRate * 8;
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+    let marron = 0;
+    for (let i = 0; i < n; i++) { marron = (marron + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = marron * 3.5; }
+    const borde = Math.floor(ctx.sampleRate * 0.05);   // sin clic al dar la vuelta el loop
+    for (let i = 0; i < borde; i++) { const k = i / borde; d[i] *= k; d[n - 1 - i] *= k; }
+    const fuente = ctx.createBufferSource(); fuente.buffer = buf; fuente.loop = true;
+    const filtro = ctx.createBiquadFilter(); filtro.type = 'lowpass'; filtro.frequency.value = 220; filtro.Q.value = 0.4;
+    const vol = ctx.createGain(); vol.gain.value = 0.0001;
+    fuente.connect(filtro); filtro.connect(vol); vol.connect(ctx.destination);
+    fuente.start(); ctx.resume?.();
+    const a = { ctx, filtro, vol };
+    rampa(a, 0.05, 240, 1.5);
+    return a;
+  } catch (e) { return null; }
+}
+function rampa(a, ganancia, frecuencia, seg) {
+  if (!a) return;
+  const t = a.ctx.currentTime, g = a.vol.gain, f = a.filtro.frequency;
+  g.cancelScheduledValues(t); f.cancelScheduledValues(t);
+  g.setValueAtTime(Math.max(g.value, 0.0001), t); f.setValueAtTime(f.value, t);
+  g.exponentialRampToValueAtTime(Math.max(ganancia, 0.0001), t + seg);
+  f.exponentialRampToValueAtTime(frecuencia, t + seg);
+}
+function ola(nombre, ms) {
+  const a = resp?.audio;
+  if (nombre === 'inhala') rampa(a, 0.22, 1100, ms / 1000);
+  else if (nombre === 'suelta') rampa(a, 0.04, 220, ms / 1000);
+  else rampa(a, 0.0001, 200, ms / 1000);
+}
+function cerrarAudio(a, ms) {
+  if (!a) return;
+  rampa(a, 0.0001, 200, ms / 1000);
+  setTimeout(() => a.ctx.close().catch(() => {}), ms + 150);
+}
+
+function pintarSonido() { botonSonido.setAttribute('aria-pressed', String(!!prefs.sonidoResp)); }
+botonSonido.onclick = () => {
+  prefs.sonidoResp = !prefs.sonidoResp; guardarPrefs(); pintarSonido();
+  if (!resp || !resp.timer) return;
+  if (prefs.sonidoResp && !resp.audio) {
+    resp.audio = crearAudio();
+    if (calma.dataset.fase !== 'quieto') ola(calma.dataset.fase, 800);
+  } else if (!prefs.sonidoResp && resp.audio) { cerrarAudio(resp.audio, 500); resp.audio = null; }
+};
+$('#calma-otro').onclick = () => empezarRespiracion();
 
 // ── entrada ───────────────────────────────────────────────────────────────
 const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];

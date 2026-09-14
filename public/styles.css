@@ -5,6 +5,7 @@
   --borde:rgba(99,64,201,.30); --afuera:#E8E6EF; --sobre-acento:#FFFFFF; --sombra:0 1px 3px rgba(26,22,38,.06),0 8px 24px rgba(26,22,38,.05);
   --orbe-1:rgba(99,64,201,.42); --orbe-2:rgba(99,64,201,.14); --orbe-0:rgba(99,64,201,0);
   --serif:'Newsreader',Georgia,serif; --sans:'Hanken Grotesk',-apple-system,system-ui,sans-serif;
+  --noche:#0E0B14;
 }
 /* El mismo violeta, sobre negro. El relleno se aclara apenas (#6F4ED8) porque
    sobre un fondo oscuro el violeta de la luz no se despega del fondo: así el
@@ -212,21 +213,67 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   display:flex;flex-direction:column;gap:20px}
 #ayuda .cuerpo::-webkit-scrollbar{display:none}
 
-/* calmarme */
-#calma{align-items:center}
-.orbe{width:260px;height:260px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
-.o1,.o2{position:absolute;border-radius:50%;animation:resp 13s ease-in-out infinite}
-.o1{width:240px;height:240px;background:radial-gradient(circle,var(--orbe-1) 0%,var(--orbe-2) 52%,var(--orbe-0) 72%)}
-.o2{width:132px;height:132px;background:var(--ambar)}
-@keyframes resp{0%{transform:scale(.82)}32%{transform:scale(1.12)}46%{transform:scale(1.12)}92%{transform:scale(.82)}100%{transform:scale(.82)}}
-.pal{position:relative;width:200px;height:40px;display:flex;align-items:center;justify-content:center}
-.pal span{position:absolute;font-family:var(--serif);font-size:26px;color:var(--sobre-acento)}
-.w1{animation:wIn 13s ease-in-out infinite}.w2{animation:wOut 13s ease-in-out infinite}
-@keyframes wIn{0%,30%{opacity:1}40%,100%{opacity:0}}
-@keyframes wOut{0%,34%{opacity:0}48%,92%{opacity:1}100%{opacity:0}}
-.barrita{width:132px;height:2px;border-radius:1px;background:color-mix(in srgb,var(--gris) 24%,transparent);overflow:hidden}
-.barrita i{display:block;height:100%;width:0;background:var(--ambar);animation:llenar 90s linear forwards}
-@keyframes llenar{to{width:100%}}
+/* respirar: siempre a oscuras. Es la única pantalla que se usa con los ojos
+   cerrados, y un fondo blanco a pleno brillo es lo contrario de calmarse. */
+#calma{align-items:center;color:var(--sobre-acento);
+  background:radial-gradient(130% 95% at 50% 40%,color-mix(in srgb,var(--ambar) 34%,var(--noche)) 0%,var(--noche) 72%)}
+#calma::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 42% at 50% 40%,color-mix(in srgb,var(--ambar) 60%,transparent),transparent 72%);
+  opacity:.25;transition:opacity var(--dur,1s) cubic-bezier(.37,0,.63,1)}
+#calma[data-fase="inhala"]::before{opacity:.75}
+#calma>:not(.solo-lector){position:relative;z-index:1}
+#tel:has(#calma.on) #estado{color:var(--sobre-acento)}
+#tel:has(#calma.on) #estado svg{fill:var(--sobre-acento);stroke:var(--sobre-acento)}
+
+.calma-barra{align-self:stretch}
+.calma-sonido{height:34px;padding:0 14px;border-radius:10px;cursor:pointer;font-family:var(--sans);font-size:13px;
+  background:none;color:var(--sobre-acento);border:1px solid color-mix(in srgb,var(--sobre-acento) 30%,transparent);
+  transition:background .3s ease,color .3s ease}
+/* Prendido se nota, pero no encandila: en plena respiración nada debería brillar más que el orbe. */
+.calma-sonido{opacity:.72}
+.calma-sonido[aria-pressed="true"]{opacity:1;background:color-mix(in srgb,var(--sobre-acento) 14%,transparent);
+  border-color:color-mix(in srgb,var(--sobre-acento) 60%,transparent)}
+
+/* El orbe no tiene animación propia: lo mueve la fase que pone el código, con la
+   misma duración que la fase. Así la palabra, la luz y el sonido van juntos. */
+#calma .orbe{width:280px;height:280px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#calma .o1,#calma .o2{position:absolute;border-radius:50%;transform:scale(.62);
+  transition:transform var(--dur,1s) cubic-bezier(.37,0,.63,1),opacity var(--dur,1s) cubic-bezier(.37,0,.63,1)}
+#calma .o1{width:280px;height:280px;opacity:.35;
+  background:radial-gradient(circle,color-mix(in srgb,var(--ambar) 60%,var(--sobre-acento)) 0%,color-mix(in srgb,var(--ambar) 30%,transparent) 42%,transparent 70%)}
+#calma .o2{width:150px;height:150px;
+  background:radial-gradient(circle at 50% 36%,color-mix(in srgb,var(--ambar) 62%,var(--sobre-acento)) 0%,var(--ambar) 62%);
+  box-shadow:0 0 70px color-mix(in srgb,var(--ambar) 70%,transparent)}
+#calma[data-fase="inhala"] .o1,#calma[data-fase="inhala"] .o2{transform:scale(1)}
+#calma[data-fase="inhala"] .o1{opacity:1}
+
+#calma .pal{position:relative;width:200px;height:40px;display:flex;align-items:center;justify-content:center}
+#calma .pal span{position:absolute;font-family:var(--serif);font-size:26px;color:var(--sobre-acento);opacity:0;transition:opacity .7s ease}
+#calma[data-fase="inhala"] .w-inhala,#calma[data-fase="suelta"] .w-suelta{opacity:1}
+
+.calma-texto{text-align:center;min-height:84px;margin-top:32px;transition:opacity .8s ease}
+.calma-t{margin:0;font-family:var(--serif);font-size:24px;line-height:1.25}
+.calma-s{margin:8px auto 0;max-width:280px;font-size:15px;line-height:1.55;opacity:.74;text-wrap:balance}
+#calma[data-fase="inhala"] .calma-texto,#calma[data-fase="suelta"] .calma-texto{opacity:0}
+
+#calma .barrita{width:132px;height:2px;border-radius:1px;overflow:hidden;margin-top:12px;
+  background:color-mix(in srgb,var(--sobre-acento) 18%,transparent)}
+#calma .barrita i{display:block;height:100%;width:0;background:color-mix(in srgb,var(--sobre-acento) 72%,transparent)}
+
+/* El final ocupa su lugar desde el principio: si apareciera empujando, el orbe
+   saltaría hacia arriba justo cuando la persona terminó de calmarse. */
+.calma-fin{align-self:stretch;margin-bottom:4px;visibility:hidden;opacity:0;transition:opacity 1.2s ease .6s}
+#calma[data-terminado] .calma-fin{visibility:visible;opacity:1}
+.btn-noche{background:var(--sobre-acento);color:var(--noche)}
+.calma-link{color:var(--sobre-acento);opacity:.74}
+
+/* Con movimiento reducido la guía sigue, porque es la función de la pantalla,
+   pero con un recorrido corto y sin que el fondo respire. */
+@media (prefers-reduced-motion:reduce){
+  #calma[data-fase="inhala"] .o1,#calma[data-fase="inhala"] .o2{transform:scale(.84)}
+  #calma::before{transition:none;opacity:.35}
+  .calma-sonido,.calma-fin{transition:none}
+}
 
 /* memoria */
 #mem .cuerpo{overflow-y:auto;min-height:0;flex-grow:1;scrollbar-width:none;padding-top:24px;
