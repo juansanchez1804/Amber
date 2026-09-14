@@ -4,7 +4,7 @@
   --gris:#6E6880; --gris2:#8B859C; --ambar:#6340C9; --ambar-claro:#5733BC;
   --borde:rgba(99,64,201,.30); --afuera:#E8E6EF; --sobre-acento:#FFFFFF; --sombra:0 1px 3px rgba(26,22,38,.06),0 8px 24px rgba(26,22,38,.05);
   --orbe-1:rgba(99,64,201,.42); --orbe-2:rgba(99,64,201,.14); --orbe-0:rgba(99,64,201,0);
-  --serif:Fraunces,Georgia,serif; --sans:Inter,-apple-system,system-ui,sans-serif;
+  --serif:'Newsreader',Georgia,serif; --sans:'Hanken Grotesk',-apple-system,system-ui,sans-serif;
 }
 [data-tema="ambar"]{
   --fondo:#0F0C09; --tarjeta:#1F1A14; --texto:#F5EFE6; --beige:#EBE2D3;
@@ -76,8 +76,8 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .rot{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris)}
 
 .btn{height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-family:var(--sans);cursor:pointer;border:0;width:100%}
-.btn-1{background:var(--ambar);color:var(--sobre-acento);font-weight:500}
+  font-size:16px;font-weight:500;font-family:var(--sans);cursor:pointer;border:0;width:100%}
+.btn-1{background:var(--ambar);color:var(--sobre-acento)}
 .btn-2{background:none;border:1px solid var(--borde);color:var(--ambar-claro)}
 .btn:disabled{opacity:.4;cursor:default}
 .link{background:none;border:0;color:var(--gris);font-size:15px;font-family:var(--sans);cursor:pointer;height:48px}

@@ -76,7 +76,9 @@ const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábad
 function pintarEntrada() {
   const d = new Date();
   $('#fecha').textContent = `${DIAS[d.getDay()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  $('#saludo').textContent = memoria?.activa && memoria.apodo ? `Hola, ${memoria.apodo}.` : 'Hola.';
+  const apodo = memoria?.apodo;
+  const apodoCap = apodo ? apodo.charAt(0).toUpperCase() + apodo.slice(1) : '';
+  $('#saludo').textContent = memoria?.activa && apodo ? `Hola, ${apodoCap}.` : 'Hola.';
   const r = memoria?.activa ? memoria.resumenes?.[1] ?? memoria.resumenes?.[0] : null;
   const sabe = $('#sabe');
   sabe.classList.toggle('acento', !!memoria?.activa && !r);
