@@ -58,6 +58,26 @@ function guiaPreguntas(mensajes) {
     : '';
 }
 
+// Con `alto` el modelo dictamina sobre la idea una de cada tres veces, y siete
+// vueltas de prompt no lo bajaron de ahí. Esto no lo convence: lo detecta y pide la
+// respuesta de nuevo. Una de tres pasa a una de nueve, y sólo cuesta una llamada
+// extra cuando de verdad falla.
+const VEREDICTO = /\bno\s+(es|lo que es|sea|son)\s*[^.,;]{0,20}(cierto|verdad|real)|\bno\s+(te\s+|lo\s+)?creo\b|\bno pienses eso\b|\bno digas eso\b|\bno\s+(lo\s+)?voy a discutir\b|\beso no es (cierto|verdad|as[íi])\b/i;
+
+const AVISO_REINTENTO = '\n\nTu respuesta anterior dictaminó sobre lo que dijo: le contestaste si su idea es verdad o no. Eso es justo lo que no va. Escribila de nuevo con dos partes y ninguna más: lo que escuchaste, y que te quedás. La idea queda entera, sin que vos opines sobre ella.';
+
+// Sin género conocido, el adjetivo se escapa igual en crisis ("no te dejo con eso
+// sola"). Es el mismo caso que el veredicto: un patrón conocido que el prompt no
+// logra sostener, y que acá ya tenemos la respuesta entera para revisar.
+const ADJ = '(sol[oa]|cansad[oa]|agotad[oa]|tranquil[oa]|perdid[oa]|segur[oa]|content[oa]|encerrad[oa]|reventad[oa])';
+const GENERO_FUGA = new RegExp(`\\b(est[áa]s|est[ée]s|sent[íi]s|pod[ée]s|puedas|segu[íi]s|sigas|quedaste|qued[áa]s|vos|dejo|dejar|dejarte|cargarlo|llevarlo|pasarlo|con eso|vos mism[oa])\\s+(\\S+\\s+){0,2}${ADJ}\\b|\\bvos mism[oa]\\b`, 'i');
+
+const AVISO_GENERO = '\n\nTu respuesta anterior le puso género con un adjetivo terminado en -o o en -a, y no sabés cuál es el suyo. Escribila de nuevo sin ese adjetivo: no hace falta ninguno. En vez de decir cómo está o con qué se queda, decí qué hacés vos.';
+
+// Sonnet 5 puede devolver un bloque de pensamiento antes del texto.
+const soloTexto = (out) => (out.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('');
+
+
 async function anthropic(body, key) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -177,17 +197,43 @@ export default async function handler(req, res) {
         : '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte. De esta respuesta depende que siga hablando: que sienta que alguien la escuchó, no que llenó un formulario.';
 
     const usoCharla = {};
-    for await (const t of anthropicStream({
+    // Tope de seguridad, no de estilo: es un corte duro que el modelo no ve y deja
+    // frases por la mitad. El largo de las respuestas lo decide el prompt.
+    const pedido = (extra = '') => ({
       model: MODELO_CHARLA,
-      // Tope de seguridad, no de estilo: es un corte duro que el modelo no ve y deja
-      // frases por la mitad. El largo de las respuestas lo decide el prompt.
       max_tokens: 1024,
       system: [
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
-        { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${sinSenal}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}` },
+        { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${sinSenal}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}${extra}` },
       ],
       messages: limpios,
-    }, key, usoCharla)) mandar({ tipo: 'texto', t });
+    });
+
+    if (riesgo.nivel === 'alto') {
+      // Sin streaming: hay que tener la respuesta entera para poder revisarla. No se
+      // nota, porque el cliente la revela a ritmo de lectura igual; lo único que
+      // cambia es que la primera palabra tarda un poco más en aparecer.
+      const uno = await anthropic(pedido(), key);
+      Object.assign(usoCharla, uno.usage ?? {});
+      let texto = soloTexto(uno);
+      const sinGenero = !(memoria?.activa && memoria.genero);
+      const falla = (t) => (VEREDICTO.test(t) ? AVISO_REINTENTO
+                          : sinGenero && GENERO_FUGA.test(t) ? AVISO_GENERO : null);
+      const aviso = falla(texto);
+      if (aviso) {
+        const dos = await anthropic(pedido(aviso), key);
+        const u = dos.usage ?? {};
+        for (const k of Object.keys(u)) usoCharla[k] = (usoCharla[k] ?? 0) + (u[k] ?? 0);
+        const segundo = soloTexto(dos);
+        // Si la segunda también falla va igual: contestar mal es mejor que no
+        // contestar en una crisis. Queda en el log para poder medirlo.
+        if (falla(segundo)) console.error('reintento alto: la segunda tampoco pasó');
+        texto = segundo;
+      }
+      mandar({ tipo: 'texto', t: texto });
+    } else {
+      for await (const t of anthropicStream(pedido(), key, usoCharla)) mandar({ tipo: 'texto', t });
+    }
 
     if (MODO_PRUEBA) mandar({ tipo: 'uso',
       charla: { modelo: MODELO_CHARLA, ...usoCharla },
