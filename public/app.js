@@ -3,7 +3,7 @@ let prefs = (() => { try { return JSON.parse(localStorage.getItem(LLAVE_PREFS)) 
 const guardarPrefs = () => { try { localStorage.setItem(LLAVE_PREFS, JSON.stringify(prefs)); } catch (e) {} };
 
 const TEMA = new URLSearchParams(location.search).get('tema');
-if (TEMA === 'ambar' || (TEMA !== 'claro' && prefs.oscuro)) document.documentElement.dataset.tema = 'ambar';
+if (TEMA === 'oscuro' || (TEMA !== 'claro' && prefs.oscuro)) document.documentElement.dataset.tema = 'oscuro';
 
 // Vibración: existe en Android y en casi ningún iPhone. Si el navegador no la
 // tiene, el interruptor no se ofrece en vez de ofrecerse y no hacer nada.
@@ -123,11 +123,23 @@ function reiniciarCalma() {
 
 // ── entrada ───────────────────────────────────────────────────────────────
 const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+// A las tres de la mañana todavía es "buenas noches": el día cambia cuando te
+// levantás, no cuando lo dice el reloj.
+function saludoDeLaHora(h) {
+  if (h >= 5 && h < 12) return 'Buen día';
+  if (h >= 12 && h < 20) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
 function pintarEntrada() {
   const d = new Date();
-  $('#fecha').textContent = `${DIAS[d.getDay()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  // La hora ya está arriba en la barra del teléfono, y repetirla acá convertía
+  // el encabezado en un reloj. Lo que importa es qué día es.
+  $('#fecha').textContent = `Hoy ${DIAS[d.getDay()].toLowerCase()}, ${d.getDate()} de ${MESES[d.getMonth()]}`;
   const apodo = memoria?.apodo;
-  $('#saludo').textContent = memoria?.activa && apodo ? `Hola, ${capitalizar(apodo)}.` : 'Hola.';
+  const saludo = saludoDeLaHora(d.getHours());
+  $('#saludo').textContent = memoria?.activa && apodo ? `${saludo}, ${capitalizar(apodo)}.` : `${saludo}.`;
   // Sin memoria previa no hay línea: el saludo queda solo. Se muestra el último,
   // que desde que existe el cierre es el de la conversación que acaba de pasar.
   const rs = memoria?.activa ? memoria.resumenes : null;
@@ -575,7 +587,6 @@ function pintarHistoria() {
   c.append(borrar);
 }
 
-const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function fechaLarga(iso) {
   const d = new Date(iso);
   return `${capitalizar(DIAS[d.getDay()])} ${d.getDate()} de ${MESES[d.getMonth()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -847,9 +858,9 @@ function pintarPreferencias() {
   const caja = el('div');
   caja.style.paddingTop = '8px';
 
-  caja.append(filaPref('Modo oscuro', 'El ámbar sobre negro con el que nació Amber.', !!prefs.oscuro, () => {
+  caja.append(filaPref('Modo oscuro', 'El mismo violeta, sobre negro.', !!prefs.oscuro, () => {
     prefs.oscuro = !prefs.oscuro; guardarPrefs(); vibrar(10);
-    if (prefs.oscuro) document.documentElement.dataset.tema = 'ambar';
+    if (prefs.oscuro) document.documentElement.dataset.tema = 'oscuro';
     else delete document.documentElement.dataset.tema;
     pintarPreferencias();
   }));

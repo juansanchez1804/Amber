@@ -6,12 +6,19 @@
   --orbe-1:rgba(99,64,201,.42); --orbe-2:rgba(99,64,201,.14); --orbe-0:rgba(99,64,201,0);
   --serif:'Newsreader',Georgia,serif; --sans:'Hanken Grotesk',-apple-system,system-ui,sans-serif;
 }
-[data-tema="ambar"]{
-  --fondo:#0F0C09; --tarjeta:#1F1A14; --texto:#F5EFE6; --beige:#EBE2D3;
-  --gris:#9B9189; --gris2:#847C70; --ambar:#B8651C; --ambar-claro:#D9A659;
-  --borde:rgba(217,166,89,.32); --afuera:#000; --sobre-acento:#FFFFFF; --sombra:0 2px 14px rgba(0,0,0,.35);
-  --orbe-1:rgba(184,101,28,.55); --orbe-2:rgba(184,101,28,.18); --orbe-0:rgba(184,101,28,0);
+/* El mismo violeta, sobre negro. El relleno se aclara apenas (#6F4ED8) porque
+   sobre un fondo oscuro el violeta de la luz no se despega del fondo: así el
+   borde del botón llega a 3.49:1 contra la página y el blanco encima a 5.59:1. */
+[data-tema="oscuro"]{
+  --fondo:#0E0B14; --tarjeta:#282041; --texto:#F2EFF8; --beige:#DCD6EC;
+  --gris:#9A93AD; --gris2:#8B84A0; --ambar:#6F4ED8; --ambar-claro:#B9A5F5;
+  --borde:rgba(185,165,245,.32); --afuera:#000; --sobre-acento:#FFFFFF; --sombra:0 2px 14px rgba(0,0,0,.45);
+  --orbe-1:rgba(111,78,216,.60); --orbe-2:rgba(111,78,216,.20); --orbe-0:rgba(111,78,216,0);
 }
+/* Sobre el violeta oscuro el blanco tiene menos margen: los subtítulos que en
+   claro van al 75% acá suben al 88%, que es donde vuelven a pasar AA. */
+[data-tema="oscuro"] .acceso-1 .acceso-s,
+[data-tema="oscuro"] .opcion[aria-checked="true"] .opcion-s{opacity:.88}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--afuera)}
 body{font-family:var(--sans);display:flex;align-items:center;justify-content:center;overflow:hidden;
