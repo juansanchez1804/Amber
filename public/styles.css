@@ -163,36 +163,52 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   border-bottom:1px solid var(--borde);transition:color .2s ease}
 .acceso-mem:hover{color:var(--ambar-claro)}
 
-.comp{flex-shrink:0;border-top:1px solid var(--tarjeta);padding-top:12px;display:flex;flex-direction:column;gap:8px;position:relative}
-.fila{display:flex;align-items:center;gap:10px;min-height:48px}
-.caret{width:1px;height:20px;background:var(--ambar);flex-shrink:0}
-#txt{flex-grow:1;background:none;border:0;color:var(--texto);font-size:17px;font-family:var(--sans);
-  resize:none;outline:none;line-height:1.41;max-height:120px;padding:12px 0}
-#txt::placeholder{color:var(--gris2)}
-#enviar{width:44px;height:44px;border-radius:50%;border:1px solid var(--borde);background:none;
+/* El campo es una pastilla: ella sola separa lo que escribís del hilo, así que
+   no hace falta línea divisoria. Los botones van abajo, para que cuando el texto
+   crece a varios renglones queden al alcance del pulgar. */
+.comp{flex-shrink:0;padding-top:12px;display:flex;flex-direction:column;gap:8px;position:relative}
+.fila{display:flex;align-items:flex-end;gap:6px;min-height:52px;padding:3px 3px 3px 18px;
+  background:var(--tarjeta);border-radius:26px;transition:box-shadow .3s ease}
+.fila-texto{flex:1;min-width:0;display:flex;flex-direction:column;align-self:center}
+#txt{width:100%;background:none;border:0;color:var(--texto);font-size:17px;font-family:var(--sans);
+  resize:none;outline:none;line-height:1.41;max-height:120px;padding:11px 0;display:block}
+#txt{scrollbar-width:none}
+#txt::-webkit-scrollbar{display:none}
+#txt::placeholder{color:var(--gris)}
+/* Enviar: vacío es un círculo claro con el avioncito apagado; con texto se llena
+   de violeta. El avión se atenúa, no el botón: así el círculo se sigue leyendo. */
+#enviar{width:44px;height:44px;border-radius:50%;border:0;background:var(--fondo);padding:0;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
-  opacity:.45;transition:opacity .3s ease}
-#enviar svg{stroke:var(--gris2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-#enviar.listo{opacity:1}
-#enviar.listo svg{stroke:var(--ambar-claro)}
+  transition:background .3s ease}
+#enviar svg{stroke:var(--gris2);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+  opacity:.55;transition:opacity .3s ease,stroke .3s ease}
+#enviar.listo{background:var(--ambar)}
+#enviar.listo svg{stroke:var(--sobre-acento);opacity:1}
 
 /* Voz: la voz entra, no sale. El usuario puede hablar; Amber nunca contesta
    hablando. Lo dictado cae en el mismo campo de siempre y queda editable: nadie
    manda sin leer lo que dijo, menos todavía si lo dijo llorando. */
-#micro{width:44px;height:44px;border-radius:50%;border:1px solid var(--borde);background:none;
+#micro{width:44px;height:44px;border-radius:50%;border:0;background:none;padding:0;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
-  opacity:.55;transition:opacity .3s ease,background .3s ease,border-color .3s ease}
+  opacity:.6;transition:opacity .3s ease,background .3s ease}
 #micro:hover{opacity:1}
 #micro svg{stroke:var(--gris2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 #micro .i-stop{display:none}
-#micro.on{opacity:1;background:var(--ambar);border-color:var(--ambar)}
+#micro.on{opacity:1;background:var(--ambar)}
 #micro.on svg{stroke:var(--sobre-acento)}
 #micro.on .i-mic{display:none}
 #micro.on .i-stop{display:block}
 #micro[hidden]{display:none}
 
-/* Mientras el micrófono está abierto tiene que ser imposible dudarlo. */
-#escucha{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-size:12px;color:var(--gris2)}
+/* Mientras el micrófono está abierto tiene que ser imposible dudarlo: la pastilla
+   se marca con un borde y el reloj vive adentro del campo. Enviar se va (queda
+   solo parar) y el texto dictado aparece debajo del reloj apenas llega. */
+.fila:has(#micro.on){box-shadow:inset 0 0 0 1px var(--borde)}
+.fila:has(#micro.on) #enviar{display:none}
+.fila:has(#micro.on) #txt:placeholder-shown{display:none}
+#escucha{display:flex;align-items:center;gap:8px;min-height:46px;font-family:var(--sans);font-size:14px;color:var(--gris)}
+#escucha:has(+ #txt:not(:placeholder-shown)){min-height:0;padding-top:11px}
+.fila:has(#micro.on) #txt:not(:placeholder-shown){padding-top:4px}
 #escucha[hidden]{display:none}
 #escucha .pt{width:7px;height:7px}
 #reloj{font-variant-numeric:tabular-nums}
@@ -358,15 +374,13 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
    píxel se dibuja con sombra y no engrosando el borde, para que nada se mueva. */
 .campo:focus-visible,.ent span[contenteditable]:focus-visible{
   outline:none;border-bottom-color:var(--ambar);box-shadow:0 1px 0 0 var(--ambar)}
-/* El campo de escribir no lleva marco: en un campo de texto el indicador de foco
-   es el cursor que parpadea, y encerrarlo en una caja violeta ensuciaba lo único
-   que tiene que estar tranquilo en esta pantalla. La barrita de la izquierda
-   crece un poco y alcanza. */
+/* El campo de escribir no lleva anillo: en un campo de texto el indicador de foco
+   es el cursor que parpadea, y un marco violeta alrededor de la pastilla se
+   confundiría con el borde de "te escucho". */
 #txt:focus-visible{outline:none}
-.caret{transition:height .2s ease,width .2s ease}
-.fila:has(#txt:focus-visible) .caret{width:2px;height:26px}
-/* El botón atenuado atenúa también su anillo de foco: al enfocarlo, opacidad plena. */
-#enviar:focus-visible,#micro:focus-visible{opacity:1}
+/* El botón atenuado atenúa también su anillo de foco: al enfocarlo, opacidad plena.
+   Y el anillo sigue la forma redonda del botón, no la de 6px del resto. */
+#enviar:focus-visible,#micro:focus-visible{opacity:1;border-radius:50%}
 
 /* Existe para el lector de pantalla y para nadie más. */
 .solo-lector{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
@@ -396,7 +410,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .dia.sin-tocar #dia::-webkit-slider-thumb{background:var(--gris2)}
 .dia.sin-tocar #dia::-moz-range-thumb{background:var(--gris2)}
 @media (prefers-reduced-motion:reduce){
-  .caret,#dia::-webkit-slider-thumb{transition:none}
+  #dia::-webkit-slider-thumb{transition:none}
 }
 
 /* La puerta al chat queda cerrada hasta que la barra se movió. Se usa
@@ -519,6 +533,8 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   .acceso-1:not([aria-disabled="true"]):hover,.btn-1:not(:disabled):hover{filter:brightness(1.07)}
   .acceso-2:hover,.btn-2:not(:disabled):hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:not([aria-checked="true"]):hover{
     border-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
+  /* Los botones llenos de la pastilla se oscurecen apenas, como en el diseño (#5733BC). */
+  #enviar.listo:hover,#micro.on:hover{background:color-mix(in srgb,var(--ambar) 88%,#000)}
 }
 .acceso:not([aria-disabled="true"]):active,.btn:not(:disabled):active,.pill:active,.ayuda-boton:active,.volver-inicio:active,.opcion:active{
   transform:scale(.985)}
