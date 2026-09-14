@@ -130,13 +130,10 @@ bajar.onclick = () => {
 };
 
 function turno(quien, texto) {
-  if (quien === 'user') {
-    const c = el('div', 'turno');
-    c.append(el('div', 'vos', 'Vos'), el('div', 'yo', texto));
-    hilo.appendChild(c); return c;
-  }
-  const n = el('div', 'am', texto);
-  hilo.appendChild(n); seguir(true); return n;
+  const n = el('div', quien === 'user' ? 'yo' : 'am', texto);
+  hilo.appendChild(n);
+  if (quien !== 'user') seguir(true);
+  return n;
 }
 // El acceso a la memoria aparece donde nace la pregunta: justo después de que
 // Amber demuestra por primera vez que se acuerda. Una vez por conversación.
