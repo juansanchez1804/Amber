@@ -10,7 +10,12 @@ const CLASIF = leer('clasificador.md');
 const MODELO_CHARLA = process.env.AMBER_MODELO_CHARLA || 'claude-sonnet-5';
 // Solo probar.mjs lo prende: habilita el riesgo fijo y el reporte de tokens.
 const MODO_PRUEBA = process.env.AMBER_MODO_PRUEBA === '1';
-const MODELO_CLASIF = 'claude-haiku-4-5-20251001';
+// Haiku 4.5 no cachea por debajo de 4.096 tokens y este prompt tiene 1.491: con
+// cache_control puesto devuelve 0 escrito, sin avisar. Sonnet 5 cachea desde 1.024,
+// y desde el quinto mensaje de una charla sale más barato que Haiku sin caché
+// (US$ 0,00075 contra 0,00166 por llamada). De paso clasifica mejor una hipérbole
+// rioplatense, que es la parte difícil.
+const MODELO_CLASIF = 'claude-sonnet-5';
 const MAX_MENSAJES  = 40;   // tope por conversación, para que nadie vacíe el saldo
 
 // Red de seguridad para cuando el clasificador no responde (caída, límite, sin
@@ -138,10 +143,12 @@ export default async function handler(req, res) {
     if (riesgoFijo) riesgo = { nivel: riesgoFijo, motivo: 'fijo (prueba)' };
     else try {
       const ctx = limpios.slice(-4).map(m => `${m.role === 'user' ? 'PERSONA' : 'AMBER'}: ${m.content}`).join('\n');
-      const out = await anthropic({ model: MODELO_CLASIF, max_tokens: 80, temperature: 0,
-        system: CLASIF, messages: [{ role: 'user', content: ctx }] }, key);
+      // Sin temperature: Sonnet 5 la rechaza con 400. El determinismo lo da el prompt.
+      const out = await anthropic({ model: MODELO_CLASIF, max_tokens: 80,
+        system: [{ type: 'text', text: CLASIF, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: ctx }] }, key);
       usoClasif = out.usage ?? null;
-      const j = JSON.parse((out.content?.[0]?.text ?? '').match(/\{[\s\S]*\}/)?.[0] ?? '{}');
+      const j = JSON.parse(soloTexto(out).match(/\{[\s\S]*\}/)?.[0] ?? '{}');
       if (['ninguno', 'ambiguo', 'atencion', 'alto'].includes(j.nivel)) riesgo = { nivel: j.nivel, motivo: j.motivo ?? '' };
     } catch (e) { clasificadorFallo = true; console.error('clasificador:', e.message); }
     if (clasificadorFallo && RIESGO_SIN_CLASIFICADOR.test(limpios.filter(m => m.role === 'user').at(-1)?.content ?? ''))
