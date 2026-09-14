@@ -97,7 +97,45 @@ function pintarEntrada() {
   const sabe = $('#sabe');
   sabe.textContent = r ?? '';
   sabe.hidden = !r;
+  pintarDia();
 }
+
+// ── cómo estuvo el día ────────────────────────────────────────────────────
+// Cinco puntos, sin números a la vista: poner "3/5" convierte un día en una nota.
+// Arranca sin tocar, porque un valor por defecto ya sería una respuesta puesta
+// en la boca de alguien que todavía no dijo nada.
+const DIA_PALABRA = { 1:'Muy difícil', 2:'Difícil', 3:'Ni bien ni mal', 4:'Bien', 5:'Muy bien' };
+const hoyISO = () => new Date().toLocaleDateString('sv');   // sv da AAAA-MM-DD
+
+const diaCaja = $('#dia-caja'), diaInput = $('#dia'), diaValor = $('#dia-v');
+
+function pintarDia() {
+  const d = memoria?.dia;
+  const deHoy = d && d.fecha === hoyISO();
+  diaCaja.classList.toggle('sin-tocar', !deHoy);
+  diaInput.value = deHoy ? d.valor : 3;
+  diaValor.textContent = deHoy ? DIA_PALABRA[d.valor] : 'Movela';
+}
+
+diaInput.addEventListener('input', () => {
+  diaCaja.classList.remove('sin-tocar');
+  diaValor.textContent = DIA_PALABRA[diaInput.value];
+});
+// El servidor corre en UTC; el "hoy" lo decide el reloj de quien escribe.
+// Una puntuación de anteayer no le sirve a Amber para nada, así que no viaja.
+function memoriaParaEnviar() {
+  if (!memoria) return memoria;
+  if (memoria.dia?.fecha === hoyISO()) return memoria;
+  const { dia, ...resto } = memoria;
+  return resto;
+}
+
+diaInput.addEventListener('change', () => {
+  if (!memoria) return;
+  memoria.dia = { valor: Number(diaInput.value), fecha: hoyISO() };
+  guardarMemoria();
+  anunciar(`Tu día quedó anotado como ${DIA_PALABRA[diaInput.value].toLowerCase()}.`);
+});
 
 // ── conversación ──────────────────────────────────────────────────────────
 const hilo = $('#hilo'), bajar = $('#bajar'), aviso = $('#aviso');
@@ -357,7 +395,7 @@ async function mandar(textoDirecto) {
   try {
     const r = await fetch('/api/chat', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mensajes, memoria }),
+      body: JSON.stringify({ mensajes, memoria: memoriaParaEnviar() }),
     });
     if ((r.headers.get('content-type') ?? '').includes('text/event-stream')) await leerStream(r, p);
     else {

@@ -101,10 +101,14 @@
           <span class="acceso-t">Respirar</span>
           <span class="acceso-s">Noventa segundos</span>
         </button>
-        <button class="acceso acceso-2" data-ir="conv">
-          <span class="acceso-t">Cómo estuvo el día</span>
-          <span class="acceso-s">Una línea alcanza</span>
-        </button>
+      </div>
+      <div class="dia sin-tocar" id="dia-caja">
+        <div class="dia-fila">
+          <label class="dia-t" for="dia">¿Cómo estuvo tu día?</label>
+          <span class="dia-v" id="dia-v">Movela</span>
+        </div>
+        <input type="range" id="dia" min="1" max="5" step="1" value="3">
+        <div class="dia-ext"><span>Muy difícil</span><span>Muy bien</span></div>
       </div>
     </div>
     <button class="ayuda-link" data-ir="ayuda">Si necesitás ayuda ahora</button>

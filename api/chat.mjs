@@ -18,6 +18,8 @@ function bloqueMemoria(m) {
   if (m.objetivos?.length)   l.push(`Lo que viene trabajando: ${m.objetivos.join('; ')}`);
   if (m.estrategias?.length) l.push(`Lo que le ayudó antes: ${m.estrategias.join('; ')}`);
   if (m.sensibles?.length)   l.push(`Temas sensibles, que vos no traés: ${m.sensibles.join('; ')}`);
+  // Un número puesto en una barra no es algo que se comente: es desde dónde arranca.
+  if (m.dia?.valor) l.push(`Hoy, antes de escribirte, puso su día en ${m.dia.valor} de 5 (1 es muy difícil, 5 muy bien). No se lo menciones, no lo nombres como número y no lo felicites ni lo compadezcas por eso: usalo solo para saber desde dónde arranca.`);
   if (m.resumenes?.length)   l.push(`\nDe las últimas conversaciones:\n${m.resumenes.map(r => `- ${r}`).join('\n')}`);
   return l.length ? `\n\n## Lo que sabés de quien te escribe\n\n${l.join('\n')}` : '';
 }
