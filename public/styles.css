@@ -266,7 +266,12 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
    mouse, así que no ensucia el uso normal. Va al final para ganarle a los
    outline:none de arriba. */
 :focus-visible{outline:2px solid var(--ambar);outline-offset:3px;border-radius:6px}
-.ent span[contenteditable]:focus-visible{outline:2px solid var(--ambar);outline-offset:4px}
+/* Ningún campo de texto lleva caja. El foco es el cursor que parpadea más el
+   subrayado que ya tienen: encerrarlos en un rectángulo violeta los convierte en
+   un formulario, que es exactamente lo que Amber no quiere parecer. El segundo
+   píxel se dibuja con sombra y no engrosando el borde, para que nada se mueva. */
+.campo:focus-visible,.ent span[contenteditable]:focus-visible{
+  outline:none;border-bottom-color:var(--ambar);box-shadow:0 1px 0 0 var(--ambar)}
 /* El campo de escribir no lleva marco: en un campo de texto el indicador de foco
    es el cursor que parpadea, y encerrarlo en una caja violeta ensuciaba lo único
    que tiene que estar tranquilo en esta pantalla. La barrita de la izquierda
