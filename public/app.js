@@ -278,27 +278,76 @@ function saludoDeLaHora(h) {
 function escribirSaludo(texto) {
   const h = $('#saludo');
   if (h.dataset.texto === texto) return;
+  pararTecleo();
   h.dataset.texto = texto;
   h.setAttribute('aria-label', texto);
   h.textContent = '';
-  let i = 0;
   texto.split(' ').forEach((palabra, k) => {
-    if (k) { h.append(' '); i++; }
+    if (k) h.append(' ');
     const p = el('span', 'sal-p'); p.setAttribute('aria-hidden', 'true');
-    for (const letra of palabra) { const l = el('span', 'sal-l', letra); l.style.setProperty('--i', i++); p.append(l); }
+    for (const letra of palabra) p.append(el('span', 'sal-l', letra));
     h.append(p);
   });
 }
 // Se anima al abrir la app y cuando el saludo cambió, no cada vez que se vuelve a la
 // home: repetido todo el tiempo deja de ser un detalle y pasa a ser una espera. Al
 // abrir espera al splash, que si no lo taparía.
-let saludoAnimado = null;
+//
+// Es una máquina de escribir: cada letra aparece de golpe, sin fundido, con el
+// cursor adelante. Arranca despacio y agarra ritmo, como quien empieza a escribir:
+// entre tecla y tecla pasan unos 200 ms al principio y 45 ms al final. Encima va
+// lo que tiene una mano: cada tecla un poco irregular, y una pausa después de la
+// coma. Mientras escribe el cursor queda fijo; cuando termina parpadea, como en
+// cualquier editor, y se va. Las letras ocupan su lugar desde el principio,
+// invisibles, así el renglón no salta mientras se escribe.
+let saludoAnimado = null, tecleo = null;
+const TECLA = { primera: 200, ultima: 45, coma: 280, espera: 520, parpadeos: 3 };
+function pararTecleo() {
+  clearTimeout(tecleo);
+  const h = $('#saludo');
+  h.classList.remove('escribiendo', 'tecleando', 'escrito');
+  h.querySelectorAll('.va, .sal-cursor, .sal-cursor-antes').forEach(l => l.classList.remove('va', 'sal-cursor', 'sal-cursor-antes'));
+}
 function animarSaludo() {
   const h = $('#saludo');
   if (h.dataset.texto === saludoAnimado) return;
   saludoAnimado = h.dataset.texto;
-  h.style.setProperty('--base', Math.max(120, 1250 - performance.now()) + 'ms');
-  h.classList.remove('aparece'); void h.offsetWidth; h.classList.add('aparece');
+  pararTecleo();
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // Cada paso es una tecla. El espacio también se teclea: el cursor pasa al
+  // principio de la palabra que sigue, aunque esa palabra baje de renglón.
+  const pasos = [];
+  h.querySelectorAll('.sal-p').forEach((p, w) => {
+    const letras = [...p.children];
+    if (w) pasos.push({ antes: letras[0] });
+    for (const l of letras) pasos.push({ letra: l });
+  });
+  const cursor = (l, antes) => {
+    h.querySelector('.sal-cursor, .sal-cursor-antes')?.classList.remove('sal-cursor', 'sal-cursor-antes');
+    l.classList.add(antes ? 'sal-cursor-antes' : 'sal-cursor');
+  };
+  h.classList.add('escribiendo');
+  cursor(pasos[0].letra, true);
+
+  let k = 0;
+  const tecla = () => {
+    const paso = pasos[k];
+    h.classList.add('tecleando');
+    if (paso.letra) { paso.letra.classList.add('va'); cursor(paso.letra); }
+    else cursor(paso.antes, true);
+    if (++k === pasos.length) {
+      h.classList.remove('tecleando');
+      h.classList.add('escrito');
+      tecleo = setTimeout(pararTecleo, TECLA.parpadeos * 1060);
+      return;
+    }
+    const p = k / (pasos.length - 1);
+    const ritmo = TECLA.ultima + (TECLA.primera - TECLA.ultima) * (1 - p) ** 2;
+    const pausa = paso.letra?.textContent === ',' ? TECLA.coma : 0;
+    tecleo = setTimeout(tecla, ritmo * (0.75 + Math.random() * 0.5) + pausa);
+  };
+  tecleo = setTimeout(tecla, Math.max(120, 1250 - performance.now()) + TECLA.espera);
 }
 
 function pintarEntrada() {

@@ -474,12 +474,23 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 @media (prefers-reduced-motion:reduce){ .llave,.llave::after{transition:none} }
 
-/* El saludo se escribe de a poco: las letras se asoman, no saltan. Cada palabra
-   va entera para que el renglón no se corte a la mitad de una. */
+/* El saludo se escribe a máquina (la cuenta de las teclas está en app.js). Cada
+   palabra va entera para que el renglón no se corte a la mitad de una. Las letras
+   que faltan están pero no se ven, así nada se mueve de lugar. */
 #saludo .sal-p{white-space:nowrap}
-#saludo.aparece .sal-l{animation:asoma .55s ease-out both;animation-delay:calc(var(--base,0ms) + var(--i) * 34ms)}
-@keyframes asoma{from{opacity:0;filter:blur(4px)}to{opacity:1;filter:blur(0)}}
-@media (prefers-reduced-motion:reduce){ #saludo.aparece .sal-l{animation:none} }
+#saludo .sal-l{position:relative}
+#saludo.escribiendo .sal-l:not(.va){visibility:hidden}
+/* El cursor: una barra fina en violeta, pegada a la última letra. Antes de empezar
+   parpadea (está esperando), mientras escribe queda quieto, y al terminar parpadea
+   unas veces y se apaga. */
+#saludo .sal-cursor::after,#saludo .sal-cursor-antes::after{content:'';position:absolute;visibility:visible;
+  top:.14em;bottom:.06em;width:max(2px,.06em);border-radius:1px;background:var(--ambar-claro);
+  animation:parpadea 1.06s linear infinite}
+#saludo .sal-cursor::after{left:100%;margin-left:.03em}
+#saludo .sal-cursor-antes::after{right:100%;margin-right:.03em}
+#saludo.tecleando .sal-cursor::after,#saludo.tecleando .sal-cursor-antes::after{animation:none}
+#saludo.escrito .sal-cursor::after{animation:parpadea 1.06s linear 3 forwards}
+@keyframes parpadea{0%,49%{opacity:1}50%,100%{opacity:0}}
 
 /* Al pasar el mouse, una respuesta chica: sube un píxel y se afirma el borde.
    Solo donde hay mouse: en el celular el hover queda pegado después de tocar. */
