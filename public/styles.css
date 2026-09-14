@@ -132,6 +132,27 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #enviar.listo{opacity:1}
 #enviar.listo svg{stroke:var(--ambar-claro)}
 
+/* Voz: la voz entra, no sale. El usuario puede hablar; Amber nunca contesta
+   hablando. Lo dictado cae en el mismo campo de siempre y queda editable: nadie
+   manda sin leer lo que dijo, menos todavía si lo dijo llorando. */
+#micro{width:44px;height:44px;border-radius:50%;border:1px solid var(--borde);background:none;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
+  opacity:.55;transition:opacity .3s ease,background .3s ease,border-color .3s ease}
+#micro:hover{opacity:1}
+#micro svg{stroke:var(--gris2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+#micro .i-stop{display:none}
+#micro.on{opacity:1;background:var(--ambar);border-color:var(--ambar)}
+#micro.on svg{stroke:var(--sobre-acento)}
+#micro.on .i-mic{display:none}
+#micro.on .i-stop{display:block}
+#micro[hidden]{display:none}
+
+/* Mientras el micrófono está abierto tiene que ser imposible dudarlo. */
+#escucha{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-size:12px;color:var(--gris2)}
+#escucha[hidden]{display:none}
+#escucha .pt{width:7px;height:7px}
+#reloj{font-variant-numeric:tabular-nums}
+
 /* Si te fuiste para arriba a leer, el hilo deja de perseguirte. */
 #bajar{position:absolute;right:0;top:-52px;width:40px;height:40px;border-radius:50%;
   border:1px solid var(--borde);background:var(--fondo);display:flex;align-items:center;

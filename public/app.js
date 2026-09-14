@@ -56,6 +56,7 @@ function ir(id) {
   const actual = document.querySelector('.p.on');
   if (actual && actual.id !== id) pantallaPrevia = actual.id;
   document.querySelectorAll('.p').forEach(p => p.classList.toggle('on', p.id === id));
+  if (id !== 'conv') pararVoz?.();
   if (id === 'conv') { ajustarColchon(); abrirConversacion(); $('#txt').focus(); seguir(false); }
   if (id === 'calma') reiniciarCalma();
   if (id === 'mem') pintarMemoria();
@@ -200,14 +201,106 @@ function recursos() {
 }
 
 const txt = $('#txt'), enviar = $('#enviar');
-txt.addEventListener('input', () => {
+// Los dedos y la voz escriben en el mismo lugar y por la misma puerta.
+function escribir(v) {
+  // Nunca reasignar el mismo texto: en algunos navegadores eso manda el cursor
+  // al final, y escribir en el medio de una frase se vuelve imposible.
+  if (txt.value !== v) txt.value = v;
   txt.style.height = 'auto'; txt.style.height = Math.min(txt.scrollHeight, 96) + 'px';
   enviar.classList.toggle('listo', txt.value.trim().length > 0);
-});
+}
+txt.addEventListener('input', () => escribir(txt.value));
 txt.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); mandar(); }
 });
 enviar.onclick = () => mandar();
+
+// ── voz ───────────────────────────────────────────────────────────────────
+// La voz entra, no sale: el usuario puede hablar, Amber nunca contesta hablando.
+// A las tres de la mañana escribir cuesta; decirlo en voz alta, menos. Pero lo
+// dictado NO se manda solo: cae en el campo de siempre y queda editable. Nadie
+// manda sin leer lo que dijo, menos todavía si lo dijo llorando.
+const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
+const micro = $('#micro'), escucha = $('#escucha'), reloj = $('#reloj');
+
+let rec = null, grabando = false, dictado = '', desde = 0, tic = null, cerrando = false;
+
+// Sin soporte del navegador el botón no existe: mejor que exista y falle.
+if (!Reconocimiento) micro.hidden = true;
+
+function pintarReloj() {
+  const s = Math.max(0, Math.floor((Date.now() - desde) / 1000));
+  reloj.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function abrirVoz() {
+  if (grabando || cortado || ocupado || !Reconocimiento) return;
+  // Lo que ya estaba escrito no se pisa: la voz sigue desde ahí.
+  dictado = txt.value.trim() ? txt.value.trim() + ' ' : '';
+  grabando = true; cerrando = false;
+
+  rec = new Reconocimiento();
+  rec.lang = 'es-AR';
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  rec.onresult = e => {
+    let firme = '', tanteo = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) firme += r[0].transcript; else tanteo += r[0].transcript;
+    }
+    if (firme) dictado += firme.replace(/^\s*/, dictado && !/\s$/.test(dictado) ? ' ' : '');
+    escribir(dictado + tanteo);
+  };
+
+  // El navegador corta solo después de un silencio. Acá el silencio es parte de
+  // hablar: alguien que llora se calla diez segundos. Mientras no toques parar,
+  // sigue escuchando.
+  rec.onend = () => {
+    if (grabando && !cerrando) { try { rec.start(); return; } catch (e) {} }
+    cerrarVoz();
+  };
+
+  rec.onerror = e => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;  // un silencio no es un error
+    cerrando = true;
+    const permiso = e.error === 'not-allowed' || e.error === 'service-not-allowed';
+    cerrarVoz();
+    if (permiso) txt.placeholder = 'Para hablar necesito permiso del micrófono.';
+  };
+
+  try { rec.start(); } catch (e) { grabando = false; return; }
+
+  desde = Date.now(); pintarReloj();
+  tic = setInterval(pintarReloj, 1000);
+  escucha.hidden = false;
+  micro.classList.add('on');
+  micro.setAttribute('aria-label', 'Dejar de hablar');
+  txt.readOnly = true;              // mientras el micrófono escribe, los dedos no pelean
+  txt.placeholder = 'Te escucho';
+}
+
+function pararVoz() {
+  if (!grabando) return;
+  cerrando = true;
+  try { rec.stop(); } catch (e) { cerrarVoz(); }
+}
+
+function cerrarVoz() {
+  if (!grabando) return;
+  grabando = false; cerrando = false;
+  clearInterval(tic); tic = null;
+  escucha.hidden = true;
+  micro.classList.remove('on');
+  micro.setAttribute('aria-label', 'Hablar');
+  txt.readOnly = false;
+  if (!cortado) txt.placeholder = 'Escribí lo que quieras';
+  escribir(dictado.trim());         // se cae lo tanteado, queda lo firme
+  txt.focus();
+}
+
+micro.onclick = () => grabando ? pararVoz() : abrirVoz();
 
 // El modelo escribe diez veces más rápido de lo que se lee. El texto se revela
 // a ritmo de lectura (~7 palabras/seg) y de a palabras enteras, nunca letra por
@@ -237,6 +330,8 @@ function revelador(nodo) {
 let ocupado = false, cortado = false;
 function cortar() {
   cortado = true;
+  pararVoz();
+  micro.hidden = true;
   txt.disabled = true;
   txt.placeholder = 'Por hoy llegamos hasta acá.';
   enviar.classList.remove('listo');
@@ -246,6 +341,7 @@ async function mandar(textoDirecto) {
   const t = (textoDirecto ?? txt.value).trim();
   if (!t || ocupado || cortado) return;
   ocupado = true;
+  if (grabando) { dictado = ''; pararVoz(); }
   quitarAperturas();
   $('#ver-ayuda').hidden = true;   // el disclaimer no ocupa el lugar de escribir
   if (textoDirecto == null) { txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo'); }
