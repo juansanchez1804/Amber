@@ -6,7 +6,10 @@ const leer = (n) => readFileSync(new URL(`../prompts/${n}`, import.meta.url), 'u
 const SYSTEM = leer('system.md');
 const CLASIF = leer('clasificador.md');
 
-const MODELO_CHARLA = 'claude-sonnet-5';
+// Producción usa Sonnet. probar.mjs elige otro con AMBER_MODELO_CHARLA.
+const MODELO_CHARLA = process.env.AMBER_MODELO_CHARLA || 'claude-sonnet-5';
+// Solo probar.mjs lo prende: habilita el riesgo fijo y el reporte de tokens.
+const MODO_PRUEBA = process.env.AMBER_MODO_PRUEBA === '1';
 const MODELO_CLASIF = 'claude-haiku-4-5-20251001';
 const MAX_MENSAJES  = 40;   // tope por conversación, para que nadie vacíe el saldo
 
@@ -51,7 +54,7 @@ function bloqueMemoria(m) {
 function guiaPreguntas(mensajes) {
   const u = [...mensajes].reverse().find(m => m.role === 'assistant');
   return u && /\?\s*$/.test(u.content.trim())
-    ? '\n\nTu mensaje anterior terminó en pregunta. Este NO puede terminar en pregunta: devolvele algo en vez de pedirle algo.'
+    ? '\n\nTu mensaje anterior terminó en pregunta, así que este no lleva ninguna. Cerrá con una observación que la persona pueda tomar o dejar, no con una pregunta encubierta ni con una frase que espere respuesta. Está bien dejar el turno abierto sin pedir nada.'
     : '';
 }
 
@@ -67,7 +70,7 @@ async function anthropic(body, key) {
 
 // La respuesta se manda de a pedazos: la primera palabra aparece mucho antes
 // que la última, y el texto se lee como alguien escribiendo.
-async function* anthropicStream(body, key) {
+async function* anthropicStream(body, key, uso = {}) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
@@ -84,6 +87,8 @@ async function* anthropicStream(body, key) {
       const linea = parte.split('\n').find(l => l.startsWith('data: '));
       if (!linea) continue;
       let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
+      if (d.type === 'message_start') Object.assign(uso, d.message?.usage ?? {});
+      if (d.type === 'message_delta' && d.usage?.output_tokens != null) uso.output_tokens = d.usage.output_tokens;
       if (d.type === 'content_block_delta' && d.delta?.type === 'text_delta') yield d.delta.text;
     }
   }
@@ -106,11 +111,16 @@ export default async function handler(req, res) {
 
     // clasificador: barato, rápido, determinista. Corre siempre, incluso al cortar:
     // el tope de mensajes no puede dejar a alguien en riesgo sin los teléfonos.
-    let riesgo = { nivel: 'ninguno', motivo: '' }, clasificadorFallo = false;
-    try {
+    let riesgo = { nivel: 'ninguno', motivo: '' }, clasificadorFallo = false, usoClasif = null;
+    // En pruebas de voz el nivel se pasa a mano y no se paga el clasificador. Viene en
+    // req.riesgoFijo, que ningún cliente puede setear por HTTP, y solo en modo prueba.
+    const riesgoFijo = MODO_PRUEBA && ['ninguno', 'ambiguo', 'atencion', 'alto'].includes(req.riesgoFijo) ? req.riesgoFijo : null;
+    if (riesgoFijo) riesgo = { nivel: riesgoFijo, motivo: 'fijo (prueba)' };
+    else try {
       const ctx = limpios.slice(-4).map(m => `${m.role === 'user' ? 'PERSONA' : 'AMBER'}: ${m.content}`).join('\n');
       const out = await anthropic({ model: MODELO_CLASIF, max_tokens: 80, temperature: 0,
         system: CLASIF, messages: [{ role: 'user', content: ctx }] }, key);
+      usoClasif = out.usage ?? null;
       const j = JSON.parse((out.content?.[0]?.text ?? '').match(/\{[\s\S]*\}/)?.[0] ?? '{}');
       if (['ninguno', 'ambiguo', 'atencion', 'alto'].includes(j.nivel)) riesgo = { nivel: j.nivel, motivo: j.motivo ?? '' };
     } catch (e) { clasificadorFallo = true; console.error('clasificador:', e.message); }
@@ -124,7 +134,7 @@ export default async function handler(req, res) {
     const dePersona = limpios.filter(m => m.role === 'user');
     const literalAhora = FRASE_LITERAL.test(dePersona.at(-1)?.content ?? '');
     const literalAntes = dePersona.slice(0, -1).some(m => FRASE_LITERAL.test(m.content));
-    const fueAmbiguo = riesgo.nivel === 'ambiguo' || (literalAhora && riesgo.nivel === 'ninguno');
+    const fueAmbiguo = !riesgoFijo && (riesgo.nivel === 'ambiguo' || (literalAhora && riesgo.nivel === 'ninguno'));
     if (fueAmbiguo && riesgo.nivel === 'ninguno') riesgo = { nivel: 'ambiguo', motivo: `${riesgo.motivo} (frase literal)` };
     if (fueAmbiguo && (Number(ambiguos) >= 1 || literalAntes)) riesgo = { nivel: 'alto', motivo: `${riesgo.motivo} (repetida)` };
 
@@ -166,6 +176,7 @@ export default async function handler(req, res) {
         ? '\n\nEs el primer mensaje. Vos ya abriste con una línea sobre el día que acaba de marcar, así que esto que te escribe es la respuesta: entrá directo en lo que te cuenta. No saludes, no te presentes y no vuelvas a preguntarle lo mismo. Si te dice que prefiere no hablar de eso, no insistas: soltá el tema y quedate. De esta respuesta depende que siga hablando: que sienta que alguien la escuchó, no que llenó un formulario.'
         : '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte. De esta respuesta depende que siga hablando: que sienta que alguien la escuchó, no que llenó un formulario.';
 
+    const usoCharla = {};
     for await (const t of anthropicStream({
       model: MODELO_CHARLA,
       // Tope de seguridad, no de estilo: es un corte duro que el modelo no ve y deja
@@ -176,7 +187,11 @@ export default async function handler(req, res) {
         { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${sinSenal}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}` },
       ],
       messages: limpios,
-    }, key)) mandar({ tipo: 'texto', t });
+    }, key, usoCharla)) mandar({ tipo: 'texto', t });
+
+    if (MODO_PRUEBA) mandar({ tipo: 'uso',
+      charla: { modelo: MODELO_CHARLA, ...usoCharla },
+      clasificador: usoClasif ? { modelo: MODELO_CLASIF, ...usoClasif } : null });
 
     mandar({ tipo: 'fin' });
     res.end();

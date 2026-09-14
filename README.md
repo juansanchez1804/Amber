@@ -29,6 +29,19 @@ node --env-file=.env probar.mjs            # después: comparar los dos informes
 node --env-file=.env probar.mjs 07 21 24   # solo algunos casos
 ```
 
+Opciones para gastar menos:
+
+```bash
+node --env-file=.env probar.mjs --estimar                 # cuánto costaría, sin correr nada
+node --env-file=.env probar.mjs --modelo sonnet           # modelo que escribe (default haiku)
+node --env-file=.env probar.mjs --riesgo ninguno          # saltea el clasificador: para probar solo la voz
+node --env-file=.env probar.mjs --juez sonnet             # juez de empatía más barato (default opus; "no" lo apaga)
+```
+
+Al terminar imprime el costo real, separado en entrada, caché y salida. Ojo: en
+Haiku el system prompt no llega al mínimo de tokens para cachear, así que Haiku
+sale más caro que Sonnet con caché.
+
 El script marca solo lo que se puede medir: nivel de riesgo, largo, aperturas y
 frases prohibidas, género, evaluar lo que dijo la persona. El eco no lo detecta:
 hay que leer las respuestas del informe. Y el modelo varía entre corridas, así que
