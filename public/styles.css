@@ -53,7 +53,10 @@ body{font-family:var(--sans);display:flex;align-items:center;justify-content:cen
 
 /* en el celular: pantalla completa, sin marco, respetando notch y barra de gestos */
 @media (max-width:520px){
-  body{display:block;background:var(--fondo)}
+  /* Al abrir desde el ícono lo primero que se pinta es el body: en violeta empalma
+     con el splash en vez de dar un fogonazo blanco. Cuando el splash se fue vuelve
+     al fondo de la app, así ningún borde (teclado, rebote) queda violeta. */
+  body{display:block;background:#6340C9;animation:fondoApp 0s 1.4s forwards}
   body{overflow:visible}
   #marco{width:100%;height:100dvh;border-radius:0;padding:0;box-shadow:none;background:var(--fondo);transform:none!important}
   #marco::before,#marco::after,#isla,#estado{display:none}
@@ -65,13 +68,21 @@ body{font-family:var(--sans);display:flex;align-items:center;justify-content:cen
      padding-left:calc(24px + env(safe-area-inset-left));
      padding-right:calc(24px + env(safe-area-inset-right))}
 }
+@keyframes fondoApp{to{background:var(--fondo)}}
 #txt,.ent span[contenteditable]{-webkit-user-select:text;user-select:text}
 
 .p{position:absolute;inset:0;display:none;flex-direction:column;padding:24px}
 .p.on{display:flex}
 
 .barra{display:flex;justify-content:space-between;align-items:center;height:44px;flex-shrink:0}
-.marca{font-family:var(--serif);font-size:15px;letter-spacing:.14em;color:var(--gris)}
+/* La piedra hace de "a" y se apoya sobre la línea de base de "mber". */
+.marca{ display:flex; align-items:flex-end; gap:5px;
+  font-family:var(--serif); font-size:15px; letter-spacing:.14em;
+  color:var(--ambar); }
+.marca-simbolo{ height:19px; margin-bottom:1.8px; display:block; }
+/* El violeta de relleno sobre negro no llega a leerse a 15px (3.5:1): en oscuro
+   va el violeta claro, como indica la tabla de colores del logo. */
+[data-tema="oscuro"] .marca{color:var(--ambar-claro)}
 .ico{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;padding:0}
 .ico svg{stroke:var(--gris);fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .crece{flex-grow:1}
@@ -316,17 +327,21 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* ── pantalla de arranque ──────────────────────────────────────────────────
    Puro CSS: aparece con la página, se apaga sola y deja de existir.
    La barra de estado y la isla quedan por encima, como en una app real. */
+/* La piedra y "mber" van abajo dentro de su renglón (flex-end), y el renglón
+   queda centrado en la pantalla con wrap + align-content: sin eso, flex-end en
+   un contenedor de pantalla completa manda las dos cosas al borde de abajo. */
 #splash{position:absolute;inset:0;z-index:5;background:var(--ambar);
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-wrap:wrap;align-content:center;align-items:flex-end;justify-content:center;gap:8px;
   animation:splashFuera .45s ease-in .95s forwards}
+#splash svg{height:26px;margin-bottom:4.9px;display:block;color:#fff}
+#splash svg,#splash span{opacity:0;animation:splashDentro .55s cubic-bezier(.22,.61,.36,1) forwards}
 #splash span{font-family:var(--serif);font-size:38px;font-weight:400;
-  letter-spacing:.20em;color:var(--sobre-acento);opacity:0;
-  animation:splashDentro .55s cubic-bezier(.22,.61,.36,1) forwards}
+  letter-spacing:.20em;color:var(--sobre-acento)}
 @keyframes splashDentro{from{opacity:0;transform:scale(.965)}to{opacity:1;transform:scale(1)}}
 @keyframes splashFuera{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){
   #splash{animation:splashFuera .3s linear .7s forwards}
-  #splash span{opacity:1;animation:none}
+  #splash svg,#splash span{opacity:1;animation:none}
 }
 
 /* Prioridad 1 del checklist: quien navega con teclado tiene que ver dónde está.
