@@ -10,6 +10,11 @@ const MODELO_CHARLA = 'claude-sonnet-5';
 const MODELO_CLASIF = 'claude-haiku-4-5-20251001';
 const MAX_MENSAJES  = 40;   // tope por conversación, para que nadie vacíe el saldo
 
+// Red de seguridad para cuando el clasificador no responde (caída, límite, sin
+// crédito): sin él, el servidor asumía "ninguno" y "no quiero seguir viviendo"
+// pasaba como un mensaje cualquiera. Mejor un falso alto que un riesgo real ignorado.
+const RIESGO_SIN_CLASIFICADOR = /\b(morir|morirme|matar|matarme|suicid\w*|no\s+quiero\s+(seguir|vivir)|mejor\s+sin\s+m[ií]|no\s+le\s+hago\s+falta\s+a\s+nadie|lastimarme|cortarme|terminar\s+con\s+todo|quitarme\s+la\s+vida|para\s+qu[eé]\s+seguir|quiero\s+que\s+(se\s+)?termine|cuando\s+yo\s+no\s+est[eé])(?![a-záéíóúñ])/i;
+
 // Frases que literalmente hablan de matarse o morirse. Las frases hechas
 // ("me quiero morir de vergüenza") no cuentan.
 const FRASE_LITERAL = /\b(me\s+quiero\s+(matar|morir)|quiero\s+(matarme|morirme)|me\s+voy\s+a\s+(matar|morir)|matarme|morirme|suicid\w*|(me\s+quiero\s+tirar|tirarme)\s+(abajo|debajo)\s+de)\b(?!\s+de\s+(la\s+)?(risa|vergüenza|verguenza|amor|hambre|sueño|calor|frío|frio|ganas|envidia))/i;
@@ -101,14 +106,16 @@ export default async function handler(req, res) {
 
     // clasificador: barato, rápido, determinista. Corre siempre, incluso al cortar:
     // el tope de mensajes no puede dejar a alguien en riesgo sin los teléfonos.
-    let riesgo = { nivel: 'ninguno', motivo: '' };
+    let riesgo = { nivel: 'ninguno', motivo: '' }, clasificadorFallo = false;
     try {
       const ctx = limpios.slice(-4).map(m => `${m.role === 'user' ? 'PERSONA' : 'AMBER'}: ${m.content}`).join('\n');
       const out = await anthropic({ model: MODELO_CLASIF, max_tokens: 80, temperature: 0,
         system: CLASIF, messages: [{ role: 'user', content: ctx }] }, key);
       const j = JSON.parse((out.content?.[0]?.text ?? '').match(/\{[\s\S]*\}/)?.[0] ?? '{}');
       if (['ninguno', 'ambiguo', 'atencion', 'alto'].includes(j.nivel)) riesgo = { nivel: j.nivel, motivo: j.motivo ?? '' };
-    } catch (e) { console.error('clasificador:', e.message); }
+    } catch (e) { clasificadorFallo = true; console.error('clasificador:', e.message); }
+    if (clasificadorFallo && RIESGO_SIN_CLASIFICADOR.test(limpios.filter(m => m.role === 'user').at(-1)?.content ?? ''))
+      riesgo = { nivel: 'alto', motivo: 'sin clasificador, palabra de riesgo' };
 
     // Una frase de hacerse daño dicha de bronca se nombra una vez. Si vuelve a
     // aparecer en la misma conversación, sube a alto. Esto no depende del
@@ -142,18 +149,22 @@ export default async function handler(req, res) {
     const porQue = riesgo.motivo.endsWith('(repetida)')
       ? '\n\nEs alto porque es la segunda vez en esta conversación que la persona dice que se quiere matar o morir. La primera vez dijo que era de bronca. Esta vez no la tomes como forma de decir: preguntale en serio cómo está, en una o dos oraciones, sin seguir con el tema anterior.'
       : riesgo.nivel === 'alto'
-        ? '\n\nLa señal es alto: aplicá el protocolo aunque el mensaje parezca liviano. No sigas con el tema anterior. No le digas que lo que piensa no es cierto ni que no es así: aunque suene a consuelo, es discutirle lo que siente.'
+        ? '\n\nLa señal es alto: aplicá el protocolo aunque el mensaje parezca liviano. No sigas con el tema anterior. No le digas que lo que piensa no es cierto ni que no es así: aunque suene a consuelo, es discutirle lo que siente. Una o dos oraciones: la calidez está en qué decís, no en decir más.'
         : '';
 
     // La regla de género está en el prompt, pero se escapa justo en los momentos
     // difíciles ("no estás solo"). Recordarla al final, cerca de la respuesta, la sostiene.
     const genero = memoria?.activa && memoria.genero ? ''
-      : '\n\nNo sabés el género de esta persona. Antes de mandar, revisá cada palabra que la describe: si termina en -o o en -a, decilo de otra forma: "no estás solo" → "acá estoy"; "cargarlo solo" → "cargarlo por tu cuenta"; "vos mismo" → "vos"; "cansado" → "con todo encima"; "encerrada" → "sin salir". No copies estos ejemplos: son para que veas la trampa.';
+      : '\n\nNo sabés el género de esta persona. Antes de mandar, revisá cada palabra que la describe: si termina en -o o en -a, decilo de otra forma: "no estás solo" → "acá estoy"; "cargarlo solo" → "cargarlo por tu cuenta"; "vos mismo" → "vos"; "cansado" → "con todo encima"; "encerrada" → "sin salir"; "estás parada" → "estás"; "reventado" → "sin resto". No copies estos ejemplos: son para que veas la trampa.';
+
+    const sinSenal = clasificadorFallo && riesgo.nivel === 'ninguno'
+      ? '\n\nEl clasificador de riesgo no respondió en este mensaje: esa señal no es confiable. Si la persona habla de querer morirse, lastimarse o de que estarían mejor sin ella, aplicá el protocolo de alto igual.'
+      : '';
 
     const primera = limpios.filter(m => m.role === 'user').length !== 1 ? ''
       : memoria?.dia?.valor
-        ? '\n\nEs el primer mensaje. Vos ya abriste preguntándole por el día que acaba de marcar, así que esto que te escribe es la respuesta a esa pregunta: entrá directo en lo que te cuenta. No saludes, no te presentes y no vuelvas a preguntarle lo mismo. Si te dice que prefiere no hablar de eso, no insistas: soltá el tema y quedate.'
-        : '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte.';
+        ? '\n\nEs el primer mensaje. Vos ya abriste con una línea sobre el día que acaba de marcar, así que esto que te escribe es la respuesta: entrá directo en lo que te cuenta. No saludes, no te presentes y no vuelvas a preguntarle lo mismo. Si te dice que prefiere no hablar de eso, no insistas: soltá el tema y quedate. De esta respuesta depende que siga hablando: que sienta que alguien la escuchó, no que llenó un formulario.'
+        : '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte. De esta respuesta depende que siga hablando: que sienta que alguien la escuchó, no que llenó un formulario.';
 
     for await (const t of anthropicStream({
       model: MODELO_CHARLA,
@@ -162,7 +173,7 @@ export default async function handler(req, res) {
       max_tokens: 1024,
       system: [
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
-        { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}` },
+        { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${sinSenal}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}` },
       ],
       messages: limpios,
     }, key)) mandar({ tipo: 'texto', t });

@@ -455,15 +455,15 @@ const APERTURAS = ['No sé por dónde empezar', 'Tuve un día horrible', 'No pue
 // siempre a mano, porque obligar a alguien a explicar un día malo es pedirle
 // justo lo que no puede.
 const APERTURA_DIA = {
-  1: { texto: 'Marcaste que hoy estuvo muy difícil. Contame qué pasó.',
+  1: { texto: 'Un día muy difícil. No hace falta contarlo ordenado: estoy acá para lo que quieras decir.',
        opciones: ['No sé por dónde empezar', 'Fue todo el día', 'Prefiero no entrar en eso'] },
-  2: { texto: 'Pusiste que el día estuvo difícil. ¿Qué fue lo que más pesó?',
+  2: { texto: 'Uf, un día difícil. ¿Qué fue lo que más te pesó?',
        opciones: ['No sé por dónde empezar', 'Una cosa puntual', 'Prefiero no entrar en eso'] },
-  3: { texto: 'Ni bien ni mal. Esos días son los más difíciles de nombrar. Contame cómo fue el tuyo.',
+  3: { texto: 'Ni bien ni mal. Esos días a veces son los más difíciles de nombrar, así que contalo como te salga.',
        opciones: ['Fue un día raro', 'No pasó nada en especial', 'No sé por dónde empezar'] },
-  4: { texto: 'Marcaste que el día estuvo bien. Contame qué fue lo que estuvo bien.',
+  4: { texto: 'Qué bueno que el día estuvo bien. ¿Qué fue lo que lo hizo bueno?',
        opciones: ['Pasó algo bueno', 'Fue tranquilo nomás', 'No sé por dónde empezar'] },
-  5: { texto: 'Pusiste que hoy estuvo muy bien. Contame qué pasó.',
+  5: { texto: 'Un día muy bueno, eso merece contarse. ¿Qué pasó?',
        opciones: ['Pasó algo bueno', 'Fue un buen día nomás', 'No sé por dónde empezar'] },
 };
 const aperturaDeHoy = () => {
