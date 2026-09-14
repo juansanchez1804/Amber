@@ -136,7 +136,7 @@ function pintarEntrada() {
   const d = new Date();
   // La hora ya está arriba en la barra del teléfono, y repetirla acá convertía
   // el encabezado en un reloj. Lo que importa es qué día es.
-  $('#fecha').textContent = `Hoy ${DIAS[d.getDay()].toLowerCase()}, ${d.getDate()} de ${MESES[d.getMonth()]}`;
+  $('#fecha').textContent = `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`;
   const apodo = memoria?.apodo;
   const saludo = saludoDeLaHora(d.getHours());
   $('#saludo').textContent = memoria?.activa && apodo ? `${saludo}, ${capitalizar(apodo)}.` : `${saludo}.`;
