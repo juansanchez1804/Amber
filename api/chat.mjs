@@ -19,6 +19,10 @@ function bloqueMemoria(m) {
   const l = [];
   if (m.apodo) l.push(`Le gusta que le digan: ${m.apodo}`);
   if (m.genero) l.push(`Cuando le hablás, usá el género gramatical ${m.genero}`);
+  // Elegido por la persona en el onboarding. Modula el registro; no toca el
+  // protocolo de riesgo, que manda siempre por encima de cualquier preferencia.
+  if (m.registro === 'escuchar') l.push('Te pidió que la escuches más de lo que le devolvés. Quedate un turno más en lo que te dice antes de traer nada tuyo, y no le propongas ni le señales contradicciones si no te lo pide. Esto no aplica cuando hay riesgo: ahí hablás igual.');
+  if (m.registro === 'devolver') l.push('Te pidió que le digas lo que ves, aunque incomode. Podés nombrar algo que se repite o algo que no cierra en lo que cuenta. Sigue prohibido diagnosticar, etiquetar y sermonear: nombrás lo que viste, no lo que concluís.');
   if (m.objetivos?.length)   l.push(`Lo que viene trabajando: ${m.objetivos.join('; ')}`);
   if (m.estrategias?.length) l.push(`Lo que le ayudó antes: ${m.estrategias.join('; ')}`);
   if (m.sensibles?.length)   l.push(`Temas sensibles, que vos no traés: ${m.sensibles.join('; ')}`);

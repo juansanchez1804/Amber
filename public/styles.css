@@ -334,3 +334,25 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .volver-inicio{align-self:flex-start;background:none;border:1px solid var(--borde);
   border-radius:10px;padding:9px 14px;font-family:var(--sans);font-size:14px;
   color:var(--ambar-claro);cursor:pointer}
+
+/* Elegir el registro: dos formas de que te hablen, no un cuestionario. */
+.opciones{display:flex;flex-direction:column;gap:10px}
+.opcion{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;
+  padding:16px;border-radius:14px;border:1px solid var(--borde);background:var(--fondo);
+  cursor:pointer;transition:background .2s ease,border-color .2s ease}
+.opcion-t{font-family:var(--serif);font-size:18px;line-height:1.15;color:var(--texto)}
+.opcion-s{font-family:var(--sans);font-size:13px;line-height:1.4;color:var(--gris)}
+.opcion[aria-checked="true"]{background:var(--ambar);border-color:var(--ambar)}
+.opcion[aria-checked="true"] .opcion-t{color:var(--sobre-acento)}
+.opcion[aria-checked="true"] .opcion-s{color:var(--sobre-acento);opacity:.85}
+
+/* Una vez contestada, la barra deja de ser un control y pasa a ser una respuesta
+   dada. Pero no desaparece: un día no termina cuando abrís la app, y quien puso
+   "bien" a las seis puede estar destrozado a las once. Cambiarla cuesta un toque
+   más, que es justo lo que hace que no sea un jueguito. */
+.dia.cerrada #dia,.dia.cerrada .dia-ext{display:none}
+.dia-cambiar{display:none;align-self:flex-start;background:none;border:0;padding:0 0 2px;
+  cursor:pointer;font-family:var(--sans);font-size:12px;color:var(--gris2);
+  border-bottom:1px solid var(--borde)}
+.dia.cerrada .dia-cambiar{display:block}
+.dia.cerrada .dia-v{color:var(--ambar-claro)}

@@ -64,6 +64,28 @@
     <button class="btn btn-1" id="ob-seguir" disabled>Seguir</button>
   </section>
 
+  <!-- ONBOARDING 2b: REGISTRO -->
+  <section class="p" id="ob2b">
+    <div class="crece" style="flex-grow:1.4"></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h2>¿Cómo querés que te hable?</h2>
+      <div class="sub">Lo cambiás cuando quieras desde la memoria.</div>
+      <div class="opciones" role="radiogroup" aria-label="Cómo querés que te hable">
+        <button class="opcion" data-registro="escuchar" role="radio" aria-checked="false">
+          <span class="opcion-t">Escuchame</span>
+          <span class="opcion-s">Quedate en lo que te digo. No me tires ideas si no te las pido.</span>
+        </button>
+        <button class="opcion" data-registro="devolver" role="radio" aria-checked="false">
+          <span class="opcion-t">Decime lo que ves</span>
+          <span class="opcion-s">Si algo se repite o no cierra, nombralo aunque incomode.</span>
+        </button>
+      </div>
+    </div>
+    <div class="crece" style="flex-grow:1.4"></div>
+    <button class="btn btn-1" id="ob-reg-seguir" disabled>Seguir</button>
+    <button class="link" id="ob-reg-saltar">Decidilo después</button>
+  </section>
+
   <!-- ONBOARDING 3: LÍMITES -->
   <section class="p" id="ob3">
     <div class="crece" style="flex-grow:1.4"></div>
@@ -109,6 +131,7 @@
         </div>
         <input type="range" id="dia" min="1" max="5" step="1" value="3">
         <div class="dia-ext"><span>Muy difícil</span><span>Muy bien</span></div>
+        <button class="dia-cambiar" id="dia-cambiar">Cambiar</button>
       </div>
     </div>
     <button class="ayuda-link" data-ir="ayuda">Si necesitás ayuda ahora</button>

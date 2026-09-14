@@ -131,13 +131,26 @@ const diaCaja = $('#dia-caja'), diaInput = $('#dia'), diaValor = $('#dia-v');
 
 const diaDeHoy = () => (memoria?.dia?.fecha === hoyISO() ? memoria.dia : null);
 
+// Contestada, la barra deja de ser un control y pasa a ser una respuesta dada.
+// No desaparece: un día no termina cuando abrís la app. Quien puso "bien" a las
+// seis puede estar destrozado a las once, y la home no puede quedar mintiendo.
+let diaEditando = false;
+
 function pintarDia() {
   const d = diaDeHoy();
   diaCaja.classList.toggle('sin-tocar', !d);
+  diaCaja.classList.toggle('cerrada', !!d && !diaEditando);
   diaInput.value = d ? d.valor : 3;
   diaValor.textContent = d ? DIA_PALABRA[d.valor] : 'Movela';
   puertaChat();
 }
+
+$('#dia-cambiar').onclick = () => {
+  diaEditando = true;
+  pintarDia();
+  diaInput.focus({ preventScroll: true });
+  anunciar('Podés volver a marcar cómo estuvo tu día.');
+};
 
 // Hablar espera a que la barra se haya movido. Respirar y los teléfonos NO
 // esperan a nada: quien está mal a las tres de la mañana no puede toparse con
@@ -176,7 +189,8 @@ diaInput.addEventListener('change', () => {
   if (!memoria) return;
   memoria.dia = { valor: Number(diaInput.value), fecha: hoyISO() };
   guardarMemoria();
-  puertaChat();
+  diaEditando = false;
+  pintarDia();
   anunciar(`Tu día quedó anotado como ${DIA_PALABRA[diaInput.value].toLowerCase()}.`);
 });
 
@@ -587,6 +601,11 @@ function grupo(rotulo, hijos) {
   g.append(t); return g;
 }
 
+const REGISTROS = [
+  ['escuchar', 'Escuchame', 'Quedate en lo que te digo. No me tires ideas si no te las pido.'],
+  ['devolver', 'Decime lo que ves', 'Si algo se repite o no cierra, nombralo aunque incomode.'],
+];
+
 function pintarMemoria() {
   const c = $('#mem-cuerpo'); c.innerHTML = '';
   const guardar = () => { guardarMemoria(); pintarMemoria(); pintarEntrada(); };
@@ -600,6 +619,20 @@ function pintarMemoria() {
   c.append(grupo('Cómo te digo', [
     entrada(memoria.apodo ?? '', () => { memoria.apodo = ''; guardar(); },
       n => { if (n !== memoria.apodo) { memoria.apodo = n; guardar(); } })]));
+  // Volver a tocar la elegida la apaga: se puede volver a la voz de siempre.
+  const opciones = el('div', 'opciones');
+  opciones.style.padding = '12px';
+  opciones.setAttribute('role', 'radiogroup');
+  for (const [k, t, d] of REGISTROS) {
+    const b = el('button', 'opcion');
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(memoria.registro === k));
+    b.append(el('span', 'opcion-t', t), el('span', 'opcion-s', d));
+    b.onclick = () => { memoria.registro = memoria.registro === k ? null : k; guardar(); };
+    opciones.append(b);
+  }
+  c.append(grupo('Cómo te hablo', [opciones]));
+
   if (memoria.objetivos.length)   c.append(grupo('Lo que venís trabajando', lista('objetivos')));
   if (memoria.estrategias.length) c.append(grupo('Lo que te ayuda', lista('estrategias')));
   if (memoria.sensibles.length)   c.append(grupo('Temas sensibles', lista('sensibles')));
@@ -646,13 +679,31 @@ obNombre.addEventListener('input', () => {
 });
 obSeguir.onclick = () => {
   apodoOnboarding = obNombre.value.trim();
-  ir('ob3');
+  ir('ob2b');
 };
+
+// El registro no es una preferencia cosmética: la voz es el producto. Se elige
+// una vez, se guarda con todo lo demás y se cambia desde la memoria.
+let registroOnboarding = null;
+const obRegSeguir = $('#ob-reg-seguir');
+
+document.querySelectorAll('#ob2b .opcion').forEach(b => {
+  b.onclick = () => {
+    registroOnboarding = b.dataset.registro;
+    document.querySelectorAll('#ob2b .opcion').forEach(o =>
+      o.setAttribute('aria-checked', String(o === b)));
+    obRegSeguir.disabled = false;
+  };
+});
+obRegSeguir.onclick = () => ir('ob3');
+// Nadie tiene que contestar para poder entrar. Sin elegir, Amber usa su voz de siempre.
+$('#ob-reg-saltar').onclick = () => { registroOnboarding = null; ir('ob3'); };
 
 const obCheck = $('#ob-check'), obEntrar = $('#ob-entrar');
 obCheck.addEventListener('change', () => { obEntrar.disabled = !obCheck.checked; });
 obEntrar.onclick = () => {
-  memoria = { activa: true, apodo: apodoOnboarding, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  memoria = { activa: true, apodo: apodoOnboarding, registro: registroOnboarding,
+              objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria();
   pintarEntrada();
   ir('entrada');
