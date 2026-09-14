@@ -39,6 +39,30 @@ async function anthropic(body, key) {
   return r.json();
 }
 
+// La respuesta se manda de a pedazos: la primera palabra aparece mucho antes
+// que la última, y el texto se lee como alguien escribiendo.
+async function* anthropicStream(body, key) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ ...body, stream: true }),
+  });
+  if (!r.ok) throw new Error(`API ${r.status}: ${(await r.text()).slice(0, 300)}`);
+  const dec = new TextDecoder();
+  let resto = '';
+  for await (const trozo of r.body) {
+    resto += dec.decode(trozo, { stream: true });
+    const partes = resto.split('\n\n');
+    resto = partes.pop();
+    for (const parte of partes) {
+      const linea = parte.split('\n').find(l => l.startsWith('data: '));
+      if (!linea) continue;
+      let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
+      if (d.type === 'content_block_delta' && d.delta?.type === 'text_delta') yield d.delta.text;
+    }
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'solo POST' });
   const key = process.env.ANTHROPIC_API_KEY;
@@ -48,15 +72,14 @@ export default async function handler(req, res) {
     const { mensajes, memoria } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     if (!Array.isArray(mensajes) || !mensajes.length)
       return res.status(400).json({ error: 'faltan mensajes' });
-    if (mensajes.length > MAX_MENSAJES)
-      return res.status(200).json({ texto: 'Charlamos bastante por hoy. Si querés arrancar de nuevo, recargá la página.', riesgo: 'ninguno', fin: true });
 
     const limpios = mensajes.slice(-30).map(m => ({
       role: m.role === 'assistant' ? 'assistant' : 'user',
       content: String(m.content).slice(0, 4000),
     }));
 
-    // clasificador: barato, rápido, determinista
+    // clasificador: barato, rápido, determinista. Corre siempre, incluso al cortar:
+    // el tope de mensajes no puede dejar a alguien en riesgo sin los teléfonos.
     let riesgo = { nivel: 'ninguno', motivo: '' };
     try {
       const ctx = limpios.slice(-4).map(m => `${m.role === 'user' ? 'PERSONA' : 'AMBER'}: ${m.content}`).join('\n');
@@ -66,20 +89,41 @@ export default async function handler(req, res) {
       if (['ninguno', 'atencion', 'alto'].includes(j.nivel)) riesgo = { nivel: j.nivel, motivo: j.motivo ?? '' };
     } catch (e) { console.error('clasificador:', e.message); }
 
-    const out = await anthropic({
+    res.writeHead(200, {
+      'content-type': 'text/event-stream; charset=utf-8',
+      'cache-control': 'no-cache, no-transform',
+      'connection': 'keep-alive',
+    });
+    const mandar = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
+    mandar({ tipo: 'riesgo', nivel: riesgo.nivel });
+
+    if (mensajes.length > MAX_MENSAJES) {
+      mandar({ tipo: 'texto', t: riesgo.nivel === 'alto'
+        ? 'Hablamos mucho hoy y hasta acá puedo acompañarte en esta conversación. No te quedes solo con esto: el 135 en CABA y Gran Buenos Aires, el 0800 345 1435 desde el resto del país, y el 911 si es una emergencia ahora.'
+        : 'Charlamos bastante por hoy. Si querés arrancar de nuevo, recargá la página.' });
+      mandar({ tipo: 'fin', fin: true });
+      return res.end();
+    }
+
+    const primera = limpios.filter(m => m.role === 'user').length === 1
+      ? '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte.'
+      : '';
+
+    for await (const t of anthropicStream({
       model: MODELO_CHARLA,
       max_tokens: 400,
       system: [
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
-        { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${guiaPreguntas(limpios)}` },
+        { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${guiaPreguntas(limpios)}${primera}` },
       ],
       messages: limpios,
-    }, key);
+    }, key)) mandar({ tipo: 'texto', t });
 
-    const texto = out.content?.filter(c => c.type === 'text').map(c => c.text).join('') ?? '';
-    res.status(200).json({ texto, riesgo: riesgo.nivel });
+    mandar({ tipo: 'fin' });
+    res.end();
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: e.message });
+    if (res.headersSent) { res.write(`data: ${JSON.stringify({ tipo: 'fin' })}\n\n`); res.end(); }
+    else res.status(500).json({ error: e.message });
   }
 }

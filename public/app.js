@@ -48,12 +48,18 @@ let memoria = cargarMemoria();
 let mensajes = [];   // historial que va a la API
 let apodoOnboarding = '';
 
+const capitalizar = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+
 // ── navegación ────────────────────────────────────────────────────────────
+let pantallaPrevia = 'entrada';
 function ir(id) {
+  const actual = document.querySelector('.p.on');
+  if (actual && actual.id !== id) pantallaPrevia = actual.id;
   document.querySelectorAll('.p').forEach(p => p.classList.toggle('on', p.id === id));
-  if (id === 'conv') { $('#txt').focus(); scroll(); }
+  if (id === 'conv') { abrirConversacion(); $('#txt').focus(); scroll(); }
   if (id === 'calma') reiniciarCalma();
   if (id === 'mem') pintarMemoria();
+  if (id === 'ayuda') pintarAyuda();
   if (id === 'ob2') $('#ob-nombre').focus();
 }
 document.addEventListener('click', e => {
@@ -62,6 +68,13 @@ document.addEventListener('click', e => {
 });
 $('#salir-calma').onclick = () => ir(mensajes.length ? 'conv' : 'entrada');
 $('#salir-mem').onclick   = () => ir(mensajes.length ? 'conv' : 'entrada');
+$('#salir-ayuda').onclick = () => ir(pantallaPrevia === 'ayuda' ? 'conv' : pantallaPrevia);
+$('#ver-ayuda').onclick   = () => ir('ayuda');
+
+function pintarAyuda() {
+  const c = $('#ayuda-cuerpo'); c.innerHTML = '';
+  c.append(tarjetasRecursos());
+}
 
 // reinicia la animación de respiración cada vez que se entra
 function reiniciarCalma() {
@@ -77,8 +90,7 @@ function pintarEntrada() {
   const d = new Date();
   $('#fecha').textContent = `${DIAS[d.getDay()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   const apodo = memoria?.apodo;
-  const apodoCap = apodo ? apodo.charAt(0).toUpperCase() + apodo.slice(1) : '';
-  $('#saludo').textContent = memoria?.activa && apodo ? `Hola, ${apodoCap}.` : 'Hola.';
+  $('#saludo').textContent = memoria?.activa && apodo ? `Hola, ${capitalizar(apodo)}.` : 'Hola.';
   const r = memoria?.activa ? memoria.resumenes?.[1] ?? memoria.resumenes?.[0] : null;
   const sabe = $('#sabe');
   sabe.classList.toggle('acento', !!memoria?.activa && !r);
@@ -109,24 +121,52 @@ function accesoMemoria() {
 
 function puntos() {
   const n = el('div', 'puntos');
-  n.innerHTML = '<i class="pt"></i><i class="pt"></i><i class="pt"></i>';
+  n.innerHTML = '<i class="pt"></i>';
   hilo.appendChild(n); scroll(); return n;
 }
 
-const RECURSOS = [
-  ['135', 'Centro de Asistencia al Suicida. CABA y GBA, de 8 a 24 h.', true],
-  ['0800 345 1435', 'La misma línea, desde todo el país.', false],
-  ['911', 'Si es una emergencia ahora.', false],
-];
-function recursos() {
-  const c = el('div', 'rec');
-  for (const [num, desc, pri] of RECURSOS) {
-    const f = el('div', 'rec-f' + (pri ? ' pri' : ''));
-    const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:3px';
-    izq.append(el('div', 'rec-n', num), el('div', 'rec-d', desc));
-    f.append(izq); c.append(f);
+// Nadie tiene que enfrentarse a una caja vacía: Amber abre, y deja tres puertas
+// de entrada para el que no sabe cómo arrancar. Se van con el primer mensaje.
+const APERTURA = 'Estoy acá. Contame lo que quieras, no hace falta que tenga sentido.';
+const APERTURAS = ['No sé por dónde empezar', 'Tuve un día horrible', 'No puedo dormir'];
+let aperturasEl = null, conversacionAbierta = false;
+function abrirConversacion() {
+  if (conversacionAbierta || mensajes.length) return;
+  conversacionAbierta = true;
+  turno('assistant', APERTURA);
+  const c = el('div', 'aperturas');
+  for (const t of APERTURAS) {
+    const b = el('button', 'apertura', t);
+    b.onclick = () => mandar(t);
+    c.append(b);
   }
   hilo.appendChild(c); scroll();
+  aperturasEl = c;
+}
+function quitarAperturas() { aperturasEl?.remove(); aperturasEl = null; }
+
+const RECURSOS = [
+  ['135', '135', 'Centro de Asistencia al Suicida. CABA y GBA, de 8 a 24 h.', true],
+  ['0800 345 1435', '08003451435', 'La misma línea, desde todo el país.', false],
+  ['911', '911', 'Si es una emergencia ahora.', false],
+];
+const TUBO = '<svg class="rec-flecha" width="18" height="18" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>';
+
+// Un número que no se puede tocar no sirve de nada en un celular.
+function tarjetasRecursos() {
+  const c = el('div', 'rec');
+  for (const [num, tel, desc, pri] of RECURSOS) {
+    const a = el('a', 'rec-f' + (pri ? ' pri' : ''));
+    a.href = `tel:${tel}`;
+    const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:3px';
+    izq.append(el('div', 'rec-n', num), el('div', 'rec-d', desc));
+    const flecha = el('span'); flecha.innerHTML = TUBO;
+    a.append(izq, flecha); c.append(a);
+  }
+  return c;
+}
+function recursos() {
+  hilo.appendChild(tarjetasRecursos()); scroll();
 }
 
 const txt = $('#txt'), enviar = $('#enviar');
@@ -137,14 +177,40 @@ txt.addEventListener('input', () => {
 txt.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); mandar(); }
 });
-enviar.onclick = mandar;
+enviar.onclick = () => mandar();
 
-let ocupado = false;
-async function mandar() {
-  const t = txt.value.trim();
-  if (!t || ocupado) return;
+// El texto llega de a pedazos, pero aparece a ritmo de alguien escribiendo.
+// Si se acumula, acelera solo: nunca queda colgado detrás del modelo.
+function revelador(nodo) {
+  let pendiente = '', abierto = true, avisar = null;
+  const id = setInterval(() => {
+    if (pendiente) {
+      const n = Math.max(1, Math.ceil(pendiente.length / 40));
+      nodo.textContent += pendiente.slice(0, n);
+      pendiente = pendiente.slice(n);
+      scroll();
+    } else if (!abierto) { clearInterval(id); avisar?.(); }
+  }, 16);
+  return {
+    empujar: t => { pendiente += t; },
+    terminar: () => new Promise(r => { abierto = false; avisar = r; }),
+  };
+}
+
+let ocupado = false, cortado = false;
+function cortar() {
+  cortado = true;
+  txt.disabled = true;
+  txt.placeholder = 'Por hoy llegamos hasta acá.';
+  enviar.classList.remove('listo');
+}
+
+async function mandar(textoDirecto) {
+  const t = (textoDirecto ?? txt.value).trim();
+  if (!t || ocupado || cortado) return;
   ocupado = true;
-  txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo');
+  quitarAperturas();
+  if (textoDirecto == null) { txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo'); }
   turno('user', t);
   mensajes.push({ role: 'user', content: t });
   const p = puntos();
@@ -153,19 +219,46 @@ async function mandar() {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ mensajes, memoria }),
     });
-    const d = await r.json();
-    p.remove();
-    if (d.error) { turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); console.error(d.error); }
+    if ((r.headers.get('content-type') ?? '').includes('text/event-stream')) await leerStream(r, p);
     else {
-      turno('assistant', d.texto);
-      mensajes.push({ role: 'assistant', content: d.texto });
-      accesoMemoria();
-      if (d.riesgo === 'alto') recursos();
+      const d = await r.json().catch(() => ({}));
+      p.remove(); turno('assistant', 'Se me cortó algo acá. Probá de nuevo.');
+      console.error(d.error ?? r.status);
     }
   } catch (e) {
     p.remove(); turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); console.error(e);
   }
-  ocupado = false; txt.focus();
+  ocupado = false;
+  if (!cortado) txt.focus();
+}
+
+async function leerStream(r, p) {
+  const lector = r.body.getReader(), dec = new TextDecoder();
+  let resto = '', nodo = null, rev = null, riesgo = 'ninguno', fin = false, texto = '';
+  for (;;) {
+    const { value, done } = await lector.read();
+    if (done) break;
+    resto += dec.decode(value, { stream: true });
+    const partes = resto.split('\n\n');
+    resto = partes.pop();
+    for (const parte of partes) {
+      const linea = parte.split('\n').find(l => l.startsWith('data: '));
+      if (!linea) continue;
+      let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
+      if (d.tipo === 'riesgo') riesgo = d.nivel;
+      else if (d.tipo === 'texto') {
+        if (!nodo) { p.remove(); nodo = turno('assistant', ''); rev = revelador(nodo); }
+        texto += d.t; rev.empujar(d.t);
+      } else if (d.tipo === 'fin') fin = d.fin === true;
+    }
+  }
+  p.remove();
+  if (rev) await rev.terminar();
+  if (!nodo) { turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); return; }
+  mensajes.push({ role: 'assistant', content: texto });
+  accesoMemoria();
+  if (riesgo === 'alto') recursos();
+  if (fin) cortar();
 }
 
 // ── memoria ───────────────────────────────────────────────────────────────
@@ -205,9 +298,10 @@ function pintarMemoria() {
       (nuevo) => { if (nuevo && nuevo !== v) { memoria[clave][i] = nuevo; guardar(); } },
       clave === 'sensibles' ? 'No lo saco yo. Lo traés vos cuando querés.' : null));
 
-  if (memoria.apodo) c.append(grupo('Cómo te digo', [
-    entrada(memoria.apodo, () => { memoria.apodo = ''; guardar(); },
-      n => { if (n && n !== memoria.apodo) { memoria.apodo = n; guardar(); } })]));
+  // Siempre visible, incluso vacío: si no, borrar el apodo lo dejaba sin forma de volver a ponerlo.
+  c.append(grupo('Cómo te digo', [
+    entrada(memoria.apodo ?? '', () => { memoria.apodo = ''; guardar(); },
+      n => { if (n !== memoria.apodo) { memoria.apodo = n; guardar(); } })]));
   if (memoria.objetivos.length)   c.append(grupo('Lo que venís trabajando', lista('objetivos')));
   if (memoria.estrategias.length) c.append(grupo('Lo que te ayuda', lista('estrategias')));
   if (memoria.sensibles.length)   c.append(grupo('Temas sensibles', lista('sensibles')));
@@ -220,10 +314,28 @@ $('#toggle-mem').onclick = () => {
   guardarMemoria(); pintarMemoria(); pintarEntrada();
 };
 
+// Borrar todo pide confirmación en el mismo botón: sin diálogos, sin sustos.
+const ROTULO_BORRAR = 'Borrar todo lo que recuerdo';
+let confirmando = null;
+$('#borrar-mem').onclick = () => {
+  const b = $('#borrar-mem');
+  if (!confirmando) {
+    b.textContent = 'Tocá de nuevo para borrar todo';
+    confirmando = setTimeout(() => { confirmando = null; b.textContent = ROTULO_BORRAR; }, 4000);
+    return;
+  }
+  clearTimeout(confirmando); confirmando = null;
+  memoria = { activa: memoria.activa, apodo: '', objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  guardarMemoria(); pintarMemoria(); pintarEntrada();
+  b.textContent = ROTULO_BORRAR;
+};
+
 // ── onboarding ────────────────────────────────────────────────────────────
 const obNombre = $('#ob-nombre'), obSeguir = $('#ob-seguir');
 obNombre.addEventListener('input', () => {
-  obSeguir.disabled = obNombre.value.trim().length < 2;
+  const v = obNombre.value.trim();
+  obSeguir.disabled = v.length < 2;
+  $('#ob-eco').textContent = v ? `Así te voy a llamar: ${capitalizar(v)}.` : 'Así te voy a llamar.';
 });
 obSeguir.onclick = () => {
   apodoOnboarding = obNombre.value.trim();

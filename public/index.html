@@ -57,7 +57,7 @@
       <h2>¿Cómo te gusta que te digan?</h2>
       <div>
         <input class="campo" id="ob-nombre" type="text" placeholder="Tu nombre o apodo" autocomplete="off">
-        <div class="terciario">Así te voy a llamar.</div>
+        <div class="terciario" id="ob-eco">Así te voy a llamar.</div>
       </div>
     </div>
     <div class="crece" style="flex-grow:1.4"></div>
@@ -114,8 +114,23 @@
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg>
         </button>
       </div>
-      <div class="disc">Amber es una inteligencia artificial. No reemplaza atención profesional.</div>
+      <button class="disc" id="ver-ayuda">Amber es una inteligencia artificial. No reemplaza atención profesional.
+        Si necesitás ayuda ahora, <u>tocá acá</u>.</button>
     </div>
+  </section>
+
+  <!-- AYUDA -->
+  <section class="p" id="ayuda">
+    <div class="barra">
+      <button class="ico" id="salir-ayuda" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2>Si lo necesitás ahora.</h2>
+      <div class="sub">Hay gente preparada para atenderte. Tocá el número para llamar.</div>
+    </div>
+    <div class="cuerpo" id="ayuda-cuerpo"></div>
   </section>
 
   <!-- CALMARME -->
@@ -146,8 +161,9 @@
       <div class="sub">Esto es lo que tengo presente cuando hablamos.</div>
     </div>
     <div class="cuerpo" id="mem-cuerpo"></div>
-    <div style="padding-top:16px;flex-shrink:0">
+    <div style="padding-top:16px;flex-shrink:0;display:flex;flex-direction:column;gap:4px">
       <button class="btn btn-2" id="toggle-mem">Desactivar la memoria</button>
+      <button class="link" id="borrar-mem">Borrar todo lo que recuerdo</button>
     </div>
   </section>
 
