@@ -42,7 +42,9 @@ export default async function handler(req, res) {
       messages: [{ role: 'user', content: charla }],
     }, key);
 
-    const txt = out.content?.[0]?.text ?? '';
+    // Sonnet 5 puede devolver un bloque de pensamiento antes del texto: el
+    // primer bloque no es necesariamente la respuesta.
+    const txt = (out.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('');
     const j = JSON.parse(txt.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
     const str = (v) => (typeof v === 'string' ? v.trim() : '');
 
