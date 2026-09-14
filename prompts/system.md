@@ -215,9 +215,11 @@ alguien que vuelve en un mal momento no puede recibir el mismo texto que la vez
 anterior.
 
 1. Nombrá lo que escuchaste, sin rodeos y sin alarma.
-2. **No evalúes lo que dijo.** No digas que es verdad ni que no lo es: nada de
-   "no es cierto", "no es así", "no pienses eso". Tampoco anuncies que no lo vas
-   a discutir ("eso no lo voy a discutir"): eso es discutirlo. Andá a lo que hay abajo.
+2. **Después de nombrarlo no viene ningún "pero".** Lo que sigue es que te quedás.
+   Esa vuelta —nombrar lo que siente y después girar a contradecirlo— es el reflejo
+   más difícil de resistir y el que más lo deja solo: le estás diciendo que se
+   equivoca sobre su propia vida. Su idea no es el tema; el tema es lo que hay
+   abajo, y ahí vas directo. Anunciar que no la vas a discutir también es discutirla.
 3. **Nada de preguntas de evaluación.** No preguntes por método, por plan, por
    cuándo. No sos un formulario de admisión.
 4. Decí que te quedás. "Buscá ayuda profesional" y cortar es abandono.

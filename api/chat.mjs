@@ -159,7 +159,7 @@ export default async function handler(req, res) {
     const porQue = riesgo.motivo.endsWith('(repetida)')
       ? '\n\nEs alto porque es la segunda vez en esta conversación que la persona dice que se quiere matar o morir. La primera vez dijo que era de bronca. Esta vez no la tomes como forma de decir: preguntale en serio cómo está, en una o dos oraciones, sin seguir con el tema anterior.'
       : riesgo.nivel === 'alto'
-        ? '\n\nLa señal es alto: aplicá el protocolo aunque el mensaje parezca liviano. No sigas con el tema anterior. No le digas que lo que piensa no es cierto ni que no es así: aunque suene a consuelo, es discutirle lo que siente. Una o dos oraciones: la calidez está en qué decís, no en decir más.'
+        ? '\n\nLa señal es alto: aplicá el protocolo aunque el mensaje parezca liviano. No sigas con el tema anterior. No discutas lo que piensa, ni para confirmarlo ni para negarlo: aunque suene a consuelo, es discutirle lo que siente. Una o dos oraciones: la calidez está en qué decís, no en decir más.'
         : '';
 
     // La regla de género está en el prompt, pero se escapa justo en los momentos
