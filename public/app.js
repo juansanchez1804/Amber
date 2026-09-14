@@ -65,7 +65,10 @@ function ir(id) {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ir]');
-  if (b) ir(b.dataset.ir);
+  if (!b) return;
+  // Cerrado no es lo mismo que roto: si no se puede pasar, decí por qué.
+  if (b.getAttribute('aria-disabled') === 'true') { senalarDia(); return; }
+  ir(b.dataset.ir);
 });
 $('#salir-calma').onclick = () => ir(mensajes.length ? 'conv' : 'entrada');
 $('#salir-mem').onclick   = () => ir(mensajes.length ? 'conv' : 'entrada');
@@ -109,12 +112,34 @@ const hoyISO = () => new Date().toLocaleDateString('sv');   // sv da AAAA-MM-DD
 
 const diaCaja = $('#dia-caja'), diaInput = $('#dia'), diaValor = $('#dia-v');
 
+const diaDeHoy = () => (memoria?.dia?.fecha === hoyISO() ? memoria.dia : null);
+
 function pintarDia() {
-  const d = memoria?.dia;
-  const deHoy = d && d.fecha === hoyISO();
-  diaCaja.classList.toggle('sin-tocar', !deHoy);
-  diaInput.value = deHoy ? d.valor : 3;
-  diaValor.textContent = deHoy ? DIA_PALABRA[d.valor] : 'Movela';
+  const d = diaDeHoy();
+  diaCaja.classList.toggle('sin-tocar', !d);
+  diaInput.value = d ? d.valor : 3;
+  diaValor.textContent = d ? DIA_PALABRA[d.valor] : 'Movela';
+  puertaChat();
+}
+
+// Hablar espera a que la barra se haya movido. Respirar y los teléfonos NO
+// esperan a nada: quien está mal a las tres de la mañana no puede toparse con
+// un formulario antes de pedir ayuda.
+function puertaChat() {
+  const abierta = !!diaDeHoy();
+  const b = $('#ir-hablar');
+  b.setAttribute('aria-disabled', String(!abierta));
+  b.querySelector('.acceso-s').textContent = abierta
+    ? 'Contame lo que quieras'
+    : 'Antes, movés la barra de abajo';
+}
+
+function senalarDia() {
+  diaCaja.classList.remove('pide');
+  void diaCaja.offsetWidth;              // reinicia la animación si ya venía corriendo
+  diaCaja.classList.add('pide');
+  anunciar('Para empezar a hablar, primero marcá cómo estuvo tu día en la barra.');
+  diaInput.focus({ preventScroll: true });
 }
 
 diaInput.addEventListener('input', () => {
@@ -134,6 +159,7 @@ diaInput.addEventListener('change', () => {
   if (!memoria) return;
   memoria.dia = { valor: Number(diaInput.value), fecha: hoyISO() };
   guardarMemoria();
+  puertaChat();
   anunciar(`Tu día quedó anotado como ${DIA_PALABRA[diaInput.value].toLowerCase()}.`);
 });
 
@@ -201,13 +227,35 @@ function puntos() {
 // de entrada para el que no sabe cómo arrancar. Se van con el primer mensaje.
 const APERTURA = 'Estoy acá. Contame lo que quieras, no hace falta que tenga sentido.';
 const APERTURAS = ['No sé por dónde empezar', 'Tuve un día horrible', 'No puedo dormir'];
+
+// Si movió la barra, Amber no abre con una frase de bienvenida: abre por donde
+// el otro ya dijo que viene. La salida de "prefiero no hablar de eso" está
+// siempre a mano, porque obligar a alguien a explicar un día malo es pedirle
+// justo lo que no puede.
+const APERTURA_DIA = {
+  1: { texto: 'Marcaste que hoy estuvo muy difícil. Contame qué pasó.',
+       opciones: ['No sé por dónde empezar', 'Fue todo el día', 'Prefiero no entrar en eso'] },
+  2: { texto: 'Pusiste que el día estuvo difícil. ¿Qué fue lo que más pesó?',
+       opciones: ['No sé por dónde empezar', 'Una cosa puntual', 'Prefiero no entrar en eso'] },
+  3: { texto: 'Ni bien ni mal. Esos días son los más difíciles de nombrar. Contame cómo fue el tuyo.',
+       opciones: ['Fue un día raro', 'No pasó nada en especial', 'No sé por dónde empezar'] },
+  4: { texto: 'Marcaste que el día estuvo bien. Contame qué fue lo que estuvo bien.',
+       opciones: ['Pasó algo bueno', 'Fue tranquilo nomás', 'No sé por dónde empezar'] },
+  5: { texto: 'Pusiste que hoy estuvo muy bien. Contame qué pasó.',
+       opciones: ['Pasó algo bueno', 'Fue un buen día nomás', 'No sé por dónde empezar'] },
+};
+const aperturaDeHoy = () => {
+  const d = diaDeHoy();
+  return d ? APERTURA_DIA[d.valor] : { texto: APERTURA, opciones: APERTURAS };
+};
 let aperturasEl = null, conversacionAbierta = false;
 function abrirConversacion() {
   if (conversacionAbierta || mensajes.length) return;
   conversacionAbierta = true;
-  turno('assistant', APERTURA);
+  const { texto, opciones } = aperturaDeHoy();
+  turno('assistant', texto);
   const c = el('div', 'aperturas');
-  for (const t of APERTURAS) {
+  for (const t of opciones) {
     const b = el('button', 'apertura', t);
     b.onclick = () => mandar(t);
     c.append(b);

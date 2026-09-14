@@ -306,3 +306,19 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @media (prefers-reduced-motion:reduce){
   .caret,#dia::-webkit-slider-thumb{transition:none}
 }
+
+/* La puerta al chat queda cerrada hasta que la barra se movió. Se usa
+   aria-disabled y no disabled: así el botón sigue siendo enfocable y, al
+   tocarlo, puede explicar por qué no se abre en vez de no hacer nada. */
+/* Cerrado NO se dibuja bajando la opacidad: eso apagaría justo la línea que hay
+   que leer para saber qué hacer (el subtítulo caía a 1.92:1). Se dibuja sacando
+   el relleno: el botón pasa a contorno con texto gris, 5.31:1, y se enciende en
+   violeta recién cuando la barra se movió. El encendido es la confirmación. */
+.acceso-1[aria-disabled="true"]{background:var(--fondo);border:1px solid var(--borde);
+  transition:background .25s ease}
+.acceso-1[aria-disabled="true"] .acceso-t{color:var(--gris)}
+.acceso-1[aria-disabled="true"] .acceso-s{color:var(--gris);opacity:1}
+.dia.pide{animation:pide 1.1s ease}
+@keyframes pide{0%,100%{box-shadow:none}
+  22%,62%{box-shadow:0 0 0 3px color-mix(in srgb,var(--ambar) 32%,transparent)}}
+@media (prefers-reduced-motion:reduce){ .dia.pide{animation:none} }

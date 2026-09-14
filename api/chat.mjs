@@ -18,8 +18,8 @@ function bloqueMemoria(m) {
   if (m.objetivos?.length)   l.push(`Lo que viene trabajando: ${m.objetivos.join('; ')}`);
   if (m.estrategias?.length) l.push(`Lo que le ayudó antes: ${m.estrategias.join('; ')}`);
   if (m.sensibles?.length)   l.push(`Temas sensibles, que vos no traés: ${m.sensibles.join('; ')}`);
-  // Un número puesto en una barra no es algo que se comente: es desde dónde arranca.
-  if (m.dia?.valor) l.push(`Hoy, antes de escribirte, puso su día en ${m.dia.valor} de 5 (1 es muy difícil, 5 muy bien). No se lo menciones, no lo nombres como número y no lo felicites ni lo compadezcas por eso: usalo solo para saber desde dónde arranca.`);
+  // Ya abriste preguntando por esto, así que lo que te escribe es la respuesta.
+  if (m.dia?.valor) l.push(`Hoy marcó su día en ${m.dia.valor} de 5 (1 muy difícil, 5 muy bien) y vos ya abriste preguntándole por eso. No repitas el número ni lo trates como un puntaje: es de dónde viene, no un dato que se comenta.`);
   if (m.resumenes?.length)   l.push(`\nDe las últimas conversaciones:\n${m.resumenes.map(r => `- ${r}`).join('\n')}`);
   return l.length ? `\n\n## Lo que sabés de quien te escribe\n\n${l.join('\n')}` : '';
 }
@@ -107,9 +107,10 @@ export default async function handler(req, res) {
       return res.end();
     }
 
-    const primera = limpios.filter(m => m.role === 'user').length === 1
-      ? '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte.'
-      : '';
+    const primera = limpios.filter(m => m.role === 'user').length !== 1 ? ''
+      : memoria?.dia?.valor
+        ? '\n\nEs el primer mensaje. Vos ya abriste preguntándole por el día que acaba de marcar, así que esto que te escribe es la respuesta a esa pregunta: entrá directo en lo que te cuenta. No saludes, no te presentes y no vuelvas a preguntarle lo mismo. Si te dice que prefiere no hablar de eso, no insistas: soltá el tema y quedate.'
+        : '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte.';
 
     for await (const t of anthropicStream({
       model: MODELO_CHARLA,
