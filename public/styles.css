@@ -76,7 +76,7 @@ body{font-family:var(--sans);display:flex;align-items:center;justify-content:cen
 
 .barra{display:flex;justify-content:space-between;align-items:center;height:44px;flex-shrink:0}
 /* La piedra hace de "a" y se apoya sobre la línea de base de "mber". */
-.marca{ display:flex; align-items:flex-end; gap:5px;
+.marca{ display:flex; align-items:flex-end; gap:9px;
   font-family:var(--serif); font-size:15px; letter-spacing:.14em;
   color:var(--ambar); }
 .marca-simbolo{ height:19px; margin-bottom:1.8px; display:block; }
@@ -347,7 +347,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
    queda centrado en la pantalla con wrap + align-content: sin eso, flex-end en
    un contenedor de pantalla completa manda las dos cosas al borde de abajo. */
 #splash{position:absolute;inset:0;z-index:5;background:var(--ambar);
-  display:flex;flex-wrap:wrap;align-content:center;align-items:flex-end;justify-content:center;gap:12px;
+  display:flex;flex-wrap:wrap;align-content:center;align-items:flex-end;justify-content:center;gap:20px;
   animation:splashFuera .45s ease-in .95s forwards}
 /* La misma proporción que en el header (piedra de 19px junto a letra de 15px),
    llevada a 38px: con 26px la piedra quedaba de la mitad y su trazo más fino que
