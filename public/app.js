@@ -1,5 +1,15 @@
+const LLAVE_PREFS = 'amber.prefs.v1';
+let prefs = (() => { try { return JSON.parse(localStorage.getItem(LLAVE_PREFS)) ?? {}; } catch (e) { return {}; } })();
+const guardarPrefs = () => { try { localStorage.setItem(LLAVE_PREFS, JSON.stringify(prefs)); } catch (e) {} };
+
 const TEMA = new URLSearchParams(location.search).get('tema');
-if (TEMA === 'ambar') document.documentElement.dataset.tema = 'ambar';
+if (TEMA === 'ambar' || (TEMA !== 'claro' && prefs.oscuro)) document.documentElement.dataset.tema = 'ambar';
+
+// Vibración: existe en Android y en casi ningún iPhone. Si el navegador no la
+// tiene, el interruptor no se ofrece en vez de ofrecerse y no hacer nada.
+const HAY_VIBRACION = typeof navigator.vibrate === 'function';
+const HAY_AVISOS = 'Notification' in window;
+const vibrar = (ms) => { if (prefs.vibrar && HAY_VIBRACION) { try { navigator.vibrate(ms); } catch (e) {} } };
 
 const $ = s => document.querySelector(s);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
@@ -78,6 +88,10 @@ function ir(id) {
   if (id === 'conv') { ajustarColchon(); abrirConversacion(); $('#txt').focus(); seguir(false); }
   if (id === 'calma') reiniciarCalma();
   if (id === 'mem') pintarMemoria();
+  if (id === 'historia') pintarHistoria();
+  if (id === 'pers') pintarPersonalizacion();
+  if (id === 'prefs') pintarPreferencias();
+  if (id === 'about') pintarAbout();
   if (id === 'ayuda') pintarAyuda();
   if (id === 'ob2') $('#ob-nombre').focus();
 }
@@ -89,7 +103,8 @@ document.addEventListener('click', e => {
   ir(b.dataset.ir);
 });
 $('#salir-calma').onclick = () => ir(mensajes.length ? 'conv' : 'entrada');
-$('#salir-mem').onclick   = () => ir(mensajes.length ? 'conv' : 'entrada');
+$('#salir-mem').onclick   = () => ir('menu');
+$('#salir-menu').onclick  = () => ir(mensajes.length && !cortado ? 'conv' : 'entrada');
 $('#salir-ayuda').onclick = () => ir(pantallaPrevia === 'ayuda' ? 'conv' : pantallaPrevia);
 $('#ver-ayuda').onclick   = () => ir('ayuda');
 
@@ -202,8 +217,15 @@ diaInput.addEventListener('change', () => {
   guardarMemoria();
   diaEditando = false;
   pintarDia();
+  vibrar(12);
   const palabra = DIA_PALABRA[diaInput.value].toLowerCase();
-  if (!primeraDeHoy) { anunciar(`Tu día quedó anotado como ${palabra}.`); return; }
+  if (!primeraDeHoy) {
+    // Cambiaste la respuesta: la pregunta con la que Amber iba a abrir ya no
+    // corresponde. Se rehace, salvo que ya hayan hablado: el pasado no se reescribe.
+    if (!mensajes.length) { conversacionAbierta = false; aperturasEl = null; accesoMostrado = false; hilo.innerHTML = ''; }
+    anunciar(`Tu día quedó anotado como ${palabra}.`);
+    return;
+  }
   // Un respiro antes de entrar: alcanza para ver qué quedó marcado, y para
   // arrepentirse y moverla de nuevo sin que la pantalla se te vaya de abajo.
   anunciar(`Tu día quedó anotado como ${palabra}. Abro la conversación.`);
@@ -299,11 +321,12 @@ const aperturaDeHoy = () => {
   const d = diaDeHoy();
   return d ? APERTURA_DIA[d.valor] : { texto: APERTURA, opciones: APERTURAS };
 };
-let aperturasEl = null, conversacionAbierta = false;
+let aperturasEl = null, conversacionAbierta = false, aperturaMostrada = '';
 function abrirConversacion() {
   if (conversacionAbierta || mensajes.length) return;
   conversacionAbierta = true;
   const { texto, opciones } = aperturaDeHoy();
+  aperturaMostrada = texto;
   turno('assistant', texto);
   const c = el('div', 'aperturas');
   for (const t of opciones) {
@@ -495,6 +518,86 @@ function verCerrar() {
   cerrarBtn.hidden = mensajes.filter(m => m.role === 'user').length < MINIMO_PARA_CERRAR;
 }
 
+// ── historia ──────────────────────────────────────────────────────────────
+// Las conversaciones quedan en este teléfono y en ningún otro lado. Veinte:
+// más atrás nadie vuelve, y el navegador tiene un techo de espacio.
+const LLAVE_HIST = 'amber.historia.v1';
+const cargarHistoria = () => { try { return JSON.parse(localStorage.getItem(LLAVE_HIST)) ?? []; } catch (e) { return []; } };
+const guardarHistoria = (h) => { try { localStorage.setItem(LLAVE_HIST, JSON.stringify(h.slice(-20))); } catch (e) {} };
+
+function archivarCharla(resumen) {
+  if (!mensajes.length) return;
+  const h = cargarHistoria();
+  h.push({
+    f: new Date().toISOString(),
+    dia: diaDeHoy()?.valor ?? null,
+    r: resumen ?? '',
+    // La apertura la muestra la app, no el modelo: si no se guarda, la charla
+    // vieja empieza con una respuesta a una pregunta que no está.
+    m: [{ r: 'assistant', c: aperturaMostrada }, ...mensajes.map(x => ({ r: x.role, c: x.content }))],
+  });
+  guardarHistoria(h);
+}
+
+function pintarHistoria() {
+  const c = $('#historia-cuerpo'); c.innerHTML = '';
+  const h = cargarHistoria().reverse();
+  if (!h.length) {
+    c.append(el('div', 'vacio', 'Todavía nada. Cada conversación que cierres queda guardada acá.'));
+    return;
+  }
+  const lista = el('div', 'grupo');
+  lista.style.gap = '10px';
+  h.forEach((ch, i) => {
+    const b = el('button', 'charla-f');
+    const cuando = el('div', 'charla-cuando');
+    if (ch.dia) { const p = el('i', 'punto-dia'); p.style.opacity = 0.3 + ch.dia * 0.14; cuando.append(p); }
+    cuando.append(el('span', 'charla-c', fechaLarga(ch.f)));
+    b.append(cuando, el('div', 'charla-r', ch.r || 'Sin resumen.'));
+    b.onclick = () => abrirCharla(h.length - 1 - i);
+    lista.append(b);
+  });
+  c.append(lista);
+
+  const borrar = el('button', 'link', 'Borrar la historia');
+  borrar.style.marginTop = '8px';
+  let confirmandoHist = null;
+  borrar.onclick = () => {
+    if (!confirmandoHist) {
+      borrar.textContent = 'Tocá de nuevo para borrar la historia';
+      confirmandoHist = setTimeout(() => { confirmandoHist = null; borrar.textContent = 'Borrar la historia'; }, 4000);
+      return;
+    }
+    clearTimeout(confirmandoHist);
+    try { localStorage.removeItem(LLAVE_HIST); } catch (e) {}
+    pintarHistoria();
+  };
+  c.append(borrar);
+}
+
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fechaLarga(iso) {
+  const d = new Date(iso);
+  return `${capitalizar(DIAS[d.getDay()])} ${d.getDate()} de ${MESES[d.getMonth()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function abrirCharla(i) {
+  const ch = cargarHistoria()[i];
+  if (!ch) return;
+  $('#charla-fecha').textContent = fechaLarga(ch.f);
+  $('#charla-dia').textContent = ch.dia ? `Ese día lo marcaste como ${DIA_PALABRA[ch.dia].toLowerCase()}.` : '';
+  $('#charla-dia').hidden = !ch.dia;
+  const c = $('#charla-cuerpo'); c.innerHTML = '';
+  const hilo2 = el('div');
+  hilo2.style.cssText = 'display:flex;flex-direction:column;gap:24px;padding-top:8px';
+  for (const m of ch.m) {
+    if (!m.c) continue;
+    hilo2.append(el('div', m.r === 'user' ? 'yo' : 'am', m.c));
+  }
+  c.append(hilo2);
+  ir('charla');
+}
+
 function guardarResumen(t) {
   if (!memoria || !t) return;
   // Ocho alcanzan: más atrás deja de ser memoria y pasa a ser archivo.
@@ -518,7 +621,8 @@ cerrarBtn.onclick = async () => {
     const d = await r.json();
     if (d.despedida) despedida = d.despedida;
     guardarResumen(d.resumen);
-  } catch (e) { console.error(e); }
+    archivarCharla(d.resumen);
+  } catch (e) { console.error(e); archivarCharla(''); }
   p.remove();
   turno('assistant', despedida);
   anunciar(despedida);
@@ -643,20 +747,6 @@ function pintarMemoria() {
   c.append(grupo('Cómo te digo', [
     entrada(memoria.apodo ?? '', () => { memoria.apodo = ''; guardar(); },
       n => { if (n !== memoria.apodo) { memoria.apodo = n; guardar(); } })]));
-  // Volver a tocar la elegida la apaga: se puede volver a la voz de siempre.
-  const opciones = el('div', 'opciones');
-  opciones.style.padding = '12px';
-  opciones.setAttribute('role', 'radiogroup');
-  for (const [k, t, d] of REGISTROS) {
-    const b = el('button', 'opcion');
-    b.setAttribute('role', 'radio');
-    b.setAttribute('aria-checked', String(memoria.registro === k));
-    b.append(el('span', 'opcion-t', t), el('span', 'opcion-s', d));
-    b.onclick = () => { memoria.registro = memoria.registro === k ? null : k; guardar(); };
-    opciones.append(b);
-  }
-  c.append(grupo('Cómo te hablo', [opciones]));
-
   // Los grupos vacíos se muestran igual, con una línea que dice qué va adentro.
   // Esconderlos dejaba la pantalla casi en blanco los primeros días y no se
   // entendía qué es lo que Amber llega a tener presente cuando hablan.
@@ -690,7 +780,7 @@ $('#cerrar-sesion').onclick = () => {
     return;
   }
   clearTimeout(confirmandoSalir); confirmandoSalir = null;
-  try { localStorage.removeItem(LLAVE); localStorage.removeItem('amber.memoria.v1'); } catch (e) {}
+  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS]) localStorage.removeItem(k); } catch (e) {}
   location.href = location.pathname;
 };
 
@@ -709,6 +799,111 @@ $('#borrar-mem').onclick = () => {
   guardarMemoria(); pintarMemoria(); pintarEntrada();
   b.textContent = ROTULO_BORRAR;
 };
+
+// ── personalización ───────────────────────────────────────────────────────
+function pintarPersonalizacion() {
+  const c = $('#pers-cuerpo'); c.innerHTML = '';
+  const o = el('div', 'opciones');
+  o.style.paddingTop = '8px';
+  o.setAttribute('role', 'radiogroup');
+  for (const [k, t, d] of REGISTROS) {
+    const b = el('button', 'opcion');
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(memoria?.registro === k));
+    b.append(el('span', 'opcion-t', t), el('span', 'opcion-s', d));
+    // Volver a tocar la elegida la apaga: se puede volver a la voz de siempre.
+    b.onclick = () => {
+      if (!memoria) return;
+      memoria.registro = memoria.registro === k ? null : k;
+      guardarMemoria(); vibrar(10); pintarPersonalizacion();
+    };
+    o.append(b);
+  }
+  c.append(o);
+  const nota = el('div', 'vacio', memoria?.registro
+    ? 'Tocá la elegida de nuevo para volver a mi voz de siempre.'
+    : 'Sin elegir ninguna, hablo como hablo siempre.');
+  nota.style.paddingTop = '14px';
+  c.append(nota);
+}
+
+// ── preferencias ──────────────────────────────────────────────────────────
+function filaPref(titulo, detalle, encendida, alTocar, disponible = true) {
+  const f = el('div', 'pref');
+  const t = el('div', 'pref-txt');
+  t.append(el('div', 'pref-t', titulo), el('div', 'pref-s', detalle));
+  const ll = el('button', 'llave');
+  ll.setAttribute('role', 'switch');
+  ll.setAttribute('aria-checked', String(!!encendida));
+  ll.setAttribute('aria-label', titulo);
+  ll.disabled = !disponible;
+  ll.onclick = alTocar;
+  f.append(t, ll);
+  return f;
+}
+
+function pintarPreferencias() {
+  const c = $('#prefs-cuerpo'); c.innerHTML = '';
+  const caja = el('div');
+  caja.style.paddingTop = '8px';
+
+  caja.append(filaPref('Modo oscuro', 'El ámbar sobre negro con el que nació Amber.', !!prefs.oscuro, () => {
+    prefs.oscuro = !prefs.oscuro; guardarPrefs(); vibrar(10);
+    if (prefs.oscuro) document.documentElement.dataset.tema = 'ambar';
+    else delete document.documentElement.dataset.tema;
+    pintarPreferencias();
+  }));
+
+  caja.append(filaPref('Vibración',
+    HAY_VIBRACION ? 'Un toque corto cuando algo queda registrado.'
+                  : 'Este navegador no la tiene. En Android sí funciona.',
+    !!prefs.vibrar && HAY_VIBRACION,
+    () => { prefs.vibrar = !prefs.vibrar; guardarPrefs(); vibrar(18); pintarPreferencias(); },
+    HAY_VIBRACION));
+
+  caja.append(filaPref('Avisos',
+    !HAY_AVISOS ? 'Este navegador no los permite.'
+    : Notification.permission === 'denied' ? 'Los bloqueaste en el navegador. Se destraba desde ahí.'
+    : 'Permiso para avisarte. El recordatorio de todas las noches llega con la app.',
+    !!prefs.avisos && HAY_AVISOS && Notification.permission === 'granted',
+    async () => {
+      if (prefs.avisos) { prefs.avisos = false; guardarPrefs(); pintarPreferencias(); return; }
+      const r = await Notification.requestPermission();
+      prefs.avisos = r === 'granted';
+      guardarPrefs(); vibrar(10); pintarPreferencias();
+      if (prefs.avisos) new Notification('Amber', { body: 'Listo. Te voy a avisar por acá.' });
+    },
+    HAY_AVISOS && Notification.permission !== 'denied'));
+
+  c.append(caja);
+}
+
+// ── sobre amber ───────────────────────────────────────────────────────────
+const ABOUT = [
+  ['Qué es', 'Amber es una inteligencia artificial para hablar de lo que te pasa, a la hora que sea. No hay turno, no hay que explicar de nuevo quién sos.'],
+  ['Qué no es', '<strong>No es terapia y no reemplaza a un profesional.</strong> No diagnostica, no receta y no es un servicio de emergencia. Si estás en riesgo, los teléfonos están en el menú, en "Si necesitás ayuda ahora".'],
+  ['Quién la hace', 'Dos estudiantes argentinos. Está en desarrollo: lo que ves es un prototipo.'],
+  ['Qué pasa con lo que contás', 'Lo que Amber recuerda y las conversaciones que cerrás viven en este teléfono, en el navegador. No hay cuenta ni servidor donde queden guardadas. Lo que escribís en una conversación viaja a la API de Anthropic para que Amber pueda contestarte, y no se usa para entrenar modelos.'],
+  ['Cómo borrarlo', 'Desde "Lo que recuerdo" borrás lo que Amber sabe de vos. Desde "Historia" borrás las conversaciones. "Cerrar sesión" borra todo junto y no se puede deshacer.'],
+  ['Edad', 'Amber es para mayores de 18.'],
+];
+
+function pintarAbout() {
+  const c = $('#about-cuerpo'); c.innerHTML = '';
+  const t = el('div', 'texto-largo');
+  t.style.paddingTop = '8px';
+  for (const [titulo, cuerpo] of ABOUT) {
+    const b = el('div');
+    b.append(el('h3', null, titulo));
+    const p = el('p'); p.innerHTML = cuerpo; b.append(p);
+    t.append(b);
+  }
+  const pie = el('p');
+  pie.style.cssText = 'font-size:13px;color:var(--gris2);padding-top:4px';
+  pie.textContent = 'Datos de salud son datos sensibles según la Ley 25.326. Los términos definitivos están en preparación.';
+  t.append(pie);
+  c.append(t);
+}
 
 // ── onboarding ────────────────────────────────────────────────────────────
 const obNombre = $('#ob-nombre'), obSeguir = $('#ob-seguir');

@@ -104,10 +104,10 @@
   <!-- ENTRADA -->
   <section class="p" id="entrada">
     <div class="barra">
-      <div class="marca">amber</div>
-      <button class="ico" data-ir="mem" aria-label="Lo que recuerdo">
+      <button class="ico" data-ir="menu" aria-label="Menú">
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
       </button>
+      <div class="marca">amber</div>
     </div>
     <div class="crece"></div>
     <div class="saludo-bloque">
@@ -220,10 +220,112 @@
       <div class="sub">Esto es lo que tengo presente cuando hablamos.</div>
     </div>
     <div class="cuerpo" id="mem-cuerpo"></div>
-    <div style="padding-top:16px;flex-shrink:0;display:flex;flex-direction:column;gap:4px">
-      <button class="btn btn-2" id="cerrar-sesion">Cerrar sesión</button>
+    <div style="padding-top:16px;flex-shrink:0">
       <button class="link" id="borrar-mem">Borrar memoria</button>
     </div>
+  </section>
+
+  <!-- MENÚ -->
+  <section class="p" id="menu">
+    <div class="barra">
+      <button class="ico" id="salir-menu" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="marca">amber</div>
+    </div>
+    <div class="cuerpo" style="padding-top:24px">
+      <nav class="lista" aria-label="Menú">
+        <button class="fila-menu" data-ir="historia">
+          <span class="fila-t">Historia</span><span class="fila-s">Las conversaciones que cerraste</span>
+        </button>
+        <button class="fila-menu" data-ir="mem">
+          <span class="fila-t">Lo que recuerdo</span><span class="fila-s">Lo que tengo presente cuando hablamos</span>
+        </button>
+        <button class="fila-menu" data-ir="pers">
+          <span class="fila-t">Personalización</span><span class="fila-s">Cómo te hablo</span>
+        </button>
+        <button class="fila-menu" data-ir="prefs">
+          <span class="fila-t">Preferencias</span><span class="fila-s">Tema, vibración, avisos</span>
+        </button>
+        <button class="fila-menu" data-ir="ayuda">
+          <span class="fila-t">Si necesitás ayuda ahora</span><span class="fila-s">Teléfonos que atienden hoy</span>
+        </button>
+        <button class="fila-menu" data-ir="about">
+          <span class="fila-t">Sobre Amber</span><span class="fila-s">Qué es, qué no es, y qué pasa con lo que contás</span>
+        </button>
+      </nav>
+    </div>
+    <div style="padding-top:16px;flex-shrink:0">
+      <button class="btn btn-2" id="cerrar-sesion">Cerrar sesión</button>
+    </div>
+  </section>
+
+  <!-- HISTORIA -->
+  <section class="p" id="historia">
+    <div class="barra">
+      <button class="ico" data-ir="menu" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2>Historia</h2>
+      <div class="sub">Las conversaciones que cerraste. Están solo en este teléfono.</div>
+    </div>
+    <div class="cuerpo" id="historia-cuerpo"></div>
+  </section>
+
+  <!-- UNA CONVERSACIÓN VIEJA -->
+  <section class="p" id="charla">
+    <div class="barra">
+      <button class="ico" data-ir="historia" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;padding-top:16px;flex-shrink:0">
+      <h2 id="charla-fecha"></h2>
+      <div class="sub" id="charla-dia"></div>
+    </div>
+    <div class="cuerpo" id="charla-cuerpo"></div>
+  </section>
+
+  <!-- PERSONALIZACIÓN -->
+  <section class="p" id="pers">
+    <div class="barra">
+      <button class="ico" data-ir="menu" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2>Cómo te hablo</h2>
+      <div class="sub">Ninguna de las dos cambia lo que hago si estás en riesgo.</div>
+    </div>
+    <div class="cuerpo" id="pers-cuerpo"></div>
+  </section>
+
+  <!-- PREFERENCIAS -->
+  <section class="p" id="prefs">
+    <div class="barra">
+      <button class="ico" data-ir="menu" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2>Preferencias</h2>
+    </div>
+    <div class="cuerpo" id="prefs-cuerpo"></div>
+  </section>
+
+  <!-- SOBRE AMBER -->
+  <section class="p" id="about">
+    <div class="barra">
+      <button class="ico" data-ir="menu" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2>Sobre Amber</h2>
+    </div>
+    <div class="cuerpo" id="about-cuerpo"></div>
   </section>
 
 </div></div>

@@ -364,3 +364,44 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 /* Un grupo vacío dice qué va a ir adentro, en vez de no existir. */
 .vacio{font-size:13px;line-height:1.5;color:var(--gris2)}
+
+/* menú y sus pantallas */
+.lista{display:flex;flex-direction:column}
+.fila-menu{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;
+  background:none;border:0;border-bottom:1px solid color-mix(in srgb,var(--gris) 16%,transparent);
+  padding:18px 2px;cursor:pointer;width:100%;font-family:var(--sans)}
+.fila-menu:last-child{border-bottom:0}
+.fila-t{font-family:var(--serif);font-size:19px;line-height:1.15;color:var(--texto)}
+.fila-s{font-size:13px;line-height:1.35;color:var(--gris)}
+
+/* historia */
+.charla-f{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;
+  background:var(--tarjeta);border:0;border-radius:14px;padding:16px;cursor:pointer;
+  width:100%;font-family:var(--sans);box-shadow:var(--sombra)}
+.charla-c{font-size:12px;letter-spacing:.04em;color:var(--gris)}
+.charla-r{font-size:15px;line-height:1.45;color:var(--texto)}
+.charla-cuando{display:flex;align-items:center;gap:8px}
+.punto-dia{width:8px;height:8px;border-radius:50%;background:var(--ambar);flex-shrink:0}
+
+/* preferencias: una fila, un interruptor */
+.pref{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 0;
+  border-bottom:1px solid color-mix(in srgb,var(--gris) 16%,transparent)}
+.pref:last-child{border-bottom:0}
+.pref-txt{display:flex;flex-direction:column;gap:4px;flex-grow:1}
+.pref-t{font-size:16px;line-height:1.3;color:var(--texto)}
+.pref-s{font-size:13px;line-height:1.4;color:var(--gris)}
+.llave{position:relative;width:48px;height:28px;border-radius:14px;flex-shrink:0;cursor:pointer;
+  border:1px solid var(--borde);background:var(--tarjeta);transition:background .2s ease,border-color .2s ease}
+.llave::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:var(--gris2);transition:transform .2s ease,background .2s ease}
+.llave[aria-checked="true"]{background:var(--ambar);border-color:var(--ambar)}
+.llave[aria-checked="true"]::after{transform:translateX(20px);background:var(--sobre-acento)}
+.llave:disabled{opacity:.4;cursor:default}
+
+/* sobre amber */
+.texto-largo{display:flex;flex-direction:column;gap:18px}
+.texto-largo h3{font-family:var(--serif);font-size:19px;font-weight:400;line-height:1.2;margin:0 0 6px;color:var(--texto)}
+.texto-largo p{margin:0;font-size:15px;line-height:1.6;color:var(--gris)}
+.texto-largo strong{color:var(--texto);font-weight:500}
+
+@media (prefers-reduced-motion:reduce){ .llave,.llave::after{transition:none} }
