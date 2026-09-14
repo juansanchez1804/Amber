@@ -93,6 +93,20 @@ function turno(quien, texto) {
   const n = el('div', quien === 'user' ? 'yo' : 'am', texto);
   hilo.appendChild(n); scroll(); return n;
 }
+// El acceso a la memoria aparece donde nace la pregunta: justo después de que
+// Amber demuestra por primera vez que se acuerda. Una vez por conversación.
+let accesoMostrado = false;
+function accesoMemoria() {
+  if (accesoMostrado || !memoria || !memoria.activa) return;
+  const hay = (memoria.objetivos?.length || memoria.estrategias?.length ||
+               memoria.sensibles?.length || memoria.resumenes?.length);
+  if (!hay) return;
+  accesoMostrado = true;
+  const b = el('button', 'acceso-mem', 'Lo que recuerdo de vos');
+  b.onclick = () => ir('mem');
+  hilo.appendChild(b); scroll();
+}
+
 function puntos() {
   const n = el('div', 'puntos');
   n.innerHTML = '<i class="pt"></i><i class="pt"></i><i class="pt"></i>';
@@ -145,6 +159,7 @@ async function mandar() {
     else {
       turno('assistant', d.texto);
       mensajes.push({ role: 'assistant', content: d.texto });
+      accesoMemoria();
       if (d.riesgo === 'alto') recursos();
     }
   } catch (e) {
