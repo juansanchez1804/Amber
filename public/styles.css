@@ -91,7 +91,6 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .btn-2{background:none;border:1px solid var(--borde);color:var(--ambar-claro)}
 .btn:disabled{opacity:.4;cursor:default}
 .link{background:none;border:0;color:var(--gris);font-size:15px;font-family:var(--sans);cursor:pointer;height:48px}
-.acento{color:var(--ambar-claro)}
 
 /* home: saludo arriba, tres accesos con jerarquía abajo */
 .saludo-bloque{display:flex;flex-direction:column;gap:12px;flex-shrink:0}
