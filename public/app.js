@@ -45,6 +45,9 @@ function guardarMemoria() {
 }
 
 let memoria = cargarMemoria();
+// El interruptor de apagarla ya no existe. Si alguien la dejó apagada antes, se
+// vuelve a prender: si no, quedaría sin memoria y sin forma de recuperarla.
+if (memoria && !memoria.activa) { memoria.activa = true; guardarMemoria(); }
 let mensajes = [];   // historial que va a la API
 let ambiguos = 0;    // frases de hacerse daño dichas de bronca en esta conversación
 let apodoOnboarding = '';
@@ -646,12 +649,23 @@ function pintarMemoria() {
         guardar();
       })).reverse()));
 
-  c.style.opacity = memoria.activa ? '1' : '.35';
-  $('#toggle-mem').textContent = memoria.activa ? 'Desactivar la memoria' : 'Activar la memoria';
 }
-$('#toggle-mem').onclick = () => {
-  memoria.activa = !memoria.activa;
-  guardarMemoria(); pintarMemoria(); pintarEntrada();
+
+// Cerrar sesión borra todo lo guardado y vuelve al principio. Recarga en vez de
+// resetear diez variables a mano: es la única forma de garantizar que no queda
+// nada del usuario anterior dando vueltas en memoria.
+const ROTULO_SALIR = 'Cerrar sesión';
+let confirmandoSalir = null;
+$('#cerrar-sesion').onclick = () => {
+  const b = $('#cerrar-sesion');
+  if (!confirmandoSalir) {
+    b.textContent = 'Tocá de nuevo para cerrar sesión';
+    confirmandoSalir = setTimeout(() => { confirmandoSalir = null; b.textContent = ROTULO_SALIR; }, 4000);
+    return;
+  }
+  clearTimeout(confirmandoSalir); confirmandoSalir = null;
+  try { localStorage.removeItem(LLAVE); localStorage.removeItem('amber.memoria.v1'); } catch (e) {}
+  location.href = location.pathname;
 };
 
 // Borrar todo pide confirmación en el mismo botón: sin diálogos, sin sustos.
@@ -665,7 +679,7 @@ $('#borrar-mem').onclick = () => {
     return;
   }
   clearTimeout(confirmando); confirmando = null;
-  memoria = { activa: memoria.activa, apodo: '', objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  memoria = { activa: true, apodo: '', registro: null, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria(); pintarMemoria(); pintarEntrada();
   b.textContent = ROTULO_BORRAR;
 };
