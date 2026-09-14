@@ -50,6 +50,20 @@ let ambiguos = 0;    // frases de hacerse daño dichas de bronca en esta convers
 let apodoOnboarding = '';
 
 const capitalizar = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+const minuscula   = s => s ? s.charAt(0).toLowerCase() + s.slice(1) : '';
+
+// El resumen se guarda sin fecha adentro y el tiempo se calcula al mostrarlo:
+// así "hoy" no queda escrito para siempre en algo que pasó hace tres semanas.
+function cuando(f) {
+  const dias = Math.round((Date.parse(hoyISO()) - Date.parse(f)) / 86400000);
+  if (dias <= 0) return 'Hoy';
+  if (dias === 1) return 'Ayer';
+  if (dias < 7)  return `Hace ${dias} días`;
+  if (dias < 14) return 'La semana pasada';
+  return `Hace ${Math.floor(dias / 7)} semanas`;
+}
+// Los resúmenes viejos son texto suelto; los nuevos traen fecha. Conviven.
+const textoResumen = r => (typeof r === 'string' ? r : `${cuando(r.f)}, ${minuscula(r.t)}`);
 
 // ── navegación ────────────────────────────────────────────────────────────
 let pantallaPrevia = 'entrada';
@@ -96,8 +110,10 @@ function pintarEntrada() {
   $('#fecha').textContent = `${DIAS[d.getDay()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   const apodo = memoria?.apodo;
   $('#saludo').textContent = memoria?.activa && apodo ? `Hola, ${capitalizar(apodo)}.` : 'Hola.';
-  // Sin memoria previa no hay línea: el saludo queda solo.
-  const r = memoria?.activa ? memoria.resumenes?.[1] ?? memoria.resumenes?.[0] : null;
+  // Sin memoria previa no hay línea: el saludo queda solo. Se muestra el último,
+  // que desde que existe el cierre es el de la conversación que acaba de pasar.
+  const rs = memoria?.activa ? memoria.resumenes : null;
+  const r = rs?.length ? textoResumen(rs[rs.length - 1]) : null;
   const sabe = $('#sabe');
   sabe.textContent = r ?? '';
   sabe.hidden = !r;
@@ -426,14 +442,61 @@ function revelador(nodo) {
 }
 
 let ocupado = false, cortado = false;
-function cortar() {
+function cortar(nota) {
   cortado = true;
   pararVoz();
   micro.hidden = true;
   txt.disabled = true;
-  txt.placeholder = 'Por hoy llegamos hasta acá.';
+  txt.placeholder = nota ?? 'Por hoy llegamos hasta acá.';
   enviar.classList.remove('listo');
+  $('#cerrar-hoy').hidden = true;
 }
+
+// ── cerrar por hoy ────────────────────────────────────────────────────────
+// Una conversación que no termina nunca no deja nada: queda abierta y se
+// disuelve. Cerrarla a propósito es lo que produce el resumen que la próxima
+// vez hace que Amber sepa de dónde venís.
+const cerrarBtn = $('#cerrar-hoy');
+const MINIMO_PARA_CERRAR = 3;   // ofrecer cerrar algo que no empezó no tiene sentido
+
+function verCerrar() {
+  if (cortado) return;
+  cerrarBtn.hidden = mensajes.filter(m => m.role === 'user').length < MINIMO_PARA_CERRAR;
+}
+
+function guardarResumen(t) {
+  if (!memoria || !t) return;
+  // Ocho alcanzan: más atrás deja de ser memoria y pasa a ser archivo.
+  memoria.resumenes = [...(memoria.resumenes ?? []), { t, f: hoyISO() }].slice(-8);
+  guardarMemoria();
+  pintarEntrada();
+}
+
+cerrarBtn.onclick = async () => {
+  if (ocupado || cortado) return;
+  ocupado = true;
+  cerrarBtn.disabled = true;
+  quitarAperturas();
+  const p = puntos();
+  let despedida = 'Lo dejamos acá por hoy. Cuando quieras seguir, estoy.';
+  try {
+    const r = await fetch('/api/cierre', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mensajes }),
+    });
+    const d = await r.json();
+    if (d.despedida) despedida = d.despedida;
+    guardarResumen(d.resumen);
+  } catch (e) { console.error(e); }
+  p.remove();
+  turno('assistant', despedida);
+  anunciar(despedida);
+  cortar('Cerraste la charla de hoy.');
+  const volver = el('button', 'volver-inicio', 'Volver al inicio');
+  volver.onclick = () => ir('entrada');
+  hilo.appendChild(volver); seguir(true);
+  ocupado = false;
+};
 
 async function mandar(textoDirecto) {
   const t = (textoDirecto ?? txt.value).trim();
@@ -491,6 +554,7 @@ async function leerStream(r, p) {
   mensajes.push({ role: 'assistant', content: texto });
   anunciar(texto);
   accesoMemoria();
+  verCerrar();
   if (riesgo === 'alto') recursos();
   if (fin) cortar();
 }
@@ -539,6 +603,15 @@ function pintarMemoria() {
   if (memoria.objetivos.length)   c.append(grupo('Lo que venís trabajando', lista('objetivos')));
   if (memoria.estrategias.length) c.append(grupo('Lo que te ayuda', lista('estrategias')));
   if (memoria.sensibles.length)   c.append(grupo('Temas sensibles', lista('sensibles')));
+  if (memoria.resumenes?.length)  c.append(grupo('Lo que me contaste', memoria.resumenes.map((v, i) =>
+    entrada(textoResumen(v),
+      () => { memoria.resumenes.splice(i, 1); guardar(); },
+      (nuevo) => {
+        if (!nuevo || nuevo === textoResumen(v)) return;
+        // Si lo editás a mano queda como lo escribiste, con la fecha que ya tenía.
+        memoria.resumenes[i] = typeof v === 'string' ? nuevo : { ...v, t: nuevo };
+        guardar();
+      })).reverse()));
 
   c.style.opacity = memoria.activa ? '1' : '.35';
   $('#toggle-mem').textContent = memoria.activa ? 'Desactivar la memoria' : 'Activar la memoria';

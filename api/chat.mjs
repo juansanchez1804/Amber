@@ -24,7 +24,18 @@ function bloqueMemoria(m) {
   if (m.sensibles?.length)   l.push(`Temas sensibles, que vos no traés: ${m.sensibles.join('; ')}`);
   // Ya abriste preguntando por esto, así que lo que te escribe es la respuesta.
   if (m.dia?.valor) l.push(`Hoy marcó su día en ${m.dia.valor} de 5 (1 muy difícil, 5 muy bien) y vos ya abriste preguntándole por eso. No repitas el número ni lo trates como un puntaje: es de dónde viene, no un dato que se comenta.`);
-  if (m.resumenes?.length)   l.push(`\nDe las últimas conversaciones:\n${m.resumenes.map(r => `- ${r}`).join('\n')}`);
+  // Los resúmenes viejos son texto suelto; los que deja el cierre traen fecha.
+  if (m.resumenes?.length) {
+    const hoy = Date.parse(new Date().toISOString().slice(0, 10));
+    const linea = (r) => {
+      if (typeof r === 'string') return r;
+      const d = Math.round((hoy - Date.parse(r.f)) / 86400000);
+      const c = d <= 0 ? 'Hoy' : d === 1 ? 'Ayer' : d < 7 ? `Hace ${d} días`
+              : d < 14 ? 'La semana pasada' : `Hace ${Math.floor(d / 7)} semanas`;
+      return `${c}, ${r.t.charAt(0).toLowerCase()}${r.t.slice(1)}`;
+    };
+    l.push(`\nDe las últimas conversaciones:\n${m.resumenes.map(r => `- ${linea(r)}`).join('\n')}`);
+  }
   return l.length ? `\n\n## Lo que sabés de quien te escribe\n\n${l.join('\n')}` : '';
 }
 

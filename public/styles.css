@@ -323,3 +323,14 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @keyframes pide{0%,100%{box-shadow:none}
   22%,62%{box-shadow:0 0 0 3px color-mix(in srgb,var(--ambar) 32%,transparent)}}
 @media (prefers-reduced-motion:reduce){ .dia.pide{animation:none} }
+
+/* Cerrar aparece recién cuando hubo conversación: ofrecer cerrar algo que no
+   empezó no tiene sentido. Y cerrar no es la acción principal de la pantalla,
+   así que va en contorno y no en relleno. */
+.barra-der{display:flex;align-items:center;gap:8px}
+#cerrar-hoy{background:none;border:1px solid var(--borde)}
+#cerrar-hoy[hidden]{display:none}
+#cerrar-hoy:disabled{opacity:.45}
+.volver-inicio{align-self:flex-start;background:none;border:1px solid var(--borde);
+  border-radius:10px;padding:9px 14px;font-family:var(--sans);font-size:14px;
+  color:var(--ambar-claro);cursor:pointer}
