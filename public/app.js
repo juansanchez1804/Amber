@@ -56,7 +56,7 @@ function ir(id) {
   const actual = document.querySelector('.p.on');
   if (actual && actual.id !== id) pantallaPrevia = actual.id;
   document.querySelectorAll('.p').forEach(p => p.classList.toggle('on', p.id === id));
-  if (id === 'conv') { abrirConversacion(); $('#txt').focus(); scroll(); }
+  if (id === 'conv') { ajustarColchon(); abrirConversacion(); $('#txt').focus(); seguir(false); }
   if (id === 'calma') reiniciarCalma();
   if (id === 'mem') pintarMemoria();
   if (id === 'ayuda') pintarAyuda();
@@ -98,12 +98,45 @@ function pintarEntrada() {
 }
 
 // ── conversación ──────────────────────────────────────────────────────────
-const hilo = $('#hilo');
-const scroll = () => hilo.scrollTo({ top: hilo.scrollHeight, behavior: 'smooth' });
+const hilo = $('#hilo'), bajar = $('#bajar');
+
+// Colchón al pie: sin él, el último mensaje no puede subir al tope de la pantalla.
+const COLCHON_MIN = 160;
+function ajustarColchon() { hilo.style.paddingBottom = Math.max(0, hilo.clientHeight - COLCHON_MIN) + 'px'; }
+const colchon = () => parseFloat(hilo.style.paddingBottom) || 0;
+const finReal = () => hilo.scrollHeight - colchon();
+const distanciaAlFin = () => finReal() - (hilo.scrollTop + hilo.clientHeight);
+
+let auto = true;
+hilo.addEventListener('scroll', () => {
+  auto = distanciaAlFin() <= 120;
+  bajar.hidden = auto;
+});
+
+// Sigue al texto que crece, pero nunca scrollea para arriba: eso desharía el anclado.
+function seguir(suave) {
+  if (!auto) return;
+  const objetivo = finReal() - hilo.clientHeight;
+  if (objetivo > hilo.scrollTop) hilo.scrollTo({ top: objetivo, behavior: suave ? 'smooth' : 'auto' });
+}
+// Al enviar, tu mensaje sube al tope y la respuesta crece abajo: el vacío del medio deja de existir.
+function anclarArriba(nodo) {
+  auto = true; bajar.hidden = true;
+  hilo.scrollTo({ top: Math.max(0, nodo.offsetTop - 8), behavior: 'smooth' });
+}
+bajar.onclick = () => {
+  auto = true; bajar.hidden = true;
+  hilo.scrollTo({ top: finReal() - hilo.clientHeight, behavior: 'smooth' });
+};
 
 function turno(quien, texto) {
-  const n = el('div', quien === 'user' ? 'yo' : 'am', texto);
-  hilo.appendChild(n); scroll(); return n;
+  if (quien === 'user') {
+    const c = el('div', 'turno');
+    c.append(el('div', 'vos', 'Vos'), el('div', 'yo', texto));
+    hilo.appendChild(c); return c;
+  }
+  const n = el('div', 'am', texto);
+  hilo.appendChild(n); seguir(true); return n;
 }
 // El acceso a la memoria aparece donde nace la pregunta: justo después de que
 // Amber demuestra por primera vez que se acuerda. Una vez por conversación.
@@ -116,13 +149,13 @@ function accesoMemoria() {
   accesoMostrado = true;
   const b = el('button', 'acceso-mem', 'Lo que recuerdo de vos');
   b.onclick = () => ir('mem');
-  hilo.appendChild(b); scroll();
+  hilo.appendChild(b); seguir(true);
 }
 
 function puntos() {
   const n = el('div', 'puntos');
   n.innerHTML = '<i class="pt"></i>';
-  hilo.appendChild(n); scroll(); return n;
+  hilo.appendChild(n); seguir(true); return n;
 }
 
 // Nadie tiene que enfrentarse a una caja vacía: Amber abre, y deja tres puertas
@@ -140,7 +173,7 @@ function abrirConversacion() {
     b.onclick = () => mandar(t);
     c.append(b);
   }
-  hilo.appendChild(c); scroll();
+  hilo.appendChild(c); seguir(true);
   aperturasEl = c;
 }
 function quitarAperturas() { aperturasEl?.remove(); aperturasEl = null; }
@@ -166,7 +199,7 @@ function tarjetasRecursos() {
   return c;
 }
 function recursos() {
-  hilo.appendChild(tarjetasRecursos()); scroll();
+  hilo.appendChild(tarjetasRecursos()); seguir(true);
 }
 
 const txt = $('#txt'), enviar = $('#enviar');
@@ -179,18 +212,25 @@ txt.addEventListener('keydown', e => {
 });
 enviar.onclick = () => mandar();
 
-// El texto llega de a pedazos, pero aparece a ritmo de alguien escribiendo.
-// Si se acumula, acelera solo: nunca queda colgado detrás del modelo.
+// El modelo escribe diez veces más rápido de lo que se lee. El texto se revela
+// a ritmo de lectura (~7 palabras/seg) y de a palabras enteras, nunca letra por
+// letra. Si se acumula demasiado, acelera: no queda colgado atrás del modelo.
+const MS_POR_PALABRA = 140;
 function revelador(nodo) {
   let pendiente = '', abierto = true, avisar = null;
   const id = setInterval(() => {
     if (pendiente) {
-      const n = Math.max(1, Math.ceil(pendiente.length / 40));
-      nodo.textContent += pendiente.slice(0, n);
-      pendiente = pendiente.slice(n);
-      scroll();
+      // Sin un espacio después de texto, la palabra todavía está llegando entera.
+      if (!/\S\s/.test(pendiente) && abierto) return;
+      const veces = pendiente.length > 160 ? 3 : pendiente.length > 80 ? 2 : 1;
+      for (let i = 0; i < veces && pendiente; i++) {
+        const trozo = pendiente.match(/^\s*\S+\s*/)?.[0] ?? pendiente;
+        nodo.textContent += trozo;
+        pendiente = pendiente.slice(trozo.length);
+      }
+      seguir(false);
     } else if (!abierto) { clearInterval(id); avisar?.(); }
-  }, 16);
+  }, MS_POR_PALABRA);
   return {
     empujar: t => { pendiente += t; },
     terminar: () => new Promise(r => { abierto = false; avisar = r; }),
@@ -210,8 +250,10 @@ async function mandar(textoDirecto) {
   if (!t || ocupado || cortado) return;
   ocupado = true;
   quitarAperturas();
+  $('#ver-ayuda').hidden = true;   // el disclaimer no ocupa el lugar de escribir
   if (textoDirecto == null) { txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo'); }
-  turno('user', t);
+  ajustarColchon();
+  anclarArriba(turno('user', t));
   mensajes.push({ role: 'user', content: t });
   const p = puntos();
   try {
@@ -364,5 +406,6 @@ function ajustarMarco() {
   const s = Math.min(1, (window.innerHeight - 32) / 884, (window.innerWidth - 32) / 430);
   m.style.transform = `scale(${s.toFixed(4)})`;
 }
-addEventListener('resize', ajustarMarco);
+addEventListener('resize', () => { ajustarMarco(); ajustarColchon(); });
 ajustarMarco();
+ajustarColchon();

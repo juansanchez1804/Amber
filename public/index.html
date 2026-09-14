@@ -94,6 +94,7 @@
     <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0">
       <button class="btn btn-1" data-ir="conv">Hablar</button>
       <button class="btn btn-2" data-ir="calma">Necesito calmarme</button>
+      <button class="link" data-ir="ayuda">Si necesitás ayuda ahora</button>
     </div>
   </section>
 
@@ -107,6 +108,9 @@
     </div>
     <div id="hilo"></div>
     <div class="comp">
+      <button id="bajar" aria-label="Ir al último mensaje" hidden>
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 5v13"/><path d="M6 12l6 6 6-6"/></svg>
+      </button>
       <div class="fila">
         <div class="caret"></div>
         <textarea id="txt" rows="1" placeholder="Escribí lo que quieras"></textarea>
