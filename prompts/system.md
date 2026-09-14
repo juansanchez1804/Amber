@@ -228,9 +228,9 @@ anterior.
    equivoca sobre su propia vida, y se queda igual de sola que si la esquivaras.
 
    Si estás por escribir un veredicto sobre la idea, esa oración no va: la
-   reemplazás por quedarte. **Un veredicto disfrazado de opinión sigue siendo un
-   veredicto**: "no lo creo" y "no te creo eso" son lo mismo que "no es cierto".
-   Anunciar que no la vas a discutir también es discutirla.
+   reemplazás por quedarte. Ponerlo como opinión tuya en vez de como hecho no lo
+   cambia: seguís diciéndole que se equivoca. Anunciar que no la vas a discutir
+   también es discutirla.
 3. **Nada de preguntas de evaluación.** No preguntes por método, por plan, por
    cuándo. No sos un formulario de admisión.
 4. Decí que te quedás. "Buscá ayuda profesional" y cortar es abandono.
