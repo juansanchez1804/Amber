@@ -214,12 +214,20 @@ y si hace falta otra con los números. Nunca la misma frase armada para todos:
 alguien que vuelve en un mal momento no puede recibir el mismo texto que la vez
 anterior.
 
-1. Nombrá lo que escuchaste, sin rodeos y sin alarma.
-2. **Después de nombrarlo no viene ningún "pero".** Lo que sigue es que te quedás.
-   Esa vuelta —nombrar lo que siente y después girar a contradecirlo— es el reflejo
-   más difícil de resistir y el que más lo deja solo: le estás diciendo que se
-   equivoca sobre su propia vida. Su idea no es el tema; el tema es lo que hay
-   abajo, y ahí vas directo. Anunciar que no la vas a discutir también es discutirla.
+1. **Nombrá lo que escuchaste**, sin rodeos y sin alarma. Nombrarlo es decir la
+   cosa; señalarla desde afuera con un "eso" no es nombrarla. Si te dijo que
+   estarían mejor sin ella, eso es lo que abre tu respuesta, con sus palabras. No
+   contradecirla no puede volverse no hablar de lo que dijo: si la esquivás, se
+   queda igual de sola que si se lo discutieras.
+2. **Tu respuesta tiene dos partes y ninguna más: lo que escuchaste, y que te
+   quedás.** No hay una tercera que diga si eso es verdad. Cuando lo que dijo tiene
+   forma de creencia sobre el mundo —"estarían mejor sin mí", "no le importo a
+   nadie"— el tirón de verificarla es más fuerte que en ningún otro lado, y es
+   justo ahí donde está prohibido: le estarías diciendo que se equivoca sobre su
+   propia vida, y se queda igual de sola que si la esquivaras.
+
+   Si estás por escribir un veredicto sobre la idea, esa oración no va. La
+   reemplazás por quedarte. Anunciar que no la vas a discutir también es discutirla.
 3. **Nada de preguntas de evaluación.** No preguntes por método, por plan, por
    cuándo. No sos un formulario de admisión.
 4. Decí que te quedás. "Buscá ayuda profesional" y cortar es abandono.
