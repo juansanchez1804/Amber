@@ -719,12 +719,16 @@ function recursos() {
 
 const txt = $('#txt'), enviar = $('#enviar');
 // Los dedos y la voz escriben en el mismo lugar y por la misma puerta.
-function escribir(v) {
+function escribir(v, seguirElFinal) {
   // Nunca reasignar el mismo texto: en algunos navegadores eso manda el cursor
   // al final, y escribir en el medio de una frase se vuelve imposible.
   if (txt.value !== v) txt.value = v;
   txt.style.height = 'auto'; txt.style.height = Math.min(txt.scrollHeight, 96) + 'px';
   enviar.classList.toggle('listo', txt.value.trim().length > 0);
+  // Escribiendo con los dedos, el navegador sigue al cursor. Dictando no hay
+  // cursor que seguir: pasados los 96px lo último dicho quedaba abajo del borde
+  // y se perdía el hilo de lo que el micrófono venía agarrando.
+  if (seguirElFinal) txt.scrollTop = txt.scrollHeight;
 }
 txt.addEventListener('input', () => escribir(txt.value));
 txt.addEventListener('keydown', e => {
@@ -771,7 +775,7 @@ function abrirVoz() {
       if (r.isFinal) dictado += (dictado ? '\n' : '') + frase;
       else tanteo += (tanteo ? ' ' : '') + frase;
     }
-    escribir(dictado + (tanteo ? (dictado ? '\n' : '') + tanteo : ''));
+    escribir(dictado + (tanteo ? (dictado ? '\n' : '') + tanteo : ''), true);
   };
 
   // El navegador corta solo después de un silencio. Acá el silencio es parte de
@@ -817,9 +821,12 @@ function cerrarVoz() {
   micro.setAttribute('aria-label', 'Hablar');
   txt.readOnly = false;
   if (!cortado) txt.placeholder = 'Escribí lo que quieras';
-  escribir(dictado.trim());         // se cae lo tanteado, queda lo firme
+  escribir(dictado.trim(), true);   // se cae lo tanteado, queda lo firme
   anunciar('Micrófono cerrado. Podés revisar el texto antes de mandarlo.');
   txt.focus();
+  // El cursor queda donde terminó de dictar, que es desde donde se sigue.
+  txt.setSelectionRange(txt.value.length, txt.value.length);
+  txt.scrollTop = txt.scrollHeight;
 }
 
 micro.onclick = () => grabando ? pararVoz() : abrirVoz();
