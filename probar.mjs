@@ -256,14 +256,18 @@ const APROX = {
   'charla|claude-sonnet-5': { entrada: 900, cacheEscritura: 500, cacheLectura: 4200, salida: 90 },
   'charla|claude-haiku-4-5': { entrada: 4400, cacheEscritura: 0, cacheLectura: 0, salida: 90 },
   'clasificador|claude-haiku-4-5-20251001': { entrada: 1650, cacheEscritura: 0, cacheLectura: 0, salida: 20 },
+  'clasificador|claude-sonnet-5': { entrada: 56, cacheEscritura: 0, cacheLectura: 1926, salida: 40 },
   'juez|claude-opus-5': { entrada: 1600, cacheEscritura: 0, cacheLectura: 0, salida: 900 },
   'juez|claude-sonnet-5': { entrada: 1600, cacheEscritura: 0, cacheLectura: 0, salida: 200 },
   'juez|claude-haiku-4-5': { entrada: 1600, cacheEscritura: 0, cacheLectura: 0, salida: 150 },
 };
 const generadas = casos.reduce((n, c) => n + c.pasos.filter((x, k) => x.rol === 'persona' && c.pasos[k + 1]?.rol !== 'fijo').length, 0);
-const plan = [['charla', MODELO, generadas], ['clasificador', 'claude-haiku-4-5-20251001', RIESGO_FIJO ? 0 : generadas], ['juez', JUEZ, JUEZ ? generadas : 0]];
+// El clasificador lo elige api/chat.mjs, no esto. Tenerlo escrito a mano hacía que
+// el estimado quedara viejo en silencio el día que cambió de modelo.
+const MODELO_CLASIF_REAL = (readFileSync('api/chat.mjs', 'utf8').match(/MODELO_CLASIF\s*=\s*'([^']+)'/) ?? [])[1] ?? 'claude-sonnet-5';
+const plan = [['charla', MODELO, generadas], ['clasificador', MODELO_CLASIF_REAL, RIESGO_FIJO ? 0 : generadas], ['juez', JUEZ, JUEZ ? generadas : 0]];
 let estimado = 0, conHistorial = true;
-console.log(`${casos.length} casos · ${generadas} respuestas generadas · charla: ${MODELO} · clasificador: ${RIESGO_FIJO ? `salteado (riesgo fijo: ${RIESGO_FIJO})` : 'haiku'} · juez: ${JUEZ ?? 'no'}`);
+console.log(`${casos.length} casos · ${generadas} respuestas generadas · charla: ${MODELO} · clasificador: ${RIESGO_FIJO ? `salteado (riesgo fijo: ${RIESGO_FIJO})` : MODELO_CLASIF_REAL} · juez: ${JUEZ ?? 'no'}`);
 for (const [rol, modelo, n] of plan) {
   if (!n) continue;
   const clave = `${rol}|${modelo}`, prom1 = historial[clave] ?? APROX[clave];
@@ -301,7 +305,7 @@ const promLargo = prom(validos.map(r => r.charla.at(-1).amber.length)).replace(/
 
 const fecha = new Date().toISOString().slice(0, 19).replace('T', '_').replaceAll(':', '');
 let md = `# ${TITULO ?? 'Prueba'} · ${new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}\n\n`;
-md += `Charla: ${MODELO} · clasificador: ${RIESGO_FIJO ? `salteado, riesgo fijo ${RIESGO_FIJO}` : 'haiku'} · juez: ${JUEZ ?? 'no'}\n\n`;
+md += `Charla: ${MODELO} · clasificador: ${RIESGO_FIJO ? `salteado, riesgo fijo ${RIESGO_FIJO}` : MODELO_CLASIF_REAL} · juez: ${JUEZ ?? 'no'}\n\n`;
 if (sinCredito) md += `> **Informe inválido:** la API rechazó llamadas por falta de crédito. El clasificador también falla en ese caso, así que los niveles de riesgo no significan nada.\n\n`;
 md += `- **Sin fallas:** ${ok} de ${resultados.length}\n`;
 md += `- **Riesgo clasificado como se esperaba:** ${riesgoOk} de ${conRiesgo}\n`;
