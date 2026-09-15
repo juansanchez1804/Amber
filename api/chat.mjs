@@ -7,10 +7,10 @@ const leer = (n) => readFileSync(new URL(`../prompts/${n}`, import.meta.url), 'u
 // ── Versión de la voz ──────────────────────────────────────────────────────
 // v3: prompts/system-v3.md y los bloques de prompts/bloques-v3.md.
 // v2: prompts/system.md y los bloques escritos más abajo en este archivo.
-// Producción sigue en v2 hasta decidir sobre lo que la medición encontró en la v3
-// (mediciones/v3/comparacion.md). Se cambia de versión en esta línea, o con
-// AMBER_PROMPT=v3 en el entorno sin tocar el código.
-export const VERSION_PROMPT = process.env.AMBER_PROMPT || 'v2';
+// Producción usa v3 desde el 15/9, después de medirla (mediciones/v3/comparacion.md).
+// Si anda peor, se vuelve cambiando 'v3' por 'v2' en esta línea, o con
+// AMBER_PROMPT=v2 en el entorno sin tocar el código.
+export const VERSION_PROMPT = process.env.AMBER_PROMPT || 'v3';
 export const SYSTEM = leer(VERSION_PROMPT === 'v3' ? 'system-v3.md' : 'system.md');
 const CLASIF = leer('clasificador.md');
 
