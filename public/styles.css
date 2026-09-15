@@ -552,3 +552,26 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   .acceso:hover,.btn:hover,.pill:hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:hover,
   .acceso:active,.btn:active,.pill:active,.ayuda-boton:active,.volver-inicio:active,.opcion:active{transform:none}
 }
+
+/* Elegir cómo respirar. Está arriba y en voz baja: la pantalla es para respirar,
+   no para configurar. Cuando el ejercicio arranca, desaparece. */
+.calma-tecnicas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;flex-shrink:0;
+  padding-top:4px;transition:opacity .5s ease}
+.calma-tec{background:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;
+  padding:7px 13px;font-family:var(--sans);font-size:12px;color:rgba(255,255,255,.62);
+  cursor:pointer;transition:color .25s ease,border-color .25s ease,background .25s ease}
+.calma-tec[aria-checked="true"]{color:#fff;border-color:rgba(255,255,255,.55);
+  background:rgba(255,255,255,.10)}
+#calma:not([data-fase="quieto"]) .calma-tecnicas{opacity:0;pointer-events:none}
+#calma[data-terminado] .calma-tecnicas{opacity:1;pointer-events:auto}
+
+/* El suspiro fisiológico suma una segunda inhalada corta: el orbe se estira un
+   poco más arriba de donde ya estaba, en vez de empezar de nuevo. */
+#calma[data-fase="inhala2"]::before{opacity:.85}
+#calma[data-fase="inhala2"] .o1,#calma[data-fase="inhala2"] .o2{transform:scale(1.07)}
+#calma[data-fase="inhala2"] .o1{opacity:1}
+#calma[data-fase="inhala2"] .w-inhala2{opacity:1}
+#calma[data-fase="inhala2"] .calma-texto{opacity:0}
+@media (prefers-reduced-motion:reduce){
+  #calma[data-fase="inhala2"] .o1,#calma[data-fase="inhala2"] .o2{transform:scale(.88)}
+}

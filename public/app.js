@@ -135,7 +135,22 @@ function pintarAyuda() {
 // sin retener el aire: es el ritmo donde la variabilidad cardíaca llega a su
 // máximo, y retener o respirar "hondo" puede disparar sobrerrespiración en
 // alguien con ansiedad. Nueve ciclos de diez segundos: los noventa de la home.
-const RESP = { acomodo: 4000, inhala: 4000, suelta: 6000, ciclos: 9 };
+const TECNICAS = {
+  // 6 por minuto: la frecuencia de resonancia, donde la variabilidad cardíaca
+  // llega a su amplitud máxima. Es la de siempre.
+  calmar: { rotulo: 'Calmarme', acomodo: 4000, inhala: 4000, inhala2: 0, suelta: 6000, ciclos: 9,
+            sub: 'Seguí el círculo. No hace falta respirar hondo.' },
+  // 5 por minuto, con la exhalación al doble de la inhalación: más lento y más
+  // pesado del lado de soltar, que es el lado que baja la activación.
+  dormir: { rotulo: 'Para dormir', acomodo: 5000, inhala: 4000, inhala2: 0, suelta: 8000, ciclos: 8,
+            sub: 'Más lento que antes. Soltá el aire sin apuro.' },
+  // El suspiro fisiológico: una inhalada, una segunda corta arriba, y una
+  // exhalación larga. Es la técnica del ensayo que citamos, y la que más rápido
+  // baja la activación cuando ya estás acelerado. Ciclos más cortos, menos tiempo.
+  bajar: { rotulo: 'Bajar de golpe', acomodo: 3000, inhala: 3000, inhala2: 900, suelta: 6500, ciclos: 6,
+           sub: 'Dos veces adentro, una larga afuera. Sirve cuando ya estás acelerado.' },
+};
+let RESP = TECNICAS[prefs.respirar] ?? TECNICAS.calmar;
 const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calmaAviso = $('#calma-aviso'),
       progreso = $('#calma-progreso'), botonSonido = $('#calma-sonido');
 let resp = null, bloqueo = null;
@@ -146,15 +161,36 @@ function fase(nombre, ms) {
 }
 const avisarCalma = t => { calmaAviso.textContent = ''; setTimeout(() => { calmaAviso.textContent = t; }, 50); };
 
+// Elegir técnica: se guarda, y si tocás una mientras ya está andando, el
+// ejercicio arranca de nuevo con la nueva en vez de quedar a mitad de camino.
+const tecnicasEl = $('#calma-tecnicas');
+tecnicasEl.querySelectorAll('.calma-tec').forEach(b => {
+  b.onclick = () => {
+    prefs.respirar = b.dataset.tec;
+    guardarPrefs();
+    RESP = TECNICAS[prefs.respirar] ?? TECNICAS.calmar;
+    pintarTecnicas();
+    vibrar(10);
+    avisarCalma(`${RESP.rotulo}. ${RESP.sub}`);
+    empezarRespiracion();
+  };
+});
+function pintarTecnicas() {
+  const cual = prefs.respirar ?? 'calmar';
+  tecnicasEl.querySelectorAll('.calma-tec').forEach(b =>
+    b.setAttribute('aria-checked', String(b.dataset.tec === cual)));
+}
+
 function empezarRespiracion() {
   pararRespiracion();
   resp = { ciclo: 0, timer: null, audio: null, pausada: false };
   delete calma.dataset.terminado;
   $('#salir-calma').textContent = 'Terminar';
   calmaT.textContent = 'Acomodate como estés.';
-  calmaS.textContent = 'Seguí el círculo. No hace falta respirar hondo.';
+  calmaS.textContent = RESP.sub;
   progreso.style.transition = 'none'; progreso.style.width = '0';
   fase('quieto', 1200);
+  pintarTecnicas();
   pintarSonido();
   // Tiene que crearse dentro del toque que abrió la pantalla: el navegador no deja
   // arrancar sonido sin un gesto de la persona.
@@ -168,9 +204,9 @@ function inhalar() {
   if (!resp) return;
   fase('inhala', RESP.inhala); ola('inhala', RESP.inhala); vibrar(24);
   avisarCalma('Inhalá');
-  progreso.style.transition = `width ${RESP.inhala + RESP.suelta}ms linear`;
+  progreso.style.transition = `width ${RESP.inhala + RESP.inhala2 + RESP.suelta}ms linear`;
   progreso.style.width = `${(resp.ciclo + 1) / RESP.ciclos * 100}%`;
-  resp.timer = setTimeout(soltar, RESP.inhala);
+  resp.timer = setTimeout(RESP.inhala2 ? inhalarDeNuevo : soltar, RESP.inhala);
 }
 
 function soltar() {
@@ -178,6 +214,13 @@ function soltar() {
   fase('suelta', RESP.suelta); ola('suelta', RESP.suelta); vibrar(12);
   avisarCalma('Soltá');
   resp.timer = setTimeout(() => { resp.ciclo++; resp.ciclo < RESP.ciclos ? inhalar() : terminarRespiracion(); }, RESP.suelta);
+}
+
+// La segunda inhalada del suspiro fisiológico: corta, arriba de la primera.
+function inhalarDeNuevo() {
+  if (!resp) return;
+  fase('inhala2', RESP.inhala2); ola('inhala', RESP.inhala2); vibrar(10);
+  resp.timer = setTimeout(soltar, RESP.inhala2);
 }
 
 function terminarRespiracion() {
@@ -472,11 +515,11 @@ diaInput.addEventListener('change', () => {
     anunciar(`Tu día quedó anotado como ${palabra}.`);
     return;
   }
-  // Un respiro antes de entrar: alcanza para ver qué quedó marcado, y para
-  // arrepentirse y moverla de nuevo sin que la pantalla se te vaya de abajo.
+  // Sin espera: la pausa se leía como demora, no como respiro. Si te equivocaste,
+  // volvés con la flecha y lo cambiás desde la home.
   anunciar(`Tu día quedó anotado como ${palabra}. Abro la conversación.`);
   clearTimeout(entrando);
-  entrando = setTimeout(() => ir('conv'), 750);
+  ir('conv');
 });
 
 // ── conversación ──────────────────────────────────────────────────────────
@@ -1143,7 +1186,7 @@ const ABOUT = [
   ['Qué no es', '<strong>No es terapia y no reemplaza a un profesional.</strong> No diagnostica, no receta y no es un servicio de emergencia. Si estás en riesgo, los teléfonos están en el menú, en "Si necesitás ayuda ahora".'],
   ['Quién la hace', 'Dos estudiantes argentinos. Está en desarrollo: lo que ves es un prototipo.'],
   ['Qué pasa con lo que contás', '<strong>No hay cuenta, no hay servidor y nadie puede leer tus conversaciones.</strong> Lo que Amber recuerda y las charlas que cerrás viven en este teléfono, en el navegador, y de acá no salen. Lo que escribís viaja a la API de Anthropic para que Amber pueda contestarte, y no se usa para entrenar modelos. Si borrás los datos del navegador, no queda nada en ningún lado: tampoco nosotros podemos recuperarlo.'],
-  ['Por qué la respiración dura noventa segundos', 'Son nueve ciclos de cuatro segundos adentro y seis afuera: seis respiraciones por minuto. Ese ritmo no es arbitrario. Alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar.'],
+  ['Por qué se respira así', 'La de siempre son nueve ciclos de cuatro segundos adentro y seis afuera: seis respiraciones por minuto. Ese ritmo no es arbitrario. Alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar. Las otras dos salen del mismo principio: <strong>Para dormir</strong> baja a cinco por minuto con la exhalación al doble de la inhalación, y <strong>Bajar de golpe</strong> es el suspiro fisiológico —una inhalada, una segunda corta arriba, y una exhalación larga—, que es justamente la técnica que ganó en ese ensayo.'],
   ['Cómo borrarlo', 'Desde "Lo que recuerdo" borrás lo que Amber sabe de vos. Desde "Historia" borrás las conversaciones. "Cerrar sesión" borra todo junto y no se puede deshacer.'],
   ['Edad', 'Amber es para mayores de 18.'],
 ];
