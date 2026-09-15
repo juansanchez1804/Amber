@@ -44,7 +44,7 @@ body{font-family:var(--sans);display:flex;align-items:center;justify-content:cen
 
 #estado{position:absolute;top:0;left:0;right:0;height:58px;z-index:4;
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 32px;font-size:16px;font-weight:600;letter-spacing:.01em;color:var(--texto);
+  padding:0 32px;font-size:17px;font-weight:600;letter-spacing:.01em;color:var(--texto);
   font-variant-numeric:tabular-nums;pointer-events:none}
 #estado svg{fill:var(--texto);stroke:var(--texto)}
 #iconos{display:flex;align-items:center;gap:7px}
@@ -101,7 +101,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .rot{font-size:13px;line-height:1.3;color:var(--gris)}
 
 .btn{height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:500;font-family:var(--sans);cursor:pointer;border:0;width:100%}
+  font-size:17px;font-weight:500;font-family:var(--sans);cursor:pointer;border:0;width:100%}
 .btn-1{background:var(--ambar);color:var(--sobre-acento)}
 .btn-2{background:none;border:1px solid var(--borde);color:var(--ambar-claro)}
 .btn:disabled{opacity:.4;cursor:default}
@@ -109,7 +109,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 /* home: saludo arriba, tres accesos con jerarquía abajo */
 .saludo-bloque{display:flex;flex-direction:column;gap:12px;flex-shrink:0}
-#saludo{font-size:34px}
+#saludo{font-size:32px}
 
 .accesos{display:flex;flex-direction:column;gap:12px;margin-top:32px;flex-shrink:0}
 .accesos-fila{display:flex;gap:12px}
@@ -139,17 +139,17 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .acceso-1 .acceso-s{font-size:13px;line-height:1.3;color:var(--sobre-acento);opacity:.75}
 .acceso-2{flex:1;min-height:88px;padding:16px;background:var(--fondo);border:1px solid var(--borde)}
 .acceso-2 .acceso-t{font-size:17px;line-height:1.15;color:var(--texto)}
-.acceso-2 .acceso-s{font-size:12px;line-height:1.3;color:var(--gris)}
+.acceso-2 .acceso-s{font-size:13px;line-height:1.3;color:var(--gris)}
 
 /* La salida a una persona de verdad, dicha con la voz de quien la necesita. No es
    letra chica: se ve y se toca fácil, pero no grita. */
 .ayuda-boton{align-self:center;margin-top:24px;flex-shrink:0;min-height:44px;padding:0 18px;border-radius:12px;cursor:pointer;
   background:var(--tarjeta);border:1px solid color-mix(in srgb,var(--ambar) 20%,transparent);
-  font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ambar-claro)}
+  font-family:var(--sans);font-size:15px;font-weight:500;color:var(--ambar-claro)}
 
 /* onboarding */
 .campo{width:100%;background:none;border:0;border-bottom:1px solid var(--borde);color:var(--texto);
-  font-size:18px;font-family:var(--sans);padding:10px 0;outline:none}
+  font-size:19px;font-family:var(--sans);padding:10px 0;outline:none}
 .campo::placeholder{color:var(--gris)}
 .terciario{font-size:13px;color:var(--gris2);margin-top:8px}
 .check{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--beige);cursor:pointer}
@@ -158,14 +158,14 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* conversación */
 #hilo{position:relative;flex-grow:1;display:flex;flex-direction:column;gap:30px;padding-top:28px;overflow-y:auto;min-height:0;scrollbar-width:none}
 #hilo::-webkit-scrollbar{display:none}
-.am{font-family:var(--serif);font-size:18px;line-height:1.5;color:var(--texto);max-width:300px;white-space:pre-wrap}
+.am{font-family:var(--serif);font-size:19px;line-height:1.5;color:var(--texto);max-width:300px;white-space:pre-wrap}
 .yo{align-self:flex-end;text-align:right;font-family:var(--sans);font-size:17px;line-height:1.41;
   color:var(--gris);max-width:250px;white-space:pre-wrap;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .yo p{margin:0}
 .am,.yo{animation:entra .4s cubic-bezier(.16,1,.3,1) both}
 @keyframes entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .pill{height:40px;padding:0 16px;border-radius:10px;background:var(--tarjeta);color:var(--ambar-claro);
-  font-size:14px;border:0;font-family:var(--sans);cursor:pointer}
+  font-size:15px;border:0;font-family:var(--sans);cursor:pointer}
 
 /* Una presencia, no un aviso: un punto que respira, no tres que saltan. */
 .puntos{display:flex;align-items:center;height:20px}
@@ -175,7 +175,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* aperturas: formas de empezar para quien se queda en blanco */
 .aperturas{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:-12px}
 .apertura{background:none;border:1px solid var(--borde);border-radius:10px;padding:9px 14px;
-  font-family:var(--sans);font-size:14px;line-height:1.3;color:var(--ambar-claro);cursor:pointer;
+  font-family:var(--sans);font-size:15px;line-height:1.3;color:var(--ambar-claro);cursor:pointer;
   text-align:left;transition:background .2s ease}
 .apertura:hover{background:var(--tarjeta)}
 
@@ -227,7 +227,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .fila:has(#micro.on){box-shadow:inset 0 0 0 1px var(--borde)}
 .fila:has(#micro.on) #enviar{display:none}
 .fila:has(#micro.on) #txt:placeholder-shown{display:none}
-#escucha{display:flex;align-items:center;gap:8px;min-height:46px;font-family:var(--sans);font-size:14px;color:var(--gris)}
+#escucha{display:flex;align-items:center;gap:8px;min-height:46px;font-family:var(--sans);font-size:15px;color:var(--gris)}
 #escucha:has(+ #txt:not(:placeholder-shown)){min-height:0;padding-top:11px}
 .fila:has(#micro.on) #txt:not(:placeholder-shown){padding-top:4px}
 #escucha[hidden]{display:none}
@@ -259,7 +259,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .rec-f:hover{border-color:var(--ambar-claro)}
 /* Es el dato que resuelve el problema y se leía más chico que la frase que lo
    describe. Acá alguien mira con el pulgar temblando: el número va primero. */
-.rec-n{font-size:29px;font-weight:500;line-height:1.15;letter-spacing:-.01em}
+.rec-n{font-size:32px;font-weight:500;line-height:1.15;letter-spacing:-.01em}
 .rec-f.pri .rec-n{color:var(--ambar-claro)}
 .rec-d{font-size:13px;line-height:1.45;color:var(--gris)}
 .rec-flecha{stroke:var(--gris2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
@@ -324,11 +324,11 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #calma[data-fase="inhala"] .o1{opacity:1}
 
 #calma .pal{position:relative;width:200px;height:40px;display:flex;align-items:center;justify-content:center}
-#calma .pal span{position:absolute;font-family:var(--serif);font-size:26px;color:var(--sobre-acento);opacity:0;transition:opacity .7s ease}
+#calma .pal span{position:absolute;font-family:var(--serif);font-size:32px;color:var(--sobre-acento);opacity:0;transition:opacity .7s ease}
 #calma[data-fase="inhala"] .w-inhala,#calma[data-fase="suelta"] .w-suelta{opacity:1}
 
 .calma-texto{text-align:center;min-height:84px;margin-top:32px;transition:opacity .8s ease}
-.calma-t{margin:0;font-family:var(--serif);font-size:24px;line-height:1.25}
+.calma-t{margin:0;font-family:var(--serif);font-size:22px;line-height:1.25}
 .calma-s{margin:8px auto 0;max-width:280px;font-size:15px;line-height:1.55;opacity:.74;text-wrap:balance}
 #calma[data-fase="inhala"] .calma-texto,#calma[data-fase="suelta"] .calma-texto{opacity:0}
 
@@ -357,14 +357,14 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .tarj{background:var(--tarjeta);border-radius:18px;padding:18px 22px;box-shadow:var(--sombra);
   display:flex;flex-direction:column;gap:14px}
 .ent{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.ent span{font-size:16px;line-height:1.5;flex-grow:1}
+.ent span{font-size:17px;line-height:1.5;flex-grow:1}
 .ent span[contenteditable]:focus{outline:0;border-bottom:1px solid var(--borde)}
 .ent span:empty::before{content:'Tocá para escribir tu nombre';color:var(--gris2)}
 .acc{display:flex;align-items:center;gap:14px;flex-shrink:0}
 .acc button{background:none;border:0;padding:0;cursor:pointer;display:flex}
 .acc svg{fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .div{height:1px;background:color-mix(in srgb,var(--gris) 18%,transparent)}
-.nota{font-size:14px;line-height:1.5;color:var(--gris)}
+.nota{font-size:15px;line-height:1.5;color:var(--gris)}
 
 /* Con reduced-motion se apaga lo decorativo, pero la respiración sigue:
    es la función de la pantalla, no un adorno. */
@@ -389,7 +389,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
    los palos de las letras. */
 #splash svg{height:48px;margin-bottom:4.2px;display:block;color:#fff}
 #splash svg,#splash span{opacity:0;animation:splashDentro .55s cubic-bezier(.22,.61,.36,1) forwards}
-#splash span{font-family:var(--serif);font-size:38px;font-weight:400;
+#splash span{font-family:var(--serif);font-size:46px;font-weight:400;
   letter-spacing:.20em;color:var(--sobre-acento)}
 @keyframes splashDentro{from{opacity:0;transform:scale(.965)}to{opacity:1;transform:scale(1)}}
 @keyframes splashFuera{to{opacity:0;visibility:hidden}}
@@ -430,7 +430,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .dia-v{font-family:var(--sans);font-size:13px;color:var(--gris);text-align:right}
 .dia.sin-tocar .dia-v,.dia.sin-decir .dia-v{color:var(--gris2)}
 .dia.tocada .dia-v{color:var(--texto)}
-.dia-ext{display:flex;justify-content:space-between;font-family:var(--sans);font-size:12px;color:var(--gris2)}
+.dia-ext{display:flex;justify-content:space-between;font-family:var(--sans);font-size:13px;color:var(--gris2)}
 
 .dia-control{display:flex;flex-direction:column;gap:8px}
 /* El pulgar es la piedra pelada: solo el contorno. El control nativo queda encima,
@@ -450,7 +450,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #dia::-moz-range-thumb{width:2px;height:30px;border:0}
 .dia-barra:has(#dia:focus-visible) .dia-piedra{box-shadow:0 0 0 2px var(--ambar)}
 .dia-acciones{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
-.dia-link{background:none;border:0;padding:0 0 2px;cursor:pointer;font-family:var(--sans);font-size:12px;
+.dia-link{background:none;border:0;padding:0 0 2px;cursor:pointer;font-family:var(--sans);font-size:13px;
   color:var(--gris2);border-bottom:1px solid var(--borde);transition:color .18s ease-out}
 /* La flecha aparece recién cuando moviste la barra, y guarda. */
 .dia-guardar{width:44px;height:44px;border-radius:50%;border:0;background:var(--ambar);padding:0;
@@ -490,7 +490,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #cerrar-hoy[hidden]{display:none}
 #cerrar-hoy:disabled{opacity:.45}
 .volver-inicio{align-self:flex-start;background:none;border:1px solid var(--borde);
-  border-radius:10px;padding:9px 14px;font-family:var(--sans);font-size:14px;
+  border-radius:10px;padding:9px 14px;font-family:var(--sans);font-size:15px;
   color:var(--ambar-claro);cursor:pointer}
 
 /* Elegir el registro: dos formas de que te hablen, no un cuestionario. */
@@ -498,7 +498,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .opcion{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;
   padding:16px;border-radius:14px;border:1px solid var(--borde);background:var(--fondo);
   cursor:pointer;transition:background .2s ease,border-color .2s ease}
-.opcion-t{font-family:var(--serif);font-size:18px;line-height:1.15;color:var(--texto)}
+.opcion-t{font-family:var(--serif);font-size:19px;line-height:1.15;color:var(--texto)}
 .opcion-s{font-family:var(--sans);font-size:13px;line-height:1.4;color:var(--gris)}
 .opcion[aria-checked="true"]{background:var(--ambar);border-color:var(--ambar)}
 .opcion[aria-checked="true"] .opcion-t{color:var(--sobre-acento)}
@@ -567,7 +567,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .charla-f{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;
   background:var(--tarjeta);border:0;border-radius:14px;padding:16px;cursor:pointer;
   width:100%;font-family:var(--sans);box-shadow:var(--sombra)}
-.charla-c{font-size:12px;letter-spacing:.04em;color:var(--gris)}
+.charla-c{font-size:13px;letter-spacing:.04em;color:var(--gris)}
 .charla-r{font-size:15px;line-height:1.45;color:var(--texto)}
 .charla-cuando{display:flex;align-items:center;gap:8px}
 .punto-dia{width:8px;height:8px;border-radius:50%;background:var(--ambar);flex-shrink:0}
@@ -577,7 +577,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   border-bottom:1px solid color-mix(in srgb,var(--gris) 16%,transparent)}
 .pref:last-child{border-bottom:0}
 .pref-txt{display:flex;flex-direction:column;gap:4px;flex-grow:1}
-.pref-t{font-size:16px;line-height:1.3;color:var(--texto)}
+.pref-t{font-size:17px;line-height:1.3;color:var(--texto)}
 .pref-s{font-size:13px;line-height:1.4;color:var(--gris)}
 .llave{position:relative;width:48px;height:28px;border-radius:14px;flex-shrink:0;cursor:pointer;
   border:1px solid var(--borde);background:var(--tarjeta);transition:background .2s ease,border-color .2s ease}
@@ -644,7 +644,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .calma-tecnicas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;flex-shrink:0;
   padding-top:4px;transition:opacity .5s ease}
 .calma-tec{background:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;
-  padding:7px 13px;font-family:var(--sans);font-size:12px;color:rgba(255,255,255,.62);
+  padding:7px 13px;font-family:var(--sans);font-size:13px;color:rgba(255,255,255,.62);
   cursor:pointer;transition:color .25s ease,border-color .25s ease,background .25s ease}
 .calma-tec[aria-checked="true"]{color:#fff;border-color:rgba(255,255,255,.55);
   background:rgba(255,255,255,.10)}
@@ -673,7 +673,6 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @media (max-width:520px) and (max-height:720px){
   #marco #entrada{padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:calc(16px + env(safe-area-inset-bottom))}
   #entrada .saludo-bloque{gap:8px}
-  #saludo{font-size:30px}
   .accesos{margin-top:20px;gap:10px}
   .accesos-fila{gap:10px}
   .acceso-1{height:84px;padding:16px}
