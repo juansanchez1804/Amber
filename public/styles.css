@@ -306,8 +306,17 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* Arriba, en una fila: salir a la izquierda, sonido a la derecha. Salir se ve
    desde el primer momento: quien entra y se arrepiente no tiene que buscarlo. */
 .calma-barra{align-self:stretch}
-.calma-salir{height:44px;padding:0 4px;background:none;border:0;cursor:pointer;
-  font-family:var(--sans);font-size:15px;color:var(--sobre-acento);opacity:.74;transition:opacity .3s ease}
+/* Terminar es un botón, pero no invita: una pastilla oscura, más oscura que la escena,
+   con un filo apenas claro que le dibuja el borde y letra chica en un lila apagado.
+   Se encuentra al buscarla y no llama la atención mientras respirás. Relleno y no
+   contorno: así no se confunde con las pastillas de técnica, que son de contorno. */
+.calma-salir{height:36px;padding:0 16px;border-radius:18px;cursor:pointer;
+  background:color-mix(in srgb,#000 42%,transparent);
+  border:1px solid color-mix(in srgb,var(--sobre-acento) 9%,transparent);
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--sobre-acento) 5%,transparent);
+  font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:.02em;
+  color:color-mix(in srgb,var(--ambar) 22%,var(--sobre-acento));opacity:.72;
+  transition:opacity .3s ease,background-color .3s ease}
 /* Sonido: una invitación con palabras, no solo un ícono. Apagado, el parlante lleva
    una cruz y dice "Sumá sonido"; prendido, salen las ondas y dice "Silenciar". */
 .calma-sonido{height:36px;padding:0 14px 0 10px;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:6px;
@@ -324,7 +333,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .calma-sonido[aria-pressed="true"] .onda-1{transition-delay:.12s}
 .calma-sonido[aria-pressed="true"] .onda-2{transition-delay:.24s}
 .calma-sonido[aria-pressed="true"] .cruz{stroke-dashoffset:1;opacity:0;transition-delay:0s}
-@media (hover:hover){ .calma-sonido:hover,.calma-salir:hover{opacity:1} }
+@media (hover:hover){ .calma-sonido:hover,.calma-salir:hover{opacity:1} .calma-salir:hover{background:color-mix(in srgb,#000 55%,transparent)} }
 .calma-sonido:focus-visible,.calma-salir:focus-visible{outline-color:var(--sobre-acento)}
 
 /* El orbe lo mueve el código, fase por fase, con la misma duración que la fase: así

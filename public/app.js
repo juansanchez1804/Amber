@@ -257,15 +257,20 @@ function aquietarEscena(ms) {
   aclarar(0, ms, SENO);
 }
 
-// ── sonido: una guía, no un ambiente ─────────────────────────────────────────
-// Un tono que sube mientras inhalás y baja mientras soltás, y al soltar se apaga
-// despacio: se puede hacer el ejercicio con los ojos cerrados, siguiendo solo el
-// sonido. Se genera en el momento, sin archivos.
+// ── sonido: una ola ──────────────────────────────────────────────────────────
+// Ruido marrón, que es el que más se parece a agua y a viento, pasado por un filtro y
+// una reverb. La regla es que cambie mucho el volumen y poco el brillo: al inhalar la
+// ola sube despacio, al soltar se retira más lento todavía, y entre ciclos queda un
+// mar de fondo bajito, sin silencios. Si el filtro barriera mucho, el ruido gemiría.
+// Se genera en el momento, sin archivos.
 // Los navegadores no dejan que algo suene sin un toque de la persona: el audio se
 // destraba en los toques que llevan a respirar, y si igual quedó trabado, el botón
 // "Sumá sonido" es el que lo destraba.
-const TONO = { calmar: [330, 494], dormir: [262, 392], bajar: [330, 440, 554] };
-const VOLUMEN = { arriba: 0.13, abajo: 0.025 };
+const OLA = {
+  fondo: 0.038, arriba: 0.21,  arriba2: 0.24,    // volumen: el techo más bajo que la ola de antes, para que no raspe
+  filtroAbajo: 700, filtroArriba: 1200,           // brillo: se mueve poco
+  cola: 2.6,                                      // segundos de reverb
+};
 const HAY_AUDIO = !!(window.AudioContext || window.webkitAudioContext);
 if (!HAY_AUDIO) botonSonido.hidden = true;
 let audio = null;
@@ -289,20 +294,44 @@ function desbloquearAudio() {
 }
 const audioSonando = () => !!(prefs.sonidoResp && audio && audio.state === 'running');
 
-function crearVoz() {
+// La cola de la reverb: ruido que se apaga solo en `seg` segundos, distinto en cada
+// oído. Es lo que convierte el ruido en espacio.
+function colaReverb(ctx, seg) {
+  const n = Math.floor(ctx.sampleRate * seg), buf = ctx.createBuffer(2, n, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5);
+  }
+  return buf;
+}
+// Arma la ola en el contexto que le den (el de la app, o uno fuera de línea para medirla).
+function armarOla(ctx) {
+  const n = ctx.sampleRate * 8, buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  let marron = 0, pico = 0;
+  for (let i = 0; i < n; i++) { marron = (marron + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = marron; pico = Math.max(pico, Math.abs(marron)); }
+  for (let i = 0; i < n; i++) d[i] *= 0.8 / pico;              // normalizado: el pico del ruido queda en 0,8
+  const borde = Math.floor(ctx.sampleRate * 0.05);              // sin clic al dar la vuelta el loop
+  for (let i = 0; i < borde; i++) { const k = i / borde; d[i] *= k; d[n - 1 - i] *= k; }
+  const fuente = ctx.createBufferSource(); fuente.buffer = buf; fuente.loop = true;
+  const filtro = ctx.createBiquadFilter(); filtro.type = 'lowpass'; filtro.frequency.value = OLA.filtroAbajo; filtro.Q.value = 0.5;
+  const vol = ctx.createGain(); vol.gain.value = 0.0001;
+  const seco = ctx.createGain(); seco.gain.value = 0.75;
+  const reverb = ctx.createConvolver(); reverb.buffer = colaReverb(ctx, OLA.cola);
+  const mojado = ctx.createGain(); mojado.gain.value = 0.55;
+  fuente.connect(filtro); filtro.connect(vol);
+  vol.connect(seco); seco.connect(ctx.destination);
+  vol.connect(reverb); reverb.connect(mojado); mojado.connect(ctx.destination);
+  fuente.start();
+  return { ctx, fuente, filtro, vol, brillo: OLA.filtroAbajo, volumen: 0.0001 };
+}
+function crearOla() {
   const ctx = contextoAudio();
   if (!ctx) return null;
   try {
-    const [bajo] = TONO[prefs.respirar] ?? TONO.calmar;
-    const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = bajo;
-    // Una octava arriba y bajita: sin ella, el tono casi no se oye en el parlante de un celu.
-    const osc2 = ctx.createOscillator(); osc2.type = 'triangle'; osc2.frequency.value = bajo * 2;
-    const g2 = ctx.createGain(); g2.gain.value = 0.18;
-    const filtro = ctx.createBiquadFilter(); filtro.type = 'lowpass'; filtro.frequency.value = 1400;
-    const vol = ctx.createGain(); vol.gain.value = 0.0001;
-    osc.connect(filtro); osc2.connect(g2); g2.connect(filtro); filtro.connect(vol); vol.connect(ctx.destination);
-    osc.start(); osc2.start();
-    return { ctx, osc, osc2, vol, frec: bajo, volumen: 0.0001 };
+    const o = armarOla(ctx);
+    // Entra de a poco hasta el mar de fondo, mientras la persona se acomoda.
+    programarOla(o, 'fondo', ctx.currentTime, 2000);
+    return o;
   } catch (e) { return null; }
 }
 const curvaSeno = (a, b, n = 48) => Float32Array.from({ length: n }, (_, i) => a + (b - a) * (1 - Math.cos(Math.PI * i / (n - 1))) / 2);
@@ -310,31 +339,31 @@ function planear(param, desde, hasta, t, seg) {
   if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(t); else param.cancelScheduledValues(t);
   param.setValueCurveAtTime(curvaSeno(desde, hasta), t + 0.01, Math.max(seg, 0.05));
 }
-// Lleva el tono y el volumen de la voz a donde va la fase.
-function tono(nombre, ms, quieto = 0) {
-  const v = resp?.voz;
-  if (!v) return;
-  const [bajo, alto, alto2] = TONO[prefs.respirar] ?? TONO.calmar;
+// Lleva la ola a donde va la fase, empezando en el tiempo t del contexto.
+function programarOla(o, nombre, t, ms, quieto = 0) {
   const seg = ms / 1000, mov = Math.max((ms - quieto) / 1000, 0.05);
-  const [frec, volumen, dur, durVol] = {
-    inhala:  [alto, VOLUMEN.arriba, mov, Math.min(0.6, mov)],
-    inhala2: [alto2 ?? alto, VOLUMEN.arriba * 1.15, Math.min(0.3, mov), 0.2],
-    suelta:  [bajo, VOLUMEN.abajo, seg, seg],
-  }[nombre] ?? [bajo, 0.0001, seg, seg];
-  try {
-    const t = v.ctx.currentTime;
-    planear(v.osc.frequency, v.frec, frec, t, dur);
-    planear(v.osc2.frequency, v.frec * 2, frec * 2, t, dur);
-    planear(v.vol.gain, v.volumen, volumen, t, durVol);
-    v.frec = frec; v.volumen = volumen;
-  } catch (e) {}
+  const [volumen, brillo, dur] = {
+    inhala:  [OLA.arriba, OLA.filtroArriba, mov],                      // sube con curva suave
+    inhala2: [OLA.arriba2, OLA.filtroArriba, Math.min(0.35, mov)],     // el segundo impulso, cortito
+    suelta:  [OLA.fondo, OLA.filtroAbajo, seg],                        // se retira durante toda la exhalación
+    fondo:   [OLA.fondo, OLA.filtroAbajo, seg],
+  }[nombre] ?? [OLA.fondo, OLA.filtroAbajo, seg];
+  planear(o.vol.gain, o.volumen, volumen, t, dur);
+  planear(o.filtro.frequency, o.brillo, brillo, t, dur);
+  o.volumen = volumen; o.brillo = brillo;
 }
-function callarVoz(ms) {
-  const v = resp?.voz;
-  if (!v) return;
-  resp.voz = null;
-  try { planear(v.vol.gain, v.volumen, 0.0001, v.ctx.currentTime, ms / 1000); } catch (e) {}
-  setTimeout(() => { try { v.osc.stop(); v.osc2.stop(); v.vol.disconnect(); } catch (e) {} }, ms + 150);
+function ola(nombre, ms, quieto = 0) {
+  const o = resp?.ola;
+  if (!o) return;
+  try { programarOla(o, nombre, o.ctx.currentTime, ms, quieto); } catch (e) {}
+}
+function callarOla(ms) {
+  const o = resp?.ola;
+  if (!o) return;
+  resp.ola = null;
+  try { planear(o.vol.gain, o.volumen, 0.0001, o.ctx.currentTime, ms / 1000); } catch (e) {}
+  // La reverb sigue sonando un poco después de que la ola se calló: se corta cuando terminó.
+  setTimeout(() => { try { o.fuente.stop(); o.vol.disconnect(); } catch (e) {} }, ms + OLA.cola * 1000 + 200);
 }
 
 function pintarSonido() {
@@ -345,13 +374,13 @@ function pintarSonido() {
 botonSonido.onclick = () => {
   if (audioSonando()) {
     prefs.sonidoResp = false; guardarPrefs();
-    callarVoz(500);
+    callarOla(500);
   } else {
     // Prenderlo, o destrabarlo si ya estaba prendido y el navegador lo frenó.
     prefs.sonidoResp = true; guardarPrefs();
     desbloquearAudio();
-    if (resp && !resp.voz && (resp.timer || resp.pausada)) resp.voz = crearVoz();
-    if (resp?.voz && calma.dataset.fase !== 'quieto') tono(calma.dataset.fase, 800);
+    if (resp && !resp.ola && (resp.timer || resp.pausada)) resp.ola = crearOla();
+    if (resp?.ola && calma.dataset.fase !== 'quieto') ola(calma.dataset.fase, 800);
   }
   pintarSonido();
 };
@@ -360,7 +389,7 @@ botonSonido.onclick = () => {
 function empezarRespiracion() {
   clearTimeout(vueltaRespirar);
   pararRespiracion();
-  resp = { ciclo: 0, timer: null, voz: null, pausada: false };
+  resp = { ciclo: 0, timer: null, ola: null, pausada: false };
   delete calma.dataset.terminado;
   calma.style.setProperty('--brillo', 1);
   $('#salir-calma').textContent = 'Terminar';
@@ -369,7 +398,7 @@ function empezarRespiracion() {
   progreso.style.transition = 'none'; progreso.style.width = '0';
   fase('quieto', 1200);
   pintarTecnicas();
-  if (prefs.sonidoResp) resp.voz = crearVoz();
+  if (prefs.sonidoResp) resp.ola = crearOla();
   pintarSonido();
   mantenerPantalla();
   avisarCalma('Noventa segundos de respiración. Acomodate como estés.');
@@ -385,7 +414,7 @@ function inhalar() {
   fase('inhala', RESP.inhala);
   moverOrbe(m.pico, HALO.arriba * b, RESP.inhala, m.curva, quieto);
   aclarar(LUZ_PICO * b, RESP.inhala, m.curva);
-  tono('inhala', RESP.inhala, quieto);
+  ola('inhala', RESP.inhala, quieto);
   vibrar(24);
   avisarCalma('Inhalá');
   progreso.style.transition = `width ${RESP.inhala + RESP.inhala2 + RESP.suelta}ms linear`;
@@ -399,7 +428,7 @@ function inhalarDeNuevo() {
   const m = movimiento(), b = brilloDelCiclo();
   fase('inhala2', RESP.inhala2);
   moverOrbe(m.pico2 ?? m.pico, HALO.arriba * b, RESP.inhala2, m.salto ?? m.curva, PICO_QUIETO);
-  tono('inhala2', RESP.inhala2, PICO_QUIETO);
+  ola('inhala2', RESP.inhala2, PICO_QUIETO);
   vibrar(10);
   resp.timer = setTimeout(soltar, RESP.inhala2);
 }
@@ -411,7 +440,7 @@ function soltar() {
   dejarRastro();
   moverOrbe(1, HALO.abajo * b, RESP.suelta, m.suelta);
   aclarar(0, RESP.suelta, m.suelta);
-  tono('suelta', RESP.suelta);
+  ola('suelta', RESP.suelta);
   vibrar(12);
   avisarCalma('Soltá');
   resp.timer = setTimeout(() => { resp.ciclo++; resp.ciclo < RESP.ciclos ? inhalar() : terminarRespiracion(); }, RESP.suelta);
@@ -421,7 +450,7 @@ function terminarRespiracion() {
   clearTimeout(resp.timer); resp.timer = null;
   fase('quieto', 2400);
   aquietarEscena(2400);
-  callarVoz(2400);
+  callarOla(2400);
   soltarPantalla();
   calmaT.textContent = 'Ya está.';
   calmaS.textContent = 'Quedate un momento así. Si querés, seguimos un rato más.';
@@ -482,7 +511,7 @@ function sinMarca(crudo, terminado) {
 function pararRespiracion() {
   if (!resp) return;
   clearTimeout(resp.timer);
-  callarVoz(400);
+  callarOla(400);
   soltarPantalla();
   resp = null;
   fase('quieto', 600);
@@ -497,7 +526,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     clearTimeout(resp.timer); resp.timer = null; resp.pausada = true;
     progreso.style.transition = 'none'; progreso.style.width = getComputedStyle(progreso).width;
-    tono('quieto', 300); fase('quieto', 600); aquietarEscena(600);
+    ola('fondo', 600); fase('quieto', 600); aquietarEscena(600);
   } else if (resp.pausada) {
     resp.pausada = false; mantenerPantalla();
     // Sin un toque, el navegador puede no dejar que vuelva a sonar: si pasa, el botón
