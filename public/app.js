@@ -65,6 +65,13 @@ if (memoria) {
   let cambio = false;
   if (GENERO_VIEJO[memoria.genero]) { memoria.genero = GENERO_VIEJO[memoria.genero]; cambio = true; }
   if ('registro' in memoria) { memoria.estilo ??= memoria.registro; delete memoria.registro; cambio = true; }
+  // Dos temas le ponían género a quien los leía. Se guarda el texto del chip, así
+  // que quien los eligió con un nombre anterior pasa al de ahora.
+  const TEMA_VIEJO = {
+    'La exigencia conmigo mismo': 'Exigirme demasiado', 'La exigencia que me pongo': 'Exigirme demasiado',
+    'Dormir o estar cansado': 'Dormir mal o el cansancio', 'Dormir o el cansancio': 'Dormir mal o el cansancio',
+  };
+  if (memoria.temas?.some(t => TEMA_VIEJO[t])) { memoria.temas = [...new Set(memoria.temas.map(t => TEMA_VIEJO[t] ?? t))]; cambio = true; }
   if (cambio) guardarMemoria();
 }
 let mensajes = [];   // historial que va a la API
