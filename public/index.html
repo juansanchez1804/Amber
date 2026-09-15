@@ -82,20 +82,16 @@
     <div class="crece" style="flex-grow:1.4"></div>
     <div style="display:flex;flex-direction:column;gap:16px">
       <h2>¿Cómo te nombro?</h2>
-      <div class="sub">En castellano casi todo lleva género. Te lo pregunto una vez para no
-        andar adivinando cada vez que te hablo.</div>
+      <div class="sub">En español cambia la palabra según a quién le hablás.</div>
       <div class="opciones" role="radiogroup" aria-label="Cómo te nombro">
-        <button class="opcion" data-genero="masculino" role="radio" aria-checked="false">
+        <button class="opcion" data-genero="m" role="radio" aria-checked="false">
           <span class="opcion-t">En masculino</span>
-          <span class="opcion-s">cansado, solo, tranquilo</span>
         </button>
-        <button class="opcion" data-genero="femenino" role="radio" aria-checked="false">
+        <button class="opcion" data-genero="f" role="radio" aria-checked="false">
           <span class="opcion-t">En femenino</span>
-          <span class="opcion-s">cansada, sola, tranquila</span>
         </button>
-        <button class="opcion" data-genero="ninguno" role="radio" aria-checked="false">
-          <span class="opcion-t">Ninguno de los dos</span>
-          <span class="opcion-s">lo digo de otra forma, sin -o ni -a</span>
+        <button class="opcion" data-genero="neutro" role="radio" aria-checked="false">
+          <span class="opcion-t">Prefiero no decirlo</span>
         </button>
       </div>
     </div>
@@ -103,26 +99,47 @@
     <button class="btn btn-1" id="ob-gen-seguir" disabled>Seguir</button>
   </section>
 
-  <!-- ONBOARDING 2b: REGISTRO -->
+  <!-- ONBOARDING 2b: ESTILO -->
   <section class="p" id="ob2b">
     <div class="crece" style="flex-grow:1.4"></div>
     <div style="display:flex;flex-direction:column;gap:16px">
-      <h2>¿Cómo querés que te hable?</h2>
-      <div class="sub">Lo cambiás cuando quieras desde la memoria.</div>
-      <div class="opciones" role="radiogroup" aria-label="Cómo querés que te hable">
-        <button class="opcion" data-registro="escuchar" role="radio" aria-checked="false">
-          <span class="opcion-t">Escuchame</span>
-          <span class="opcion-s">Quedate en lo que te digo. No me tires ideas si no te las pido.</span>
+      <h2>¿Qué te sirve más ahora?</h2>
+      <div class="opciones" role="radiogroup" aria-label="Qué te sirve más ahora">
+        <button class="opcion" data-estilo="escuchar" role="radio" aria-checked="false">
+          <span class="opcion-t">Que te escuche</span>
+          <span class="opcion-s">Sin devoluciones, sin que opine.</span>
         </button>
-        <button class="opcion" data-registro="devolver" role="radio" aria-checked="false">
-          <span class="opcion-t">Decime lo que ves</span>
-          <span class="opcion-s">Si algo se repite o no cierra, nombralo aunque incomode.</span>
+        <button class="opcion" data-estilo="devolver" role="radio" aria-checked="false">
+          <span class="opcion-t">Que te devuelva lo que veo</span>
+          <span class="opcion-s">Aunque a veces incomode.</span>
         </button>
       </div>
     </div>
     <div class="crece" style="flex-grow:1.4"></div>
     <button class="btn btn-1" id="ob-reg-seguir" disabled>Seguir</button>
     <button class="link" id="ob-reg-saltar">Decidilo después</button>
+  </section>
+
+  <!-- ONBOARDING 2c: TEMAS -->
+  <section class="p" id="ob2c">
+    <div class="crece" style="flex-grow:1.4"></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h2>¿De qué te gustaría hablar?</h2>
+      <div class="sub">Elegí hasta tres. Sirve para no tener que explicarte de nuevo.</div>
+      <div class="chips" role="group" aria-label="Temas, hasta tres">
+        <button class="chip" aria-pressed="false">Facultad o trabajo</button>
+        <button class="chip" aria-pressed="false">Familia</button>
+        <button class="chip" aria-pressed="false">Pareja</button>
+        <button class="chip" aria-pressed="false">Amistades</button>
+        <button class="chip" aria-pressed="false">La exigencia conmigo mismo</button>
+        <button class="chip" aria-pressed="false">No saber qué hacer con mi vida</button>
+        <button class="chip" aria-pressed="false">Dormir o estar cansado</button>
+        <button class="chip" aria-pressed="false">Plata</button>
+      </div>
+    </div>
+    <div class="crece" style="flex-grow:1.4"></div>
+    <button class="btn btn-1" id="ob-temas-seguir" disabled>Seguir</button>
+    <button class="link" id="ob-temas-saltar">Prefiero no elegir</button>
   </section>
 
   <!-- ONBOARDING 3: LÍMITES -->

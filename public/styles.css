@@ -451,6 +451,15 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .opcion[aria-checked="true"] .opcion-t{color:var(--sobre-acento)}
 .opcion[aria-checked="true"] .opcion-s{color:var(--sobre-acento);opacity:.85}
 
+/* Temas del onboarding: se eligen hasta tres. Van de corrido y bajan de renglón;
+   con tres elegidos, los demás se apagan hasta que destildes uno. */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:10px 16px;border-radius:22px;border:1px solid var(--borde);background:var(--fondo);
+  font-family:var(--sans);font-size:15px;line-height:1.3;color:var(--texto);text-align:left;cursor:pointer;
+  transition:background .2s ease,border-color .2s ease,color .2s ease,opacity .2s ease}
+.chip[aria-pressed="true"]{background:var(--ambar);border-color:var(--ambar);color:var(--sobre-acento)}
+.chip:disabled{opacity:.4;cursor:default}
+
 /* Una vez contestada, la barra deja de ser un control y pasa a ser una respuesta
    dada. Pero no desaparece: un día no termina cuando abrís la app, y quien puso
    "bien" a las seis puede estar destrozado a las once. Cambiarla cuesta un toque
@@ -531,7 +540,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @media (hover:hover){
   .acceso:not([aria-disabled="true"]):hover,.btn:not(:disabled):hover,.pill:hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:hover{transform:translateY(-1px)}
   .acceso-1:not([aria-disabled="true"]):hover,.btn-1:not(:disabled):hover{filter:brightness(1.07)}
-  .acceso-2:hover,.btn-2:not(:disabled):hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:not([aria-checked="true"]):hover{
+  .acceso-2:hover,.btn-2:not(:disabled):hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:not([aria-checked="true"]):hover,.chip:not([aria-pressed="true"]):not(:disabled):hover{
     border-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
   /* Los botones llenos de la pastilla se oscurecen apenas, como en el diseño (#5733BC). */
   #enviar.listo:hover,#micro.on:hover{background:color-mix(in srgb,var(--ambar) 88%,#000)}

@@ -27,15 +27,21 @@ const RIESGO_SIN_CLASIFICADOR = /\b(morir|morirme|matar|matarme|suicid\w*|no\s+q
 // ("me quiero morir de vergüenza") no cuentan.
 const FRASE_LITERAL = /\b(me\s+quiero\s+(matar|morir)|quiero\s+(matarme|morirme)|me\s+voy\s+a\s+(matar|morir)|matarme|morirme|suicid\w*|(me\s+quiero\s+tirar|tirarme)\s+(abajo|debajo)\s+de)\b(?!\s+de\s+(la\s+)?(risa|vergüenza|verguenza|amor|hambre|sueño|calor|frío|frio|ganas|envidia))/i;
 
+// El onboarding guarda el género como m, f o neutro (las memorias viejas, como
+// masculino o femenino). Se traduce en este único lugar: con neutro o sin dato,
+// Amber no sabe el género y se cuida de no ponérselo.
+const generoDe = (m) => (m?.activa && { m: 'masculino', f: 'femenino', masculino: 'masculino', femenino: 'femenino' }[m.genero]) || null;
+
 function bloqueMemoria(m) {
   if (!m || !m.activa) return '';
   const l = [];
   if (m.apodo) l.push(`Le gusta que le digan: ${m.apodo}`);
-  if (m.genero) l.push(`Cuando le hablás, usá el género gramatical ${m.genero}`);
+  if (generoDe(m)) l.push(`Cuando le hablás, usá el género gramatical ${generoDe(m)}`);
   // Elegido por la persona en el onboarding. Modula el registro; no toca el
   // protocolo de riesgo, que manda siempre por encima de cualquier preferencia.
-  if (m.registro === 'escuchar') l.push('Te pidió que la escuches más de lo que le devolvés. Quedate un turno más en lo que te dice antes de traer nada tuyo, y no le propongas ni le señales contradicciones si no te lo pide. Esto no aplica cuando hay riesgo: ahí hablás igual.');
-  if (m.registro === 'devolver') l.push('Te pidió que le digas lo que ves, aunque incomode. Podés nombrar algo que se repite o algo que no cierra en lo que cuenta. Sigue prohibido diagnosticar, etiquetar y sermonear: nombrás lo que viste, no lo que concluís.');
+  const estilo = m.estilo ?? m.registro;
+  if (estilo === 'escuchar') l.push('Te pidió que la escuches más de lo que le devolvés. Quedate un turno más en lo que te dice antes de traer nada tuyo, y no le propongas ni le señales contradicciones si no te lo pide. Esto no aplica cuando hay riesgo: ahí hablás igual.');
+  if (estilo === 'devolver') l.push('Te pidió que le digas lo que ves, aunque incomode. Podés nombrar algo que se repite o algo que no cierra en lo que cuenta. Sigue prohibido diagnosticar, etiquetar y sermonear: nombrás lo que viste, no lo que concluís.');
   if (m.objetivos?.length)   l.push(`Lo que viene trabajando: ${m.objetivos.join('; ')}`);
   if (m.estrategias?.length) l.push(`Lo que le ayudó antes: ${m.estrategias.join('; ')}`);
   if (m.sensibles?.length)   l.push(`Temas sensibles, que vos no traés: ${m.sensibles.join('; ')}`);
@@ -191,7 +197,7 @@ export default async function handler(req, res) {
 
     // La regla de género está en el prompt, pero se escapa justo en los momentos
     // difíciles ("no estás solo"). Recordarla al final, cerca de la respuesta, la sostiene.
-    const genero = memoria?.activa && memoria.genero ? ''
+    const genero = generoDe(memoria) ? ''
       : '\n\nNo sabés el género de esta persona. Antes de mandar, revisá cada palabra que la describe: si termina en -o o en -a, decilo de otra forma: "no estás solo" → "acá estoy"; "cargarlo solo" → "cargarlo por tu cuenta"; "vos mismo" → "vos"; "cansado" → "con todo encima"; "encerrada" → "sin salir"; "estás parada" → "estás"; "reventado" → "sin resto". No copies estos ejemplos: son para que veas la trampa. La trampa peor está en las respuestas de riesgo, donde la frase sale sola. No es una lista de frases: es una construcción, y cambiarle el verbo no la arregla. Cualquier forma de "dejarte solo", "estar sola", "poder sola", "cargarlo solo" lleva la marca, la escribas como la escribas. El reemplazo nunca necesita el adjetivo: "no te dejo con eso", "acá estoy", "no tenés que poder con esto", "no lo cargás por tu cuenta".';
 
     const sinSenal = clasificadorFallo && riesgo.nivel === 'ninguno'
@@ -223,7 +229,7 @@ export default async function handler(req, res) {
       const uno = await anthropic(pedido(), key);
       Object.assign(usoCharla, uno.usage ?? {});
       let texto = soloTexto(uno);
-      const sinGenero = !(memoria?.activa && memoria.genero);
+      const sinGenero = !generoDe(memoria);
       const falla = (t) => (VEREDICTO.test(t) ? AVISO_REINTENTO
                           : sinGenero && GENERO_FUGA.test(t) ? AVISO_GENERO : null);
       const aviso = falla(texto);

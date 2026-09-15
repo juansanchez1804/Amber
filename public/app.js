@@ -17,7 +17,7 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
 const SEMILLA = {
   "activa": true,
   "apodo": "Nico",
-  "genero": "masculino",
+  "genero": "m",
   "objetivos": [
     "La ansiedad antes de los finales",
     "Volver a dormir bien"
@@ -58,6 +58,15 @@ let memoria = cargarMemoria();
 // El interruptor de apagarla ya no existe. Si alguien la dejó apagada antes, se
 // vuelve a prender: si no, quedaría sin memoria y sin forma de recuperarla.
 if (memoria && !memoria.activa) { memoria.activa = true; guardarMemoria(); }
+// Las memorias guardadas antes del onboarding nuevo tenían el género escrito entero
+// y el estilo con otro nombre ("registro"). Se pasan una vez a los valores de ahora.
+if (memoria) {
+  const GENERO_VIEJO = { masculino: 'm', femenino: 'f' };
+  let cambio = false;
+  if (GENERO_VIEJO[memoria.genero]) { memoria.genero = GENERO_VIEJO[memoria.genero]; cambio = true; }
+  if ('registro' in memoria) { memoria.estilo ??= memoria.registro; delete memoria.registro; cambio = true; }
+  if (cambio) guardarMemoria();
+}
 let mensajes = [];   // historial que va a la API
 let ambiguos = 0;    // frases de hacerse daño dichas de bronca en esta conversación
 let apodoOnboarding = '';
@@ -958,9 +967,9 @@ const VACIO = {
   resumenes:   'Todavía nada. Cada vez que cerrás una conversación queda una línea acá.',
 };
 
-const REGISTROS = [
-  ['escuchar', 'Escuchame', 'Quedate en lo que te digo. No me tires ideas si no te las pido.'],
-  ['devolver', 'Decime lo que ves', 'Si algo se repite o no cierra, nombralo aunque incomode.'],
+const ESTILOS = [
+  ['escuchar', 'Que te escuche', 'Sin devoluciones, sin que opine.'],
+  ['devolver', 'Que te devuelva lo que veo', 'Aunque a veces incomode.'],
 ];
 
 function pintarMemoria() {
@@ -976,17 +985,15 @@ function pintarMemoria() {
   c.append(grupo('Cómo te digo', [
     entrada(memoria.apodo ?? '', () => { memoria.apodo = ''; guardar(); },
       n => { if (n !== memoria.apodo) { memoria.apodo = n; guardar(); } })]));
-  const GENEROS = [['masculino','En masculino','cansado, solo, tranquilo'],
-                   ['femenino','En femenino','cansada, sola, tranquila'],
-                   [null,'Ninguno de los dos','lo digo de otra forma, sin -o ni -a']];
+  const GENEROS = [['m', 'En masculino'], ['f', 'En femenino'], ['neutro', 'Prefiero no decirlo']];
   const og = el('div', 'opciones');
   og.style.padding = '12px';
   og.setAttribute('role', 'radiogroup');
-  for (const [k, t, d] of GENEROS) {
+  for (const [k, t] of GENEROS) {
     const b = el('button', 'opcion');
     b.setAttribute('role', 'radio');
     b.setAttribute('aria-checked', String((memoria.genero ?? null) === k));
-    b.append(el('span', 'opcion-t', t), el('span', 'opcion-s', d));
+    b.append(el('span', 'opcion-t', t));
     b.onclick = () => { memoria.genero = k; vibrar(10); guardar(); };
     og.append(b);
   }
@@ -1040,7 +1047,7 @@ $('#borrar-mem').onclick = () => {
     return;
   }
   clearTimeout(confirmando); confirmando = null;
-  memoria = { activa: true, apodo: '', registro: null, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  memoria = { activa: true, apodo: '', estilo: null, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria(); pintarMemoria(); pintarEntrada();
   b.textContent = ROTULO_BORRAR;
 };
@@ -1051,21 +1058,21 @@ function pintarPersonalizacion() {
   const o = el('div', 'opciones');
   o.style.paddingTop = '8px';
   o.setAttribute('role', 'radiogroup');
-  for (const [k, t, d] of REGISTROS) {
+  for (const [k, t, d] of ESTILOS) {
     const b = el('button', 'opcion');
     b.setAttribute('role', 'radio');
-    b.setAttribute('aria-checked', String(memoria?.registro === k));
+    b.setAttribute('aria-checked', String(memoria?.estilo === k));
     b.append(el('span', 'opcion-t', t), el('span', 'opcion-s', d));
     // Volver a tocar la elegida la apaga: se puede volver a la voz de siempre.
     b.onclick = () => {
       if (!memoria) return;
-      memoria.registro = memoria.registro === k ? null : k;
+      memoria.estilo = memoria.estilo === k ? null : k;
       guardarMemoria(); vibrar(10); pintarPersonalizacion();
     };
     o.append(b);
   }
   c.append(o);
-  const nota = el('div', 'vacio', memoria?.registro
+  const nota = el('div', 'vacio', memoria?.estilo
     ? 'Tocá la elegida de nuevo para volver a mi voz de siempre.'
     : 'Sin elegir ninguna, hablo como hablo siempre.');
   nota.style.paddingTop = '14px';
@@ -1169,7 +1176,7 @@ let generoOnboarding = null;
 const obGenSeguir = $('#ob-gen-seguir');
 document.querySelectorAll('#ob2a .opcion').forEach(b => {
   b.onclick = () => {
-    generoOnboarding = b.dataset.genero === 'ninguno' ? null : b.dataset.genero;
+    generoOnboarding = b.dataset.genero;
     document.querySelectorAll('#ob2a .opcion').forEach(o =>
       o.setAttribute('aria-checked', String(o === b)));
     obGenSeguir.disabled = false;
@@ -1178,28 +1185,48 @@ document.querySelectorAll('#ob2a .opcion').forEach(b => {
 });
 obGenSeguir.onclick = () => ir('ob2b');
 
-// El registro no es una preferencia cosmética: la voz es el producto. Se elige
+// El estilo no es una preferencia cosmética: la voz es el producto. Se elige
 // una vez, se guarda con todo lo demás y se cambia desde la memoria.
-let registroOnboarding = null;
+let estiloOnboarding = null;
 const obRegSeguir = $('#ob-reg-seguir');
 
 document.querySelectorAll('#ob2b .opcion').forEach(b => {
   b.onclick = () => {
-    registroOnboarding = b.dataset.registro;
+    estiloOnboarding = b.dataset.estilo;
     document.querySelectorAll('#ob2b .opcion').forEach(o =>
       o.setAttribute('aria-checked', String(o === b)));
     obRegSeguir.disabled = false;
   };
 });
-obRegSeguir.onclick = () => ir('ob3');
+obRegSeguir.onclick = () => ir('ob2c');
 // Nadie tiene que contestar para poder entrar. Sin elegir, Amber usa su voz de siempre.
-$('#ob-reg-saltar').onclick = () => { registroOnboarding = null; ir('ob3'); };
+$('#ob-reg-saltar').onclick = () => { estiloOnboarding = null; ir('ob2c'); };
+
+// Temas: hasta tres, para no tener que explicar de nuevo de qué se trata. Se guarda
+// el texto tal cual se ve. Con tres elegidos los demás se apagan.
+let temasOnboarding = [];
+const chipsTemas = [...document.querySelectorAll('#ob2c .chip')], obTemasSeguir = $('#ob-temas-seguir');
+chipsTemas.forEach(b => {
+  b.onclick = () => {
+    const t = b.textContent.trim();
+    temasOnboarding = temasOnboarding.includes(t) ? temasOnboarding.filter(x => x !== t) : [...temasOnboarding, t].slice(0, 3);
+    chipsTemas.forEach(c => {
+      const elegido = temasOnboarding.includes(c.textContent.trim());
+      c.setAttribute('aria-pressed', String(elegido));
+      c.disabled = !elegido && temasOnboarding.length >= 3;
+    });
+    obTemasSeguir.disabled = !temasOnboarding.length;
+    vibrar(10);
+  };
+});
+obTemasSeguir.onclick = () => ir('ob3');
+$('#ob-temas-saltar').onclick = () => { temasOnboarding = []; ir('ob3'); };
 
 const obCheck = $('#ob-check'), obEntrar = $('#ob-entrar');
 obCheck.addEventListener('change', () => { obEntrar.disabled = !obCheck.checked; });
 obEntrar.onclick = () => {
-  memoria = { activa: true, apodo: apodoOnboarding, genero: generoOnboarding, registro: registroOnboarding,
-              objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  memoria = { activa: true, apodo: apodoOnboarding, genero: generoOnboarding, estilo: estiloOnboarding,
+              temas: temasOnboarding, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria();
   pintarEntrada();
   ir('entrada');
