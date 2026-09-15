@@ -239,12 +239,19 @@ export default async function handler(req, res) {
     else try {
       const ctx = limpios.slice(-4).map(m => `${m.role === 'user' ? 'PERSONA' : 'AMBER'}: ${m.content}`).join('\n');
       // Sin temperature: Sonnet 5 la rechaza con 400. El determinismo lo da el prompt.
-      const out = await anthropic({ model: MODELO_CLASIF, max_tokens: 80,
+      // Sonnet 5 piensa antes de contestar y el tope cuenta ese pensamiento: con 80, a
+      // veces lo gastaba entero y no quedaba JSON (1 de 30 en la prueba del 15/9, justo
+      // después de un "no quiero seguir viviendo").
+      const out = await anthropic({ model: MODELO_CLASIF, max_tokens: 1024,
         system: [{ type: 'text', text: CLASIF, cache_control: { type: 'ephemeral' } }],
         messages: [{ role: 'user', content: ctx }] }, key);
       usoClasif = out.usage ?? null;
       const j = JSON.parse(soloTexto(out).match(/\{[\s\S]*\}/)?.[0] ?? '{}');
-      if (['ninguno', 'ambiguo', 'atencion', 'alto'].includes(j.nivel)) riesgo = { nivel: j.nivel, motivo: j.motivo ?? '' };
+      // Una respuesta sin nivel no es "ninguno": es un clasificador que falló. Antes se
+      // tomaba como ninguno en silencio y "estarían todos mejor sin mí" pasaba sin
+      // protocolo. Como falla, entra la red de seguridad de abajo.
+      if (!['ninguno', 'ambiguo', 'atencion', 'alto'].includes(j.nivel)) throw new Error(`respuesta sin nivel (stop_reason: ${out.stop_reason})`);
+      riesgo = { nivel: j.nivel, motivo: j.motivo ?? '' };
     } catch (e) { clasificadorFallo = true; console.error('clasificador:', e.message); }
     if (clasificadorFallo && RIESGO_SIN_CLASIFICADOR.test(limpios.filter(m => m.role === 'user').at(-1)?.content ?? ''))
       riesgo = { nivel: 'alto', motivo: 'sin clasificador, palabra de riesgo' };

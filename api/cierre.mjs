@@ -34,7 +34,10 @@ export default async function handler(req, res) {
 
     const out = await anthropic({
       model: MODELO,
-      max_tokens: 400,
+      // Sonnet 5 piensa antes de escribir y el tope cuenta ese pensamiento. Con 400, una
+      // de seis despedidas salió vacía (la de después de una crisis) y el resumen se
+      // perdía: esa charla no quedaba en la memoria.
+      max_tokens: 2048,
       system: [
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
         { type: 'text', text: CIERRE },
