@@ -482,6 +482,7 @@ const DIA_PALABRA = { 1:'Muy difícil', 2:'Difícil', 3:'Ni bien ni mal', 4:'Bie
 const hoyISO = () => new Date().toLocaleDateString('sv');   // sv da AAAA-MM-DD
 
 const diaCaja = $('#dia-caja'), diaInput = $('#dia'), diaValor = $('#dia-v');
+const diaBarra = $('#dia-barra'), diaGuardar = $('#dia-guardar');
 
 const diaDeHoy = () => (memoria?.dia?.fecha === hoyISO() ? memoria.dia : null);
 
@@ -490,13 +491,25 @@ const diaDeHoy = () => (memoria?.dia?.fecha === hoyISO() ? memoria.dia : null);
 // seis puede estar destrozado a las once, y la home no puede quedar mintiendo.
 let diaEditando = false;
 
+// "Prefiero no decir" también es una respuesta: abre la puerta, pero se guarda
+// sin valor, así Amber no abre preguntando por un día que no le contaron.
 function pintarDia() {
   const d = diaDeHoy();
   diaCaja.classList.toggle('sin-tocar', !d);
+  diaCaja.classList.remove('tocada');
+  diaCaja.classList.toggle('sin-decir', !!d && !d.valor);
   diaCaja.classList.toggle('cerrada', !!d && !diaEditando);
-  diaInput.value = d ? d.valor : 3;
-  diaValor.textContent = d ? DIA_PALABRA[d.valor] : 'Movela';
+  diaGuardar.hidden = true;
+  moverPiedra(d?.valor || 3);
+  diaValor.textContent = !d ? 'Movela' : d.valor ? DIA_PALABRA[d.valor] : 'Prefiero no decir';
   puertaChat();
+}
+
+// El pulgar es la piedra: se dibuja aparte y sigue al control nativo, que queda encima.
+function moverPiedra(v) {
+  diaInput.value = v;
+  diaBarra.style.setProperty('--pct', `${(v - 1) * 25}%`);
+  diaInput.setAttribute('aria-valuetext', DIA_PALABRA[v]);
 }
 
 $('#dia-cambiar').onclick = () => {
@@ -526,14 +539,15 @@ function senalarDia() {
   diaInput.focus({ preventScroll: true });
 }
 
-// Contestar la barra ES entrar a hablar: marcar cómo estuvo el día y después
-// tener que tocar otro botón para contarlo parte en dos un solo gesto.
-let entrando = null;
-
+// Mover la barra no guarda: guarda la flecha que aparece al moverla. Así se puede
+// ir y venir hasta encontrar la palabra, y la flecha es entrar a hablar.
 diaInput.addEventListener('input', () => {
-  clearTimeout(entrando);       // si la seguís moviendo, todavía no terminaste
-  diaCaja.classList.remove('sin-tocar');
-  diaValor.textContent = DIA_PALABRA[diaInput.value];
+  const v = Number(diaInput.value);
+  moverPiedra(v);
+  diaCaja.classList.remove('sin-tocar', 'sin-decir');
+  diaCaja.classList.add('tocada');
+  diaValor.textContent = DIA_PALABRA[v];
+  diaGuardar.hidden = false;
 });
 // El servidor corre en UTC; el "hoy" lo decide el reloj de quien escribe.
 // Una puntuación de anteayer no le sirve a Amber para nada, así que no viaja.
@@ -544,30 +558,32 @@ function memoriaParaEnviar() {
   return resto;
 }
 
-diaInput.addEventListener('change', () => {
+function guardarDia(valor) {
   if (!memoria) return;
   // Corregir una respuesta ya dada no te manda a ningún lado: si tocaste
   // "Cambiar" fue para arreglar el dato, no para abrir una conversación.
   const primeraDeHoy = !diaDeHoy();
-  memoria.dia = { valor: Number(diaInput.value), fecha: hoyISO() };
+  memoria.dia = { valor, fecha: hoyISO() };
   guardarMemoria();
   diaEditando = false;
   pintarDia();
   vibrar(12);
-  const palabra = DIA_PALABRA[diaInput.value].toLowerCase();
+  const anotado = valor
+    ? `Tu día quedó anotado como ${DIA_PALABRA[valor].toLowerCase()}.`
+    : 'Listo, no hace falta decir cómo estuvo tu día.';
   if (!primeraDeHoy) {
     // Cambiaste la respuesta: la pregunta con la que Amber iba a abrir ya no
     // corresponde. Se rehace, salvo que ya hayan hablado: el pasado no se reescribe.
     if (!mensajes.length) { conversacionAbierta = false; aperturasEl = null; accesoMostrado = false; hilo.innerHTML = ''; }
-    anunciar(`Tu día quedó anotado como ${palabra}.`);
+    anunciar(anotado);
+    $('#dia-cambiar').focus({ preventScroll: true });
     return;
   }
-  // Sin espera: la pausa se leía como demora, no como respiro. Si te equivocaste,
-  // volvés con la flecha y lo cambiás desde la home.
-  anunciar(`Tu día quedó anotado como ${palabra}. Abro la conversación.`);
-  clearTimeout(entrando);
+  anunciar(`${anotado} Abro la conversación.`);
   ir('conv');
-});
+}
+diaGuardar.onclick = () => guardarDia(Number(diaInput.value));
+$('#dia-no-decir').onclick = () => guardarDia(null);
 
 // ── conversación ──────────────────────────────────────────────────────────
 const hilo = $('#hilo'), bajar = $('#bajar'), aviso = $('#aviso');
@@ -655,7 +671,7 @@ const APERTURA_DIA = {
 };
 const aperturaDeHoy = () => {
   const d = diaDeHoy();
-  return d ? APERTURA_DIA[d.valor] : { texto: APERTURA, opciones: APERTURAS };
+  return d?.valor ? APERTURA_DIA[d.valor] : { texto: APERTURA, opciones: APERTURAS };
 };
 let aperturasEl = null, conversacionAbierta = false, aperturaMostrada = '';
 function abrirConversacion() {
