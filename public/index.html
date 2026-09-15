@@ -246,7 +246,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
       <div class="barra-der">
-        <button class="pill" data-ir="calma">Calmarme</button>
+        <button class="pill" data-ir="calma">Respirar</button>
         <button class="pill" id="cerrar-hoy" hidden>Cerrar por hoy</button>
       </div>
     </div>
@@ -295,15 +295,19 @@
   <!-- RESPIRAR: a oscuras siempre, sea cual sea el tema. Es el único lugar de la app
        que se usa con los ojos cerrados. -->
   <section class="p" id="calma" data-fase="quieto">
+    <!-- La escena de atrás: una niebla que se desplaza muy lento durante todo el
+         ejercicio y una luz que se aclara apenas al inhalar. -->
+    <div class="calma-fondo" aria-hidden="true"><div class="calma-niebla"></div><div class="calma-luz" id="calma-luz"></div></div>
     <div class="barra calma-barra">
-      <span></span>
-      <button class="calma-sonido" id="calma-sonido" aria-pressed="false" aria-label="Sonido" title="Activar sonido">
-        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <button class="calma-salir" id="salir-calma">Terminar</button>
+      <button class="calma-sonido" id="calma-sonido" aria-pressed="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
           <path class="parlante" d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/>
           <path class="onda onda-1" d="M15.4 9.3a3.8 3.8 0 0 1 0 5.4"/>
           <path class="onda onda-2" d="M18.2 6.7a7.5 7.5 0 0 1 0 10.6"/>
           <path class="cruz" pathLength="1" d="M16 9.5l5 5M21 9.5l-5 5"/>
         </svg>
+        <span id="calma-sonido-t">Sumá sonido</span>
       </button>
     </div>
     <div class="calma-tecnicas" id="calma-tecnicas" role="radiogroup" aria-label="Cómo respirar">
@@ -313,7 +317,7 @@
     </div>
     <div class="crece"></div>
     <div class="orbe" aria-hidden="true">
-      <div class="o1"></div><div class="o2"></div>
+      <div class="o1" id="calma-o1"></div><div class="rastro" id="calma-rastro"></div><div class="o2" id="calma-o2"></div>
       <div class="pal"><span class="w-inhala">Inhalá</span><span class="w-inhala2">Un poco más</span><span class="w-suelta">Soltá</span></div>
     </div>
     <div class="calma-texto">
@@ -325,7 +329,6 @@
     <div class="calma-fin" id="calma-fin">
       <button class="btn btn-noche" id="calma-otro">Otro rato</button>
     </div>
-    <button class="link calma-link" id="salir-calma">Terminar</button>
     <p class="solo-lector" id="calma-aviso" role="status" aria-live="polite"></p>
   </section>
 
