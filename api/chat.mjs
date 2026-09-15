@@ -42,6 +42,9 @@ function bloqueMemoria(m) {
   const estilo = m.estilo ?? m.registro;
   if (estilo === 'escuchar') l.push('Te pidió que la escuches más de lo que le devolvés. Quedate un turno más en lo que te dice antes de traer nada tuyo, y no le propongas ni le señales contradicciones si no te lo pide. Esto no aplica cuando hay riesgo: ahí hablás igual.');
   if (estilo === 'devolver') l.push('Te pidió que le digas lo que ves, aunque incomode. Podés nombrar algo que se repite o algo que no cierra en lo que cuenta. Sigue prohibido diagnosticar, etiquetar y sermonear: nombrás lo que viste, no lo que concluís.');
+  // Lo eligió al entrar, para no tener que explicarlo de nuevo. Es de dónde viene,
+  // no una agenda: si Amber los saca ella, deja de ser una charla.
+  if (m.temas?.length) l.push(`Al entrar dijo que quería hablar de: ${m.temas.join('; ')}. No los traigas vos; si aparecen, ya sabés de qué se trata.`);
   if (m.objetivos?.length)   l.push(`Lo que viene trabajando: ${m.objetivos.join('; ')}`);
   if (m.estrategias?.length) l.push(`Lo que le ayudó antes: ${m.estrategias.join('; ')}`);
   if (m.sensibles?.length)   l.push(`Temas sensibles, que vos no traés: ${m.sensibles.join('; ')}`);
