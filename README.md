@@ -36,6 +36,7 @@ node --env-file=.env probar.mjs --estimar                 # cuánto costaría, s
 node --env-file=.env probar.mjs --modelo sonnet           # modelo que escribe (default haiku)
 node --env-file=.env probar.mjs --riesgo ninguno          # saltea el clasificador: para probar solo la voz
 node --env-file=.env probar.mjs --juez sonnet             # juez de empatía más barato (default opus; "no" lo apaga)
+AMBER_PROMPT=v3 node --env-file=.env probar.mjs            # prueba otra versión de la voz (v2 o v3; default: la del servidor)
 ```
 
 Al terminar imprime el costo real, separado en entrada, caché y salida. Ojo: en

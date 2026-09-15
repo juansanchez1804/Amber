@@ -119,7 +119,7 @@ document.addEventListener('click', e => {
   if (b.getAttribute('aria-disabled') === 'true') { senalarDia(); return; }
   ir(b.dataset.ir);
 });
-$('#salir-calma').onclick = () => ir(mensajes.length ? 'conv' : 'entrada');
+$('#salir-calma').onclick = () => { if (!volverDeRespirar()) ir(mensajes.length ? 'conv' : 'entrada'); };
 $('#salir-mem').onclick   = () => ir('menu');
 $('#salir-menu').onclick  = () => ir(mensajes.length && !cortado ? 'conv' : 'entrada');
 $('#salir-ayuda').onclick = () => ir(pantallaPrevia === 'ayuda' ? 'conv' : pantallaPrevia);
@@ -182,6 +182,7 @@ function pintarTecnicas() {
 }
 
 function empezarRespiracion() {
+  clearTimeout(vueltaRespirar);
   pararRespiracion();
   resp = { ciclo: 0, timer: null, audio: null, pausada: false };
   delete calma.dataset.terminado;
@@ -233,6 +234,42 @@ function terminarRespiracion() {
   calma.dataset.terminado = '';
   $('#salir-calma').textContent = 'Volver';
   avisarCalma('Terminó. Podés seguir un rato más o volver.');
+  // Si la abrió Amber en medio de la charla, el "Ya está" se ve un momento y se
+  // vuelve sola a la conversación.
+  if (respiracionDesdeCharla) vueltaRespirar = setTimeout(volverDeRespirar, 2400);
+}
+
+// Amber puede abrir la respiración: termina su mensaje con [RESPIRAR]. El marcador no
+// se muestra; el mensaje se lee entero y dos segundos y medio después arranca. Al
+// volver, termine o se salga antes, Amber ya dejó escrito que sigue ahí: nunca se
+// vuelve a una charla que quedó muda.
+const MARCA_RESPIRAR = '[RESPIRAR]';
+const VUELTA_RESPIRAR = 'Acá estoy. Seguimos cuando quieras.';
+let respiracionDesdeCharla = false, vueltaRespirar = null;
+function respirarDesdeCharla() {
+  if (cortado || document.querySelector('.p.on')?.id !== 'conv') return;
+  respiracionDesdeCharla = true;
+  ir('calma');
+}
+function volverDeRespirar() {
+  if (!respiracionDesdeCharla) return false;
+  respiracionDesdeCharla = false;
+  clearTimeout(vueltaRespirar);
+  ir('conv');
+  turno('assistant', VUELTA_RESPIRAR);
+  mensajes.push({ role: 'assistant', content: VUELTA_RESPIRAR });
+  anunciar(VUELTA_RESPIRAR);
+  return true;
+}
+// Lo que se puede mostrar de lo que llegó: sin el marcador y, mientras sigue
+// llegando, sin la cola que todavía podría ser uno ("[RES" llega antes que
+// "PIRAR]") ni los renglones en blanco que lo preceden.
+function sinMarca(crudo, terminado) {
+  let v = crudo.replace(/\s*\[RESPIRAR\][ \t]*/g, '');
+  if (terminado) return v.trimEnd();
+  const i = v.lastIndexOf('[');
+  if (i > -1 && MARCA_RESPIRAR.startsWith(v.slice(i))) v = v.slice(0, i);
+  return v.replace(/\s+$/, '');
 }
 
 function pararRespiracion() {
@@ -936,7 +973,10 @@ async function mandar(textoDirecto) {
   try {
     const r = await fetch('/api/chat', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mensajes, memoria: memoriaParaEnviar(), ambiguos }),
+      // El saludo con el que abrió la conversación va primero: sin él, Amber contesta
+      // a una pregunta que no ve.
+      body: JSON.stringify({ mensajes: aperturaMostrada ? [{ role: 'assistant', content: aperturaMostrada }, ...mensajes] : mensajes,
+                             memoria: memoriaParaEnviar(), ambiguos }),
     });
     if ((r.headers.get('content-type') ?? '').includes('text/event-stream')) await leerStream(r, p);
     else {
@@ -953,7 +993,7 @@ async function mandar(textoDirecto) {
 
 async function leerStream(r, p) {
   const lector = r.body.getReader(), dec = new TextDecoder();
-  let resto = '', nodo = null, rev = null, riesgo = 'ninguno', fin = false, texto = '';
+  let resto = '', nodo = null, rev = null, riesgo = 'ninguno', fin = false, crudo = '', mostrado = '';
   for (;;) {
     const { value, done } = await lector.read();
     if (done) break;
@@ -966,12 +1006,21 @@ async function leerStream(r, p) {
       let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
       if (d.tipo === 'riesgo') { riesgo = d.nivel; if (d.ambiguo) ambiguos++; }
       else if (d.tipo === 'texto') {
-        if (!nodo) { p.remove(); nodo = turno('assistant', ''); rev = revelador(nodo); }
-        texto += d.t; rev.empujar(d.t);
+        crudo += d.t;
+        const visible = sinMarca(crudo, false);
+        if (visible.length > mostrado.length) {
+          if (!nodo) { p.remove(); nodo = turno('assistant', ''); rev = revelador(nodo); }
+          rev.empujar(visible.slice(mostrado.length)); mostrado = visible;
+        }
       } else if (d.tipo === 'fin') fin = d.fin === true;
     }
   }
   p.remove();
+  const texto = sinMarca(crudo, true);
+  if (texto.length > mostrado.length) {
+    if (!nodo) { nodo = turno('assistant', ''); rev = revelador(nodo); }
+    rev.empujar(texto.slice(mostrado.length));
+  }
   if (rev) await rev.terminar();
   if (!nodo) { turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); return; }
   mensajes.push({ role: 'assistant', content: texto });
@@ -980,6 +1029,7 @@ async function leerStream(r, p) {
   verCerrar();
   if (riesgo === 'alto') recursos();
   if (fin) cortar();
+  else if (crudo.includes(MARCA_RESPIRAR)) setTimeout(respirarDesdeCharla, 2500);
 }
 
 // ── memoria ───────────────────────────────────────────────────────────────

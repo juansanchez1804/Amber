@@ -3,8 +3,20 @@ import { readFileSync } from 'node:fs';
 // Se leen los .md directamente: así, editar prompts/system.md desde GitHub
 // cambia la voz de Amber sin ningún paso intermedio.
 const leer = (n) => readFileSync(new URL(`../prompts/${n}`, import.meta.url), 'utf8');
-const SYSTEM = leer('system.md');
+
+// ── Versión de la voz ──────────────────────────────────────────────────────
+// v3: prompts/system-v3.md y los bloques de prompts/bloques-v3.md.
+// v2: prompts/system.md y los bloques escritos más abajo en este archivo.
+// Producción sigue en v2 hasta decidir sobre lo que la medición encontró en la v3
+// (mediciones/v3/comparacion.md). Se cambia de versión en esta línea, o con
+// AMBER_PROMPT=v3 en el entorno sin tocar el código.
+export const VERSION_PROMPT = process.env.AMBER_PROMPT || 'v2';
+export const SYSTEM = leer(VERSION_PROMPT === 'v3' ? 'system-v3.md' : 'system.md');
 const CLASIF = leer('clasificador.md');
+
+// bloques-v3.md: cada "## nombre" es un texto. El comentario del principio no se manda.
+const BLOQUES_V3 = Object.fromEntries([...leer('bloques-v3.md').split('-->').at(-1)
+  .matchAll(/^## (\w+)\n([\s\S]*?)(?=\n## \w+\n|(?![\s\S]))/gm)].map(([, n, t]) => [n, t.trim()]));
 
 // Producción usa Sonnet. probar.mjs elige otro con AMBER_MODELO_CHARLA.
 const MODELO_CHARLA = process.env.AMBER_MODELO_CHARLA || 'claude-sonnet-5';
@@ -63,6 +75,76 @@ function bloqueMemoria(m) {
     l.push(`\nDe las últimas conversaciones:\n${m.resumenes.map(r => `- ${linea(r)}`).join('\n')}`);
   }
   return l.length ? `\n\n## Lo que sabés de quien te escribe\n\n${l.join('\n')}` : '';
+}
+
+// ── Bloques v3: el único lugar donde se eligen los textos y se llenan los {{marcadores}}.
+// Una línea cuyo marcador queda vacío se saca entera, así lo que no se sabe no aparece.
+function llenar(plantilla, datos) {
+  return plantilla.split('\n').flatMap(linea => {
+    const marcas = [...linea.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]);
+    if (marcas.some(k => !datos[k])) return [];
+    return [linea.replace(/\{\{(\w+)\}\}/g, (_, k) => datos[k])];
+  }).join('\n');
+}
+// "a, b y c", en minúscula: van en medio de una oración.
+const enProsa = (xs) => {
+  const l = xs.map(x => String(x).charAt(0).toLowerCase() + String(x).slice(1));
+  return l.length > 1 ? `${l.slice(0, -1).join(', ')} y ${l.at(-1)}` : (l[0] ?? '');
+};
+
+function bloqueV3({ memoria, riesgo, clasificadorFallo, limpios, primera }) {
+  const B = BLOQUES_V3, m = memoria?.activa ? memoria : {};
+  const g = generoDe(memoria);
+  const estilo = m.estilo ?? m.registro;
+  const hoy = Date.parse(new Date().toISOString().slice(0, 10));
+  const resumen = (r) => {
+    if (typeof r === 'string') return r;
+    const d = Math.round((hoy - Date.parse(r.f)) / 86400000);
+    const c = d <= 0 ? 'Hoy' : d === 1 ? 'Ayer' : d < 7 ? `Hace ${d} días`
+            : d < 14 ? 'La semana pasada' : `Hace ${Math.floor(d / 7)} semanas`;
+    return `${c}, ${r.t.charAt(0).toLowerCase()}${r.t.slice(1)}`;
+  };
+  const memoriaTexto = llenar(B.memoria, {
+    apodo: m.apodo,
+    linea_genero: g === 'masculino' ? B.genero_m : g === 'femenino' ? B.genero_f
+                : m.genero === 'neutro' ? B.genero_neutro : B.genero_sin_dato,
+    linea_estilo: estilo === 'escuchar' ? B.estilo_escuchar : estilo === 'devolver' ? B.estilo_devolver : '',
+    linea_temas: m.temas?.length ? llenar(B.temas, { temas: enProsa(m.temas) }) : '',
+    linea_trabajando: m.objetivos?.length ? llenar(B.trabajando, { objetivos: enProsa(m.objetivos) }) : '',
+    linea_ayudo: m.estrategias?.length ? llenar(B.ayudo, { estrategias: enProsa(m.estrategias) }) : '',
+    linea_sensibles: m.sensibles?.length ? llenar(B.sensibles, { sensibles: enProsa(m.sensibles) }) : '',
+    resumenes_recientes: m.resumenes?.length
+      ? llenar(B.resumenes, { resumenes: m.resumenes.map(resumen).map(t => /[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`).join(' ') }) : '',
+  });
+
+  const partes = [memoriaTexto, llenar(B.senal, { senal: riesgo.nivel })];
+  if (riesgo.motivo.endsWith('(repetida)')) partes.push(B.repetida);
+  else if (riesgo.nivel === 'alto') partes.push(B.alto);
+  if (clasificadorFallo && riesgo.nivel === 'ninguno') partes.push(B.sin_clasificador);
+  // El saludo no cuenta: limpios no lo trae. Si no, los saludos que terminan en
+  // pregunta ("¿Qué fue lo que más te pesó?") le prohibirían preguntar justo en la
+  // primera respuesta, que es donde el prompt dice que más vale hacerlo.
+  const ultimaDeAmber = [...limpios].reverse().find(x => x.role === 'assistant');
+  if (riesgo.nivel !== 'alto' && ultimaDeAmber && /\?\s*$/.test(ultimaDeAmber.content.trim())) partes.push(B.preguntas);
+  if (primera) partes.push(B.primer_mensaje);
+  return partes.filter(Boolean).join('\n\n');
+}
+
+// La API rechaza una conversación que empieza con Amber o que tiene dos turnos
+// seguidos del mismo lado. Con el saludo en el historial, y con el "acá estoy" que
+// deja la respiración, pasan las dos cosas: acá se ordena, justo antes de mandar.
+function paraElModelo(msgs, saludo) {
+  const out = [];
+  for (const x of msgs) {
+    if (out.length && out.at(-1).role === x.role) out.at(-1).content += `\n\n${x.content}`;
+    else out.push({ ...x });
+  }
+  // Sin saludo, un historial recortado que empieza con Amber pierde ese turno (antes
+  // era un 400). Con saludo, va primero lo mínimo que la API pide de la persona.
+  if (!saludo) { while (out[0]?.role === 'assistant') out.shift(); return out; }
+  if (out[0]?.role === 'assistant') out[0].content = `${saludo}\n\n${out[0].content}`;
+  else out.unshift({ role: 'assistant', content: saludo });
+  return [{ role: 'user', content: BLOQUES_V3.abre_conversacion }, ...out];
 }
 
 function guiaPreguntas(mensajes) {
@@ -134,7 +216,11 @@ export default async function handler(req, res) {
   if (!key) return res.status(500).json({ error: 'falta ANTHROPIC_API_KEY' });
 
   try {
-    const { mensajes, memoria, ambiguos } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { mensajes: todos, memoria, ambiguos } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    // La app manda primero el saludo con el que abrió la conversación. Se separa: el
+    // clasificador, el tope y el conteo de mensajes siguen mirando solo la charla.
+    const saludo = Array.isArray(todos) && todos[0]?.role === 'assistant' ? String(todos[0].content).slice(0, 4000) : null;
+    const mensajes = saludo ? todos.slice(1) : todos;
     if (!Array.isArray(mensajes) || !mensajes.length)
       return res.status(400).json({ error: 'faltan mensajes' });
 
@@ -212,6 +298,14 @@ export default async function handler(req, res) {
         ? '\n\nEs el primer mensaje. Vos ya abriste con una línea sobre el día que acaba de marcar, así que esto que te escribe es la respuesta: entrá directo en lo que te cuenta. No saludes, no te presentes y no vuelvas a preguntarle lo mismo. Si te dice que prefiere no hablar de eso, no insistas: soltá el tema y quedate. De esta respuesta depende que siga hablando: que sienta que alguien la escuchó, no que llenó un formulario.'
         : '\n\nEs el primer mensaje de la conversación. Vos ya abriste con una línea corta diciendo que estás acá: no vuelvas a saludar ni a presentarte. De esta respuesta depende que siga hablando: que sienta que alguien la escuchó, no que llenó un formulario.';
 
+    const v3 = VERSION_PROMPT === 'v3';
+    const bloque = v3
+      ? bloqueV3({ memoria, riesgo, clasificadorFallo, limpios, primera: limpios.filter(m => m.role === 'user').length === 1 })
+      : `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${sinSenal}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}`;
+    // La v2 no sabía del saludo: se le manda la charla como antes. El saludo entra
+    // solo mientras siga dentro de los últimos 30 mensajes.
+    const historial = v3 ? paraElModelo(limpios, mensajes.length <= 30 ? saludo : null) : paraElModelo(limpios, null);
+
     const usoCharla = {};
     // Tope de seguridad, no de estilo: es un corte duro que el modelo no ve y deja
     // frases por la mitad. El largo de las respuestas lo decide el prompt.
@@ -220,9 +314,9 @@ export default async function handler(req, res) {
       max_tokens: 1024,
       system: [
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
-        { type: 'text', text: `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${sinSenal}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}${extra}` },
+        { type: 'text', text: `${bloque}${extra}` },
       ],
-      messages: limpios,
+      messages: historial,
     });
 
     if (riesgo.nivel === 'alto') {
@@ -233,8 +327,9 @@ export default async function handler(req, res) {
       Object.assign(usoCharla, uno.usage ?? {});
       let texto = soloTexto(uno);
       const sinGenero = !generoDe(memoria);
+      const avisoGenero = v3 ? `\n\n${BLOQUES_V3.aviso_genero}` : AVISO_GENERO;
       const falla = (t) => (VEREDICTO.test(t) ? AVISO_REINTENTO
-                          : sinGenero && GENERO_FUGA.test(t) ? AVISO_GENERO : null);
+                          : sinGenero && GENERO_FUGA.test(t) ? avisoGenero : null);
       const aviso = falla(texto);
       if (aviso) {
         const dos = await anthropic(pedido(aviso), key);

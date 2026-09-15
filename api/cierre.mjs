@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
+// La voz sale del mismo archivo que el resto, en la misma versión que elige el chat:
+// una despedida tiene que sonar a Amber, no a un sistema cerrando una sesión.
+import { SYSTEM } from './chat.mjs';
 
-// La voz sale del mismo archivo que el resto: una despedida tiene que sonar a
-// Amber, no a un sistema cerrando una sesión.
 const leer = (n) => readFileSync(new URL(`../prompts/${n}`, import.meta.url), 'utf8');
-const SYSTEM = leer('system.md');
 const CIERRE = leer('cierre.md');
 
 const MODELO = 'claude-sonnet-5';
