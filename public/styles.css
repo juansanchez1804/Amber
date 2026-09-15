@@ -282,7 +282,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* respirar: siempre a oscuras. Es la única pantalla que se usa con los ojos
    cerrados, y un fondo blanco a pleno brillo es lo contrario de calmarse. Todo en el
    mismo violeta: lo que cambia entre técnicas es cómo se mueve, no el color. */
-#calma{align-items:center;color:var(--sobre-acento);
+#calma{--crema:#F4EFE6;align-items:center;color:var(--crema);
   background:radial-gradient(130% 95% at 50% 40%,color-mix(in srgb,var(--ambar) 34%,var(--noche)) 0%,var(--noche) 72%)}
 #calma::before{content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(60% 42% at 50% 40%,color-mix(in srgb,var(--ambar) 60%,transparent),transparent 72%);
@@ -320,7 +320,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* Sonido: una invitación con palabras, no solo un ícono. Apagado, el parlante lleva
    una cruz y dice "Sumá sonido"; prendido, salen las ondas y dice "Silenciar". */
 .calma-sonido{height:36px;padding:0 14px 0 10px;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:6px;
-  background:none;color:var(--sobre-acento);border:1px solid color-mix(in srgb,var(--sobre-acento) 26%,transparent);
+  background:none;color:var(--crema);border:1px solid color-mix(in srgb,var(--crema) 26%,transparent);
   font-family:var(--sans);font-size:13px;opacity:.8;transition:opacity .3s ease,background-color .3s ease,border-color .3s ease}
 .calma-sonido[hidden]{display:none}
 .calma-sonido svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;overflow:visible;flex:none}
@@ -356,17 +356,20 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #calma .pal{position:relative;width:200px;height:40px;display:flex;align-items:center;justify-content:center}
 /* Al cambiar de fase, la palabra que se va sale rápido y la que llega entra después:
    si se fundieran juntas, por un momento se leerían las dos encimadas. */
-#calma .pal span{position:absolute;font-family:var(--serif);font-size:32px;color:var(--sobre-acento);opacity:0;transition:opacity .2s ease;white-space:nowrap}
+#calma .pal span{position:absolute;font-family:var(--serif);font-size:32px;color:var(--crema);opacity:0;transition:opacity .2s ease;white-space:nowrap}
 #calma[data-fase="inhala"] .w-inhala,#calma[data-fase="inhala2"] .w-inhala2,#calma[data-fase="suelta"] .w-suelta{opacity:1;transition:opacity .6s ease .2s}
 
-.calma-texto{text-align:center;min-height:84px;margin-top:16px;transition:opacity .8s ease}
+/* El texto y la barra van juntos, del mismo ancho: la barra es la última línea del
+   texto, no algo que flota abajo. */
+.calma-pie{width:240px;max-width:100%;margin-top:16px;display:flex;flex-direction:column;align-items:stretch}
+.calma-texto{text-align:center;min-height:84px;transition:opacity .8s ease}
 .calma-t{margin:0;font-family:var(--serif);font-size:22px;line-height:1.25}
-.calma-s{margin:8px auto 0;max-width:280px;font-size:15px;line-height:1.55;opacity:.74;text-wrap:balance}
+.calma-s{margin:8px auto 0;max-width:240px;font-size:15px;line-height:1.55;opacity:.74;text-wrap:balance}
 #calma[data-fase="inhala"] .calma-texto,#calma[data-fase="inhala2"] .calma-texto,#calma[data-fase="suelta"] .calma-texto{opacity:0}
 
-#calma .barrita{width:132px;height:2px;border-radius:1px;overflow:hidden;margin-top:12px;
-  background:color-mix(in srgb,var(--sobre-acento) 18%,transparent)}
-#calma .barrita i{display:block;height:100%;width:0;background:color-mix(in srgb,var(--sobre-acento) 72%,transparent)}
+#calma .barrita{height:2px;border-radius:1px;overflow:hidden;margin-top:14px;
+  background:color-mix(in srgb,var(--crema) 15%,transparent)}
+#calma .barrita i{display:block;height:100%;width:0;background:color-mix(in srgb,var(--crema) 35%,transparent)}
 
 /* El final ocupa su lugar desde el principio: si apareciera empujando, el orbe
    saltaría hacia arriba justo cuando la persona terminó de calmarse. */
@@ -679,15 +682,21 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 }
 
 /* Elegir cómo respirar. Está arriba y en voz baja: la pantalla es para respirar,
-   no para configurar. Con aire respecto de la fila de arriba. Cuando el ejercicio
-   arranca, desaparece. */
-.calma-tecnicas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;flex-shrink:0;
+   no para configurar. Tres palabras sueltas, sin caja: la elegida en crema pleno con
+   una línea fina debajo, que se desliza hasta la nueva al cambiar. Cuando el
+   ejercicio arranca, desaparecen. */
+.calma-tecnicas{position:relative;display:flex;gap:26px;justify-content:center;flex-shrink:0;
   margin-top:20px;transition:opacity .5s ease}
-.calma-tec{background:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;
-  padding:7px 13px;font-family:var(--sans);font-size:13px;color:rgba(255,255,255,.62);
-  cursor:pointer;transition:color .25s ease,border-color .25s ease,background .25s ease}
-.calma-tec[aria-checked="true"]{color:#fff;border-color:rgba(255,255,255,.55);
-  background:rgba(255,255,255,.10)}
+.calma-tec{min-height:44px;padding:0;background:none;border:0;cursor:pointer;
+  font-family:var(--serif);font-size:15px;color:var(--crema);opacity:.4;transition:opacity .3s ease}
+.calma-tec[aria-checked="true"]{opacity:1}
+@media (hover:hover){ .calma-tec:not([aria-checked="true"]):hover{opacity:.7} }
+.calma-tec:focus-visible{outline-color:var(--crema)}
+.calma-tec-linea{position:absolute;left:0;bottom:9px;height:1px;width:0;background:var(--crema);
+  transform:translateX(var(--x,0));width:var(--ancho,0);
+  transition:transform .3s cubic-bezier(.37,0,.63,1),width .3s cubic-bezier(.37,0,.63,1)}
+.calma-tec-linea.sin-transicion{transition:none}
+@media (prefers-reduced-motion:reduce){ .calma-tec-linea{transition:none} }
 #calma:not([data-fase="quieto"]) .calma-tecnicas{opacity:0;pointer-events:none}
 #calma[data-terminado] .calma-tecnicas{opacity:1;pointer-events:auto}
 
@@ -717,5 +726,6 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   #calma .o2,#calma .rastro{width:110px;height:110px}
   #calma .pal span{font-size:22px}
   .calma-tecnicas{margin-top:12px}
-  .calma-texto{margin-top:12px;min-height:76px}
+  .calma-pie{margin-top:12px}
+  .calma-texto{min-height:76px}
 }

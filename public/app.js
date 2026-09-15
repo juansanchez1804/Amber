@@ -189,11 +189,26 @@ tecnicasEl.querySelectorAll('.calma-tec').forEach(b => {
     empezarRespiracion();
   };
 });
-function pintarTecnicas() {
+function pintarTecnicas(deslizar = true) {
   const cual = prefs.respirar ?? 'calmar';
-  tecnicasEl.querySelectorAll('.calma-tec').forEach(b =>
-    b.setAttribute('aria-checked', String(b.dataset.tec === cual)));
+  let activa = null;
+  tecnicasEl.querySelectorAll('.calma-tec').forEach(b => {
+    const es = b.dataset.tec === cual;
+    b.setAttribute('aria-checked', String(es));
+    if (es) activa = b;
+  });
+  // La línea va debajo de la palabra elegida, de su mismo ancho. Al tocar otra se
+  // desliza; al entrar a la pantalla, aparece ya en su lugar.
+  const linea = $('#calma-tec-linea');
+  if (!activa || !activa.offsetWidth) return;
+  linea.classList.toggle('sin-transicion', !deslizar);
+  linea.style.setProperty('--x', `${activa.offsetLeft}px`);
+  linea.style.setProperty('--ancho', `${activa.offsetWidth}px`);
+  if (!deslizar) { void linea.offsetWidth; linea.classList.remove('sin-transicion'); }
 }
+// Las palabras cambian de ancho cuando termina de cargar la tipografía o si cambia la pantalla.
+document.fonts?.ready.then(() => pintarTecnicas(false));
+addEventListener('resize', () => pintarTecnicas(false));
 
 // ── cómo se mueve ─────────────────────────────────────────────────────────────
 // Las tres técnicas tienen el mismo color: se reconocen por el movimiento.
@@ -286,13 +301,15 @@ function contextoAudio() {
 // Solo desde un toque. Además del resume suena algo vacío: hay iPhone que no
 // destraban el audio hasta que algo suena de verdad.
 function desbloquearAudio() {
-  if (!prefs.sonidoResp) return;
+  if (!sonidoElegido()) return;
   const ctx = contextoAudio();
   if (!ctx) return;
   try { const b = ctx.createBufferSource(); b.buffer = ctx.createBuffer(1, 1, ctx.sampleRate); b.connect(ctx.destination); b.start(0); } catch (e) {}
   ctx.resume?.().catch(() => {});
 }
-const audioSonando = () => !!(prefs.sonidoResp && audio && audio.state === 'running');
+// Prendido salvo que la persona lo haya silenciado alguna vez: eso se recuerda.
+const sonidoElegido = () => prefs.sonidoResp !== false;
+const audioSonando = () => !!(sonidoElegido() && audio && audio.state === 'running');
 
 // La cola de la reverb: ruido que se apaga solo en `seg` segundos, distinto en cada
 // oído. Es lo que convierte el ruido en espacio.
@@ -329,8 +346,9 @@ function crearOla() {
   if (!ctx) return null;
   try {
     const o = armarOla(ctx);
-    // Entra de a poco hasta el mar de fondo, mientras la persona se acomoda.
-    programarOla(o, 'fondo', ctx.currentTime, 2000);
+    // Suena desde el primer momento: sin fundido de entrada, solo lo justo para que
+    // no haga clic.
+    programarOla(o, 'fondo', ctx.currentTime, 40);
     return o;
   } catch (e) { return null; }
 }
@@ -397,8 +415,9 @@ function empezarRespiracion() {
   calmaS.textContent = RESP.sub;
   progreso.style.transition = 'none'; progreso.style.width = '0';
   fase('quieto', 1200);
-  pintarTecnicas();
-  if (prefs.sonidoResp) resp.ola = crearOla();
+  // Al entrar, la línea aparece en su lugar; si se eligió otra técnica, sigue deslizándose.
+  pintarTecnicas(!!$('#calma-tec-linea').style.getPropertyValue('--x'));
+  if (sonidoElegido()) resp.ola = crearOla();
   pintarSonido();
   mantenerPantalla();
   avisarCalma('Noventa segundos de respiración. Acomodate como estés.');
