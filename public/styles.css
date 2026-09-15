@@ -476,12 +476,33 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 /* menú y sus pantallas */
 .lista{display:flex;flex-direction:column}
-.fila-menu{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;
+.fila-menu{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  text-align:left;
   background:none;border:0;border-bottom:1px solid color-mix(in srgb,var(--gris) 16%,transparent);
-  padding:18px 2px;cursor:pointer;width:100%;font-family:var(--sans)}
+  padding:18px 2px;cursor:pointer;width:100%;font-family:var(--sans);
+  transition:transform .18s ease-out,border-color .18s ease-out}
 .fila-menu:last-child{border-bottom:0}
 .fila-t{font-family:var(--serif);font-size:19px;line-height:1.15;color:var(--texto)}
 .fila-s{font-size:13px;line-height:1.35;color:var(--gris)}
+/* Una fila no es una caja: en vez de levantarse, se corre hacia donde va.
+   El violeta se prende de golpe y se apaga despacio, para que el toque se vea
+   aunque la pantalla cambie enseguida. */
+.fila-menu::before{content:'';position:absolute;inset:0 -12px;border-radius:12px;
+  background:var(--ambar);opacity:0;pointer-events:none;transition:opacity .28s ease-out}
+.fila-menu>*{position:relative}
+@media (hover:hover){
+  .fila-menu:hover{transform:translateX(4px);
+    border-bottom-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
+  .fila-menu:hover::before{opacity:.05}
+}
+.fila-menu.tocada{transform:none;border-bottom-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
+.fila-menu.tocada::before{opacity:.15;transition-duration:.07s}
+/* Sobre fondo oscuro el mismo violeta se pierde: necesita más cuerpo. */
+[data-tema="oscuro"] .fila-menu.tocada::before{opacity:.3}
+[data-tema="oscuro"] .fila-menu:hover::before{opacity:.1}
+@media (prefers-reduced-motion:reduce){
+  .fila-menu,.fila-menu:hover,.fila-menu.tocada{transform:none}
+}
 
 /* historia */
 .charla-f{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;

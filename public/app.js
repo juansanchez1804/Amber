@@ -112,6 +112,16 @@ function ir(id) {
   if (id === 'ayuda') pintarAyuda();
   if (id === 'ob2') $('#ob-nombre').focus();
 }
+// Mientras el dedo está apoyado, la fila se prende en violeta. Tiene que pasar
+// en pointerdown: para cuando llega el click la pantalla ya cambió.
+document.addEventListener('pointerdown', e => {
+  const f = e.target.closest('.fila-menu');
+  if (!f) return;
+  f.classList.add('tocada');
+  const soltar = () => f.classList.remove('tocada');
+  addEventListener('pointerup', soltar, { once: true });
+  addEventListener('pointercancel', soltar, { once: true });
+});
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ir]');
   if (!b) return;
