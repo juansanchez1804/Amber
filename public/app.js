@@ -65,6 +65,7 @@ if (memoria) {
   let cambio = false;
   if (GENERO_VIEJO[memoria.genero]) { memoria.genero = GENERO_VIEJO[memoria.genero]; cambio = true; }
   if ('registro' in memoria) { memoria.estilo ??= memoria.registro; delete memoria.registro; cambio = true; }
+  if (!Array.isArray(memoria.datos)) { memoria.datos = []; cambio = true; }
   // Dos temas le ponían género a quien los leía. Se guarda el texto del chip, así
   // que quien los eligió con un nombre anterior pasa al de ahora.
   const TEMA_VIEJO = {
@@ -633,7 +634,7 @@ function turno(quien, texto) {
 let accesoMostrado = false;
 function accesoMemoria() {
   if (accesoMostrado || !memoria || !memoria.activa) return;
-  const hay = (memoria.objetivos?.length || memoria.estrategias?.length ||
+  const hay = (memoria.datos?.length || memoria.objetivos?.length || memoria.estrategias?.length ||
                memoria.sensibles?.length || memoria.resumenes?.length);
   if (!hay) return;
   accesoMostrado = true;
@@ -949,6 +950,54 @@ function abrirCharla(i) {
   ir('charla');
 }
 
+// ── memoria que se arma mientras hablás ─────────────────────────────────────
+// Después de cada respuesta, aparte y sin esperarla, se lee el último intercambio y
+// se anota lo que valga la pena: gente, lo que hace, lo que le sirve, lo que le duele.
+// El mensaje siguiente ya lo lleva. Solo agrega o corrige: borrar lo borra la persona.
+const TOPE_LISTA = { datos: 20, objetivos: 6, estrategias: 8, sensibles: 8 };
+const mismoTexto = (a, b) => typeof a === 'string' && typeof b === 'string'
+  && a.trim().toLowerCase() === b.trim().toLowerCase();
+
+async function aprenderDeLaCharla() {
+  if (!memoria?.activa) return;
+  const ultimo = [...mensajes].reverse().find(m => m.role === 'user');
+  // "mal" o "jaja sí" no traen nada que guardar: no vale una llamada.
+  if (!ultimo || ultimo.content.trim().split(/\s+/).length < 3) return;
+  try {
+    const r = await fetch('/api/memoria', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ memoria: memoriaParaEnviar(), mensajes: mensajes.slice(-4) }),
+    });
+    if (!r.ok) return;
+    const { agregar = {}, reemplazar = [] } = await r.json();
+    if (!anotarEnMemoria(agregar, reemplazar)) return;
+    guardarMemoria();
+    if (document.querySelector('.p.on')?.id === 'mem') pintarMemoria();
+  } catch (e) { console.error(e); }
+}
+
+function anotarEnMemoria(agregar, reemplazar) {
+  if (!memoria) return false;
+  let cambio = false;
+  for (const { lista, viejo, nuevo } of Array.isArray(reemplazar) ? reemplazar : []) {
+    const xs = memoria[lista];
+    if (!(lista in TOPE_LISTA) || !Array.isArray(xs) || xs.some(x => mismoTexto(x, nuevo))) continue;
+    const i = xs.findIndex(x => mismoTexto(x, viejo));
+    if (i > -1) { xs[i] = nuevo.trim(); cambio = true; }
+  }
+  for (const [lista, tope] of Object.entries(TOPE_LISTA)) {
+    const nuevos = Array.isArray(agregar[lista]) ? agregar[lista] : [];
+    const xs = (memoria[lista] ??= []);
+    for (const t of nuevos) {
+      if (typeof t !== 'string' || !t.trim() || xs.some(x => mismoTexto(x, t))) continue;
+      xs.push(t.trim()); cambio = true;
+    }
+    // Más allá del tope, lo más viejo deja lugar a lo nuevo.
+    if (xs.length > tope) { memoria[lista] = xs.slice(-tope); cambio = true; }
+  }
+  return cambio;
+}
+
 function guardarResumen(t) {
   if (!memoria || !t) return;
   // Ocho alcanzan: más atrás deja de ser memoria y pasa a ser archivo.
@@ -1050,6 +1099,7 @@ async function leerStream(r, p) {
   if (rev) await rev.terminar();
   if (!nodo) { turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); return; }
   mensajes.push({ role: 'assistant', content: texto });
+  aprenderDeLaCharla();
   anunciar(texto);
   accesoMemoria();
   verCerrar();
@@ -1087,6 +1137,7 @@ function grupo(rotulo, hijos) {
 }
 
 const VACIO = {
+  datos:       'Todavía nada. Acá va quedando lo que me contás mientras hablamos: gente, lo que hacés, lo que está pasando.',
   objetivos:   'Todavía nada. Acá va apareciendo lo que venís trabajando.',
   estrategias: 'Todavía nada. Acá guardo lo que te haya servido alguna vez.',
   sensibles:   'Todavía nada. Acá van los temas que no traigo yo.',
@@ -1101,7 +1152,7 @@ const ESTILOS = [
 function pintarMemoria() {
   const c = $('#mem-cuerpo'); c.innerHTML = '';
   const guardar = () => { guardarMemoria(); pintarMemoria(); pintarEntrada(); };
-  const lista = (clave) => memoria[clave].map((v, i) =>
+  const lista = (clave) => (memoria[clave] ??= []).map((v, i) =>
     entrada(v,
       () => { memoria[clave].splice(i, 1); guardar(); },
       (nuevo) => { if (nuevo && nuevo !== v) { memoria[clave][i] = nuevo; guardar(); } },
@@ -1130,6 +1181,7 @@ function pintarMemoria() {
   // entendía qué es lo que Amber llega a tener presente cuando hablan.
   const conVacio = (clave, hijos) => (hijos.length ? hijos : [el('div', 'vacio', VACIO[clave])]);
 
+  c.append(grupo('Personas y situaciones',  conVacio('datos', lista('datos'))));
   c.append(grupo('Lo que venís trabajando', conVacio('objetivos', lista('objetivos'))));
   c.append(grupo('Lo que te ayuda',         conVacio('estrategias', lista('estrategias'))));
   c.append(grupo('Temas sensibles',         conVacio('sensibles', lista('sensibles'))));
@@ -1173,7 +1225,7 @@ $('#borrar-mem').onclick = () => {
     return;
   }
   clearTimeout(confirmando); confirmando = null;
-  memoria = { activa: true, apodo: '', estilo: null, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  memoria = { activa: true, apodo: '', estilo: null, datos: [], objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria(); pintarMemoria(); pintarEntrada();
   b.textContent = ROTULO_BORRAR;
 };
@@ -1353,7 +1405,7 @@ const obCheck = $('#ob-check'), obEntrar = $('#ob-entrar');
 obCheck.addEventListener('change', () => { obEntrar.disabled = !obCheck.checked; });
 obEntrar.onclick = () => {
   memoria = { activa: true, apodo: apodoOnboarding, genero: generoOnboarding, estilo: estiloOnboarding,
-              temas: temasOnboarding, objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+              temas: temasOnboarding, datos: [], objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria();
   pintarEntrada();
   ir('entrada');

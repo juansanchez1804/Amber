@@ -28,7 +28,9 @@ const MODO_PRUEBA = process.env.AMBER_MODO_PRUEBA === '1';
 // (US$ 0,00075 contra 0,00166 por llamada). De paso clasifica mejor una hipérbole
 // rioplatense, que es la parte difícil.
 const MODELO_CLASIF = 'claude-sonnet-5';
-const MAX_MENSAJES  = 40;   // tope por conversación, para que nadie vacíe el saldo
+// Tope por conversación. Es un prototipo: alto, para que quien la prueba no se
+// quede sin charla. Hasta ahí Amber ve la conversación entera, no solo el final.
+const MAX_MENSAJES  = 200;
 
 // Red de seguridad para cuando el clasificador no responde (caída, límite, sin
 // crédito): sin él, el servidor asumía "ninguno" y "no quiero seguir viviendo"
@@ -57,6 +59,7 @@ function bloqueMemoria(m) {
   // Lo eligió al entrar, para no tener que explicarlo de nuevo. Es de dónde viene,
   // no una agenda: si Amber los saca ella, deja de ser una charla.
   if (m.temas?.length) l.push(`Al entrar dijo que quería hablar de: ${m.temas.join('; ')}. No los traigas vos; si aparecen, ya sabés de qué se trata.`);
+  if (m.datos?.length)       l.push(`Cosas de su vida que ya te contó: ${m.datos.join(' ')}`);
   if (m.objetivos?.length)   l.push(`Lo que viene trabajando: ${m.objetivos.join('; ')}`);
   if (m.estrategias?.length) l.push(`Lo que le ayudó antes: ${m.estrategias.join('; ')}`);
   if (m.sensibles?.length)   l.push(`Temas sensibles, que vos no traés: ${m.sensibles.join('; ')}`);
@@ -110,6 +113,7 @@ function bloqueV3({ memoria, riesgo, clasificadorFallo, limpios, primera }) {
                 : m.genero === 'neutro' ? B.genero_neutro : B.genero_sin_dato,
     linea_estilo: estilo === 'escuchar' ? B.estilo_escuchar : estilo === 'devolver' ? B.estilo_devolver : '',
     linea_temas: m.temas?.length ? llenar(B.temas, { temas: enProsa(m.temas) }) : '',
+    linea_datos: m.datos?.length ? llenar(B.datos, { datos: m.datos.map(String).map(t => /[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`).join(' ') }) : '',
     linea_trabajando: m.objetivos?.length ? llenar(B.trabajando, { objetivos: enProsa(m.objetivos) }) : '',
     linea_ayudo: m.estrategias?.length ? llenar(B.ayudo, { estrategias: enProsa(m.estrategias) }) : '',
     linea_sensibles: m.sensibles?.length ? llenar(B.sensibles, { sensibles: enProsa(m.sensibles) }) : '',
@@ -224,7 +228,7 @@ export default async function handler(req, res) {
     if (!Array.isArray(mensajes) || !mensajes.length)
       return res.status(400).json({ error: 'faltan mensajes' });
 
-    const limpios = mensajes.slice(-30).map(m => ({
+    const limpios = mensajes.slice(-MAX_MENSAJES).map(m => ({
       role: m.role === 'assistant' ? 'assistant' : 'user',
       content: String(m.content).slice(0, 4000),
     }));
@@ -310,8 +314,8 @@ export default async function handler(req, res) {
       ? bloqueV3({ memoria, riesgo, clasificadorFallo, limpios, primera: limpios.filter(m => m.role === 'user').length === 1 })
       : `${bloqueMemoria(memoria)}\n\nSeñal del clasificador para el último mensaje: ${riesgo.nivel}${porQue}${sinSenal}${riesgo.nivel === 'alto' ? '' : guiaPreguntas(limpios)}${genero}${primera}`;
     // La v2 no sabía del saludo: se le manda la charla como antes. El saludo entra
-    // solo mientras siga dentro de los últimos 30 mensajes.
-    const historial = v3 ? paraElModelo(limpios, mensajes.length <= 30 ? saludo : null) : paraElModelo(limpios, null);
+    // mientras la charla quepa entera.
+    const historial = v3 ? paraElModelo(limpios, mensajes.length <= MAX_MENSAJES ? saludo : null) : paraElModelo(limpios, null);
 
     const usoCharla = {};
     // Tope de seguridad, no de estilo: es un corte duro que el modelo no ve y deja

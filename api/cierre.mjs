@@ -28,7 +28,8 @@ export default async function handler(req, res) {
     if (!Array.isArray(mensajes) || !mensajes.length)
       return res.status(400).json({ error: 'faltan mensajes' });
 
-    const charla = mensajes.slice(-30)
+    // Toda la charla, con el mismo tope que el chat: el resumen es de lo que pasó, no del final.
+    const charla = mensajes.slice(-200)
       .map(m => `${m.role === 'assistant' ? 'AMBER' : 'PERSONA'}: ${String(m.content).slice(0, 4000)}`)
       .join('\n');
 

@@ -1,6 +1,7 @@
 {
   "functions": {
-    "api/chat.mjs":   { "includeFiles": "prompts/**" },
-    "api/cierre.mjs": { "includeFiles": "prompts/**" }
+    "api/chat.mjs":    { "includeFiles": "prompts/**" },
+    "api/cierre.mjs":  { "includeFiles": "prompts/**" },
+    "api/memoria.mjs": { "includeFiles": "prompts/**" }
   }
 }

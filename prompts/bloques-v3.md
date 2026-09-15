@@ -16,6 +16,12 @@ Agregadas porque el paquete las nombra pero no trae el texto:
   texto de neutro sin el "pidió", que ahí no sería cierto.
 - trabajando, ayudo, sensibles, resumenes: las líneas {{linea_trabajando}},
   {{linea_ayudo}}, {{linea_sensibles}} y {{resumenes_recientes}} de memoria.
+- datos: la línea {{linea_datos}}. Lo va completando api/memoria.mjs mientras la
+  persona habla (hechos de su vida, escritos hablándole).
+
+Cambiada: temas ya no termina en "Y priorizá guardar lo que aparezca sobre estos
+temas por sobre lo demás". Amber no guarda nada; esa prioridad la tiene ahora
+prompts/memoria.md, que es lo que guarda.
 - abre_conversacion: la API exige que el primer mensaje sea de la persona. Con el
   saludo de Amber en el historial, este turno va antes, para que la llamada sea
   válida. No es algo que la persona haya dicho.
@@ -28,6 +34,7 @@ Le gusta que le digan {{apodo}}.
 {{linea_genero}}
 {{linea_estilo}}
 {{linea_temas}}
+{{linea_datos}}
 {{linea_trabajando}}
 {{linea_ayudo}}
 {{linea_sensibles}}
@@ -57,8 +64,7 @@ Cuando empezó, dijo que le gustaría hablar de: {{temas}}.
 
 Eso significa que ya vienen pesando, no que son comentarios al pasar. Cuando alguno
 aparezca, no lo trates como algo nuevo ni preguntes si le pasa seguido: ya sabés que
-sí. Asumí que hay historia atrás y preguntá por lo específico de hoy. Y priorizá
-guardar lo que aparezca sobre estos temas por sobre lo demás.
+sí. Asumí que hay historia atrás y preguntá por lo específico de hoy.
 
 ## senal
 Señal del clasificador para el último mensaje: {{senal}}
@@ -97,6 +103,9 @@ decir cómo está o con qué se queda, decí qué hacés vos.
 ## genero_sin_dato
 No sabés el género de esta persona. Escribí de forma que no haga falta:
 si una frase te obliga a elegir una terminación, reescribila.
+
+## datos
+Cosas de su vida que ya te contó, escritas hablándole: {{datos}}
 
 ## trabajando
 Viene trabajando en {{objetivos}}.
