@@ -309,9 +309,13 @@ export default async function handler(req, res) {
     const usoCharla = {};
     // Tope de seguridad, no de estilo: es un corte duro que el modelo no ve y deja
     // frases por la mitad. El largo de las respuestas lo decide el prompt.
+    // Sonnet 5 piensa antes de escribir y el tope cuenta ese pensamiento. Con 1024,
+    // en los momentos difíciles (la segunda frase de riesgo del caso 24) se lo gastaba
+    // entero pensando y la respuesta llegaba vacía: "Se me cortó algo acá" justo ahí.
+    // Solo se cobra lo que se usa, así que subirlo no encarece las respuestas normales.
     const pedido = (extra = '') => ({
       model: MODELO_CHARLA,
-      max_tokens: 1024,
+      max_tokens: 4096,
       system: [
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
         { type: 'text', text: `${bloque}${extra}` },
