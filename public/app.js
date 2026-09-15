@@ -1033,7 +1033,7 @@ async function mandar(textoDirecto) {
   ocupado = true;
   if (grabando) { dictado = ''; pararVoz(); }
   quitarAperturas();
-  $('#ver-ayuda').hidden = true;   // el disclaimer no ocupa el lugar de escribir
+  $('#ver-ayuda').hidden = true;   // mientras se escribe no ocupa el lugar de escribir
   if (textoDirecto == null) { txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo'); }
   ajustarColchon();
   anclarArriba(turno('user', t));
@@ -1057,6 +1057,10 @@ async function mandar(textoDirecto) {
     p.remove(); turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); console.error(e);
   }
   ocupado = false;
+  // Vuelve la puerta a los teléfonos. Se esconde mientras se manda, no para siempre:
+  // adentro de la conversación no hay otra salida a los recursos, y dejarla oculta
+  // la hacía depender de que el clasificador acierte, que es justo lo que no queremos.
+  $('#ver-ayuda').hidden = false;
   if (!cortado) txt.focus();
 }
 

@@ -242,8 +242,12 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #bajar[hidden]{display:none}
 /* El disclaimer es también la puerta a los recursos: siempre visible, no depende
    de que el clasificador acierte. */
-.disc{font-size:11px;line-height:1.5;color:var(--gris2);font-family:var(--sans);
-  background:none;border:0;padding:0;text-align:left;cursor:pointer;width:100%}
+/* Es la línea más importante de la pantalla, así que no puede ser la más chica:
+   13px, el gris que pasa AA sobre blanco (5,31:1) y alto de 44px como cualquier
+   otro control de la app. */
+.disc{font-size:13px;line-height:1.45;color:var(--gris);font-family:var(--sans);
+  background:none;border:0;padding:4px 0;text-align:left;cursor:pointer;width:100%;
+  min-height:44px;display:block}
 .disc u{text-decoration-color:var(--borde);text-underline-offset:2px}
 
 /* recursos de riesgo */
@@ -424,7 +428,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .dia-v{font-family:var(--sans);font-size:13px;color:var(--gris);text-align:right}
 .dia.sin-tocar .dia-v,.dia.sin-decir .dia-v{color:var(--gris2)}
 .dia.tocada .dia-v{color:var(--texto)}
-.dia-ext{display:flex;justify-content:space-between;font-family:var(--sans);font-size:11px;color:var(--gris2)}
+.dia-ext{display:flex;justify-content:space-between;font-family:var(--sans);font-size:12px;color:var(--gris2)}
 
 .dia-control{display:flex;flex-direction:column;gap:8px}
 /* El pulgar es la piedra pelada: solo el contorno. El control nativo queda encima,
@@ -538,10 +542,10 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
    aunque la pantalla cambie enseguida. */
 .fila-menu::before{content:'';position:absolute;inset:0 -12px;border-radius:12px;
   background:var(--ambar);opacity:0;pointer-events:none;transition:opacity .28s ease-out}
-.fila-menu>*{position:relative}
+.fila-menu>*{position:relative;transition:transform .18s ease-out}
 @media (hover:hover){
-  .fila-menu:hover{transform:translateX(4px);
-    border-bottom-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
+  .fila-menu:hover > *{transform:translateY(-1px)}
+  .fila-menu:hover{border-bottom-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
   .fila-menu:hover::before{opacity:.05}
 }
 .fila-menu.tocada{transform:none;border-bottom-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
@@ -550,7 +554,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 [data-tema="oscuro"] .fila-menu.tocada::before{opacity:.3}
 [data-tema="oscuro"] .fila-menu:hover::before{opacity:.1}
 @media (prefers-reduced-motion:reduce){
-  .fila-menu,.fila-menu:hover,.fila-menu.tocada{transform:none}
+  .fila-menu,.fila-menu:hover,.fila-menu.tocada,.fila-menu:hover > *{transform:none}
 }
 
 /* historia */
