@@ -91,7 +91,7 @@ body{font-family:var(--sans);display:flex;align-items:center;justify-content:cen
 .crece{flex-grow:1}
 
 h1{font-family:var(--serif);font-size:46px;font-weight:400;line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
-h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;letter-spacing:-.015em;margin:0}
+h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;letter-spacing:-.015em;margin:0;text-wrap:balance}
 .cap{font-size:13px;letter-spacing:.06em;color:var(--gris)}
 .sabe{font-size:15px;line-height:1.62;color:var(--gris);max-width:300px}
 .sub{font-size:15px;line-height:1.62;color:var(--gris);max-width:300px}
@@ -257,7 +257,9 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   text-decoration:none;color:var(--texto);transition:border-color .2s ease}
 .rec-f.pri{border-color:var(--borde)}
 .rec-f:hover{border-color:var(--ambar-claro)}
-.rec-n{font-size:18px;font-weight:500;line-height:1.3}
+/* Es el dato que resuelve el problema y se leía más chico que la frase que lo
+   describe. Acá alguien mira con el pulgar temblando: el número va primero. */
+.rec-n{font-size:29px;font-weight:500;line-height:1.15;letter-spacing:-.01em}
 .rec-f.pri .rec-n{color:var(--ambar-claro)}
 .rec-d{font-size:13px;line-height:1.45;color:var(--gris)}
 .rec-flecha{stroke:var(--gris2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
@@ -523,6 +525,10 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 /* Un grupo vacío dice qué va a ir adentro, en vez de no existir. */
 .vacio{font-size:13px;line-height:1.5;color:var(--gris2)}
+/* Una pantalla vacía es una invitación, no un cartel: dice qué la va a llenar
+   y deja a mano el camino para empezar. */
+.vacio-puerta{display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding-top:20px}
+.vacio-puerta .btn{width:auto;padding:0 22px}
 
 /* menú y sus pantallas */
 /* La lista no se estira: "Cerrar sesión" va pegado abajo de ella, no al pie de

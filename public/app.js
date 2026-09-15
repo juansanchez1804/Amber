@@ -904,7 +904,14 @@ function pintarHistoria() {
   const c = $('#historia-cuerpo'); c.innerHTML = '';
   const h = cargarHistoria().reverse();
   if (!h.length) {
-    c.append(el('div', 'vacio', 'Todavía nada. Cada conversación que cierres queda guardada acá.'));
+    // El subtítulo de arriba ya dice qué es esta pantalla; repetirlo no ayuda.
+    // Lo que falta acá es por dónde se empieza.
+    const puerta = el('div', 'vacio-puerta');
+    puerta.append(el('div', 'vacio', 'Todavía nada. Acá va quedando cada conversación que cierres.'));
+    const b = el('button', 'btn btn-2', 'Ir a hablar');
+    b.onclick = () => ir('entrada');
+    puerta.append(b);
+    c.append(puerta);
     return;
   }
   const lista = el('div', 'grupo');
