@@ -655,3 +655,30 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @media (prefers-reduced-motion:reduce){
   #calma[data-fase="inhala2"] .o1,#calma[data-fase="inhala2"] .o2{transform:scale(.88)}
 }
+
+/* En el celu, con las barras del navegador, quedan entre 550 y 660 px de alto: la
+   home y respirar pueden no entrar. Primero se aprietan los espacios, que el diseño
+   pensó para una pantalla alta. Si igual no entra, la pantalla se desplaza en vez de
+   cortar el último botón, que en la home es "Necesito hablar con una persona ya". */
+@media (max-width:520px){
+  #entrada,#calma{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+  #entrada::-webkit-scrollbar,#calma::-webkit-scrollbar{display:none}
+}
+@media (max-width:520px) and (max-height:720px){
+  #marco #entrada{padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  #entrada .saludo-bloque{gap:8px}
+  #saludo{font-size:30px}
+  .accesos{margin-top:20px;gap:10px}
+  .accesos-fila{gap:10px}
+  .acceso-1{height:84px;padding:16px}
+  .acceso-2{min-height:76px;padding:14px 16px}
+  .dia{gap:8px;padding:14px 16px}
+  .ayuda-boton{margin-top:16px}
+}
+/* Respirar solo se aprieta en pantallas muy bajas (un iPhone SE con Safari): el orbe
+   es la guía, y achicarlo en un celu común no hace falta. */
+@media (max-width:520px) and (max-height:620px){
+  #calma .orbe,#calma .o1{width:220px;height:220px}
+  #calma .o2{width:118px;height:118px}
+  .calma-texto{margin-top:20px;min-height:76px}
+}

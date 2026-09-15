@@ -538,7 +538,13 @@ function senalarDia() {
   diaCaja.classList.add('pide');
   anunciar('Para empezar a hablar, primero marcá cómo estuvo tu día en la barra.');
   diaInput.focus({ preventScroll: true });
+  mostrar(diaCaja);
 }
+
+// En un celu bajo la home se desplaza: lo que se señala o se enciende tiene que quedar
+// a la vista, no abajo del borde.
+const mostrar = (nodo) => nodo.scrollIntoView({ block: 'nearest',
+  behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 
 // Mover la barra no guarda: guarda la flecha que aparece al moverla. Así se puede
 // ir y venir hasta encontrar la palabra.
@@ -576,6 +582,7 @@ function guardarDia(valor) {
     : 'Listo, no hace falta decir cómo estuvo tu día.';
   anunciar(`${anotado} Ya podés hablar o respirar.`);
   $('#ir-hablar').focus({ preventScroll: true });
+  mostrar($('#ir-hablar'));
 }
 diaGuardar.onclick = () => guardarDia(Number(diaInput.value));
 $('#dia-no-decir').onclick = () => guardarDia(null);
