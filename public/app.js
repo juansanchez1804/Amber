@@ -541,7 +541,7 @@ function senalarDia() {
 }
 
 // Mover la barra no guarda: guarda la flecha que aparece al moverla. Así se puede
-// ir y venir hasta encontrar la palabra, y la flecha es entrar a hablar.
+// ir y venir hasta encontrar la palabra.
 diaInput.addEventListener('input', () => {
   const v = Number(diaInput.value);
   moverPiedra(v);
@@ -559,29 +559,23 @@ function memoriaParaEnviar() {
   return resto;
 }
 
+// Guardar el día no te mete en el chat: abre la puerta y te deja elegir entre hablar
+// y respirar. Quien marcó "muy difícil" puede necesitar respirar antes de contar nada.
 function guardarDia(valor) {
   if (!memoria) return;
-  // Corregir una respuesta ya dada no te manda a ningún lado: si tocaste
-  // "Cambiar" fue para arreglar el dato, no para abrir una conversación.
-  const primeraDeHoy = !diaDeHoy();
   memoria.dia = { valor, fecha: hoyISO() };
   guardarMemoria();
   diaEditando = false;
   pintarDia();
   vibrar(12);
+  // La pregunta con la que Amber abre depende del día. Si cambió y todavía no
+  // hablaron, se rehace; si ya hablaron, el pasado no se reescribe.
+  if (!mensajes.length) { conversacionAbierta = false; aperturasEl = null; accesoMostrado = false; hilo.innerHTML = ''; }
   const anotado = valor
     ? `Tu día quedó anotado como ${DIA_PALABRA[valor].toLowerCase()}.`
     : 'Listo, no hace falta decir cómo estuvo tu día.';
-  if (!primeraDeHoy) {
-    // Cambiaste la respuesta: la pregunta con la que Amber iba a abrir ya no
-    // corresponde. Se rehace, salvo que ya hayan hablado: el pasado no se reescribe.
-    if (!mensajes.length) { conversacionAbierta = false; aperturasEl = null; accesoMostrado = false; hilo.innerHTML = ''; }
-    anunciar(anotado);
-    $('#dia-cambiar').focus({ preventScroll: true });
-    return;
-  }
-  anunciar(`${anotado} Abro la conversación.`);
-  ir('conv');
+  anunciar(`${anotado} Ya podés hablar o respirar.`);
+  $('#ir-hablar').focus({ preventScroll: true });
 }
 diaGuardar.onclick = () => guardarDia(Number(diaInput.value));
 $('#dia-no-decir').onclick = () => guardarDia(null);
