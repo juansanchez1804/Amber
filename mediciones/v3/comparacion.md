@@ -63,7 +63,7 @@ Respuestas completas en `v2-set-completo.md` y `v3-set-completo.md`.
 Sonnet 5 piensa antes de responder, y `max_tokens: 1024` cuenta ese pensamiento. Si lo
 gasta pensando, no queda nada para el texto y la app muestra "Se me cortó algo acá".
 Repitiendo el último turno del caso 24: v3, vacía 2 de 3 veces; v2, 1 de 3. Con el tope
-en 4.096, 4 de 4 respondieron. Hoy pasa en producción y no se tocó.
+en 4.096, 4 de 4 respondieron. Arreglado en producción el 15/9 (commit b0ebe8d).
 
 ## Sin medir
 
