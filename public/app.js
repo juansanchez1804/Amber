@@ -923,7 +923,10 @@ function escribir(v, seguirElFinal) {
   // y se perdía el hilo de lo que el micrófono venía agarrando.
   if (seguirElFinal) txt.scrollTop = txt.scrollHeight;
 }
-txt.addEventListener('input', () => escribir(txt.value));
+// Escribir con los dedos cierra el micrófono. Los dos escriben en el mismo campo:
+// si siguen a la vez, lo que llega de la voz pisa lo que estás tecleando. Lo que
+// se venía dictando queda donde está y la tecla que apretaste, también.
+txt.addEventListener('input', () => { if (grabando) pararVoz(true); escribir(txt.value); });
 txt.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && !ocupado) { e.preventDefault(); mandar(); }
 });
@@ -938,6 +941,10 @@ const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognitio
 const micro = $('#micro'), escucha = $('#escucha'), reloj = $('#reloj');
 
 let rec = null, grabando = false, dictado = '', desde = 0, tic = null, cerrando = false;
+// Cuando el micrófono se cierra porque volviste a escribir, el campo ya tiene lo
+// bueno y no hay que pisarlo. La sesión es para no cerrar de prepo un micrófono
+// que se abrió después: cada apertura es una sesión nueva.
+let sinPisar = false, sesionVoz = 0;
 
 // Una pausa corta es respirar en medio de una frase; recién un silencio largo es
 // otra cosa. Se mide desde que cerró el segmento anterior hasta que volvió a
@@ -959,7 +966,7 @@ function abrirVoz() {
   // Lo que ya estaba escrito no se pisa: la voz sigue desde ahí.
   dictado = txt.value.trim();
   ultimoFinal = Date.now(); retomo = 0;
-  grabando = true; cerrando = false;
+  grabando = true; cerrando = false; sinPisar = false; sesionVoz++;
 
   rec = new Reconocimiento();
   rec.lang = 'es-AR';
@@ -970,6 +977,7 @@ function abrirVoz() {
   // aire. Si cada una empieza renglón, lo dictado llega partido en pedazos sueltos:
   // solo el silencio largo corta, lo demás se pega con un espacio.
   rec.onresult = e => {
+    if (cerrando) return;   // lo que llega tarde no vuelve a escribir un campo ya cerrado
     let tanteo = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const r = e.results[i], frase = r[0].transcript.trim();
@@ -1003,15 +1011,23 @@ function abrirVoz() {
   escucha.hidden = false;
   micro.classList.add('on');
   micro.setAttribute('aria-label', 'Dejar de hablar');
-  txt.readOnly = true;              // mientras el micrófono escribe, los dedos no pelean
+  // El campo NO se bloquea. Antes quedaba de solo lectura mientras escuchaba, y
+  // si el micrófono no cerraba (la app pasa a segundo plano, el navegador no
+  // avisa) no se podía escribir más: la charla quedaba trabada.
   txt.placeholder = 'Te escucho';
   anunciar('Micrófono abierto. Te escucho.');
 }
 
-function pararVoz() {
+// dejarTexto: se cierra porque el campo ya tiene lo que corresponde (lo que
+// estás tecleando, o el mensaje que se está mandando) y no hay que tocarlo.
+function pararVoz(dejarTexto) {
   if (!grabando) return;
-  cerrando = true;
+  cerrando = true; sinPisar = !!dejarTexto;
+  const sesion = sesionVoz;
   try { rec.stop(); } catch (e) { cerrarVoz(); }
+  // Si el navegador no avisa que cerró, el micrófono queda prendido para siempre
+  // y ni siquiera se puede volver a abrir. Pasado un segundo se cierra igual.
+  setTimeout(() => { if (grabando && sesion === sesionVoz) cerrarVoz(); }, 1200);
 }
 
 function cerrarVoz() {
@@ -1021,10 +1037,10 @@ function cerrarVoz() {
   escucha.hidden = true;
   micro.classList.remove('on');
   micro.setAttribute('aria-label', 'Hablar');
-  txt.readOnly = false;
   if (!cortado) txt.placeholder = 'Escribí lo que quieras';
-  escribir(dictado.trim(), true);   // se cae lo tanteado, queda lo firme
   anunciar('Micrófono cerrado. Podés revisar el texto antes de mandarlo.');
+  if (sinPisar) { sinPisar = false; return; }
+  escribir(dictado.trim(), true);   // se cae lo tanteado, queda lo firme
   txt.focus();
   // El cursor queda donde terminó de dictar, que es desde donde se sigue.
   txt.setSelectionRange(txt.value.length, txt.value.length);
@@ -1255,7 +1271,7 @@ async function mandar(textoDirecto) {
   const t = (textoDirecto ?? txt.value).trim();
   if (!t || ocupado || cortado) return;
   ocupado = true;
-  if (grabando) { dictado = ''; pararVoz(); }
+  if (grabando) pararVoz(true);   // se manda lo que está a la vista, no lo que quedó en el aire
   quitarAperturas();
   quitarOferta();
   $('#ver-ayuda').hidden = true;   // mientras se escribe no ocupa el lugar de escribir
