@@ -159,8 +159,11 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #hilo{position:relative;flex-grow:1;display:flex;flex-direction:column;gap:30px;padding-top:28px;overflow-y:auto;min-height:0;scrollbar-width:none}
 #hilo::-webkit-scrollbar{display:none}
 .am{font-family:var(--serif);font-size:19px;line-height:1.5;color:var(--texto);max-width:300px;white-space:pre-wrap}
-.yo{align-self:flex-end;text-align:right;font-family:var(--sans);font-size:17px;line-height:1.41;
-  color:var(--gris);max-width:250px;white-space:pre-wrap;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+/* Lo que escribe la persona va del lado derecho, pero el texto arranca siempre en
+   el mismo lugar: alineado a la derecha, cada renglón empezaba en otro punto y
+   varias líneas seguidas se leían como una escalera. */
+.yo{align-self:flex-end;text-align:left;font-family:var(--sans);font-size:17px;line-height:1.41;
+  color:var(--gris);max-width:250px;white-space:pre-wrap;display:flex;flex-direction:column;align-items:stretch;gap:8px}
 .yo p{margin:0}
 .am,.yo{animation:entra .4s cubic-bezier(.16,1,.3,1) both}
 @keyframes entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}

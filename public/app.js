@@ -939,6 +939,13 @@ const micro = $('#micro'), escucha = $('#escucha'), reloj = $('#reloj');
 
 let rec = null, grabando = false, dictado = '', desde = 0, tic = null, cerrando = false;
 
+// Una pausa corta es respirar en medio de una frase; recién un silencio largo es
+// otra cosa. Se mide desde que cerró el segmento anterior hasta que volvió a
+// sonar la voz, que es cuando llega el primer tanteo del segmento siguiente.
+const PAUSA_RENGLON = 2500;
+let ultimoFinal = 0, retomo = 0;
+const union = () => !dictado ? '' : (retomo && retomo - ultimoFinal > PAUSA_RENGLON ? '\n' : ' ');
+
 // Sin soporte del navegador el botón no existe: mejor que exista y falle.
 if (!Reconocimiento) micro.hidden = true;
 
@@ -951,6 +958,7 @@ function abrirVoz() {
   if (grabando || cortado || ocupado || !Reconocimiento) return;
   // Lo que ya estaba escrito no se pisa: la voz sigue desde ahí.
   dictado = txt.value.trim();
+  ultimoFinal = Date.now(); retomo = 0;
   grabando = true; cerrando = false;
 
   rec = new Reconocimiento();
@@ -958,17 +966,18 @@ function abrirVoz() {
   rec.continuous = true;
   rec.interimResults = true;
 
-  // Cada pausa cierra un segmento. Unirlos con un espacio pegaba dos cosas dichas
-  // por separado en un párrafo corrido sin puntuación: van en renglones distintos.
+  // El reconocimiento cierra un segmento en cada pausa, también en las de tomar
+  // aire. Si cada una empieza renglón, lo dictado llega partido en pedazos sueltos:
+  // solo el silencio largo corta, lo demás se pega con un espacio.
   rec.onresult = e => {
     let tanteo = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const r = e.results[i], frase = r[0].transcript.trim();
       if (!frase) continue;
-      if (r.isFinal) dictado += (dictado ? '\n' : '') + frase;
-      else tanteo += (tanteo ? ' ' : '') + frase;
+      if (r.isFinal) { dictado += union() + frase; ultimoFinal = Date.now(); retomo = 0; }
+      else { retomo ||= Date.now(); tanteo += (tanteo ? ' ' : '') + frase; }
     }
-    escribir(dictado + (tanteo ? (dictado ? '\n' : '') + tanteo : ''), true);
+    escribir(dictado + (tanteo ? union() + tanteo : ''), true);
   };
 
   // El navegador corta solo después de un silencio. Acá el silencio es parte de
