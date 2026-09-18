@@ -41,7 +41,9 @@ const LLAVE = 'amber.memoria.v2';
 
 // ?reset borra lo guardado y arranca de cero. Sirve para demostrar dos veces seguidas.
 if (new URLSearchParams(location.search).has('reset')) {
-  try { localStorage.removeItem('amber.memoria.v1'); localStorage.removeItem(LLAVE); } catch (e) {}
+  // La llave de la charla en curso se escribe literal porque se declara más abajo,
+  // junto al resto de lo que hace a la conversación.
+  try { for (const k of ['amber.memoria.v1', LLAVE, 'amber.charla_en_curso.v1']) localStorage.removeItem(k); } catch (e) {}
 }
 const DEMO_MEMORIA = new URLSearchParams(location.search).get('memoria') === 'demo';
 
@@ -513,6 +515,7 @@ function volverDeRespirar() {
   ir('conv');
   turno('assistant', VUELTA_RESPIRAR);
   mensajes.push({ role: 'assistant', content: VUELTA_RESPIRAR });
+  guardarCharlaEnCurso();
   anunciar(VUELTA_RESPIRAR);
   return true;
 }
@@ -870,8 +873,17 @@ const aperturaDeHoy = () => {
 };
 let aperturasEl = null, conversacionAbierta = false, aperturaMostrada = '';
 function abrirConversacion() {
-  if (conversacionAbierta || mensajes.length) return;
+  if (conversacionAbierta) return;
   conversacionAbierta = true;
+  // Lo que venía de antes de recargar vuelve a la pantalla tal cual, sin saludar
+  // de nuevo ni volver a ofrecer por dónde empezar.
+  if (mensajes.length) {
+    if (aperturaMostrada) turno('assistant', aperturaMostrada);
+    for (const m of mensajes) turno(m.role, m.content);
+    verCerrar();
+    seguir(false);
+    return;
+  }
   const { texto, opciones } = aperturaDeHoy();
   aperturaMostrada = texto;
   turno('assistant', texto);
@@ -1074,9 +1086,14 @@ function revelador(nodo) {
   };
 }
 
-let ocupado = false, cortado = false;
+let ocupado = false, cortado = false, cerrada = false;
+// cortar() es el final duro: se llegó al tope de mensajes y la salida es recargar.
+// Cerrar por hoy ya no pasa por acá, porque después de cerrar se puede seguir
+// hablando. Acá se archiva antes de soltar: si no, al recargar volvería la misma
+// conversación pasada de largo y se cortaría de nuevo en el primer mensaje.
 function cortar(nota) {
   cortado = true;
+  if (mensajes.length) { const ch = charlaViva(); olvidarCharla(); cerrarEnSilencio(ch); }
   pararVoz();
   micro.hidden = true;
   txt.disabled = true;
@@ -1090,32 +1107,116 @@ function cortar(nota) {
 // disuelve. Cerrarla a propósito es lo que produce el resumen que la próxima
 // vez hace que Amber sepa de dónde venís.
 const cerrarBtn = $('#cerrar-hoy');
-const MINIMO_PARA_CERRAR = 3;   // ofrecer cerrar algo que no empezó no tiene sentido
+const MINIMO_PARA_CERRAR = 1;   // cualquier charla se puede cerrar, hasta la de un mensaje
+// Resumir dos mensajes sobre nada llena "Lo que me contaste" de ruido y gasta una
+// llamada. Abajo de cuatro, la charla se guarda igual pero sin resumen.
+const MINIMO_PARA_RESUMEN = 4;
+const DESPEDIDA = 'Lo dejamos acá por hoy. Cuando quieras seguir, estoy.';
+
+const mensajesDeLaPersona = () => mensajes.filter(m => m.role === 'user').length;
 
 function verCerrar() {
-  if (cortado) return;
-  cerrarBtn.hidden = mensajes.filter(m => m.role === 'user').length < MINIMO_PARA_CERRAR;
+  if (cortado || cerrada) return;
+  cerrarBtn.hidden = mensajesDeLaPersona() < MINIMO_PARA_CERRAR;
 }
 
 // ── historia ──────────────────────────────────────────────────────────────
-// Las conversaciones quedan en este teléfono y en ningún otro lado. Veinte:
-// más atrás nadie vuelve, y el navegador tiene un techo de espacio.
+// Las conversaciones quedan en este teléfono y en ningún otro lado. Sesenta son
+// unos dos meses hablando todos los días: más atrás nadie vuelve, y el navegador
+// tiene un techo de espacio.
 const LLAVE_HIST = 'amber.historia.v1';
+const TOPE_HISTORIA = 60;
 const cargarHistoria = () => { try { return JSON.parse(localStorage.getItem(LLAVE_HIST)) ?? []; } catch (e) { return []; } };
-const guardarHistoria = (h) => { try { localStorage.setItem(LLAVE_HIST, JSON.stringify(h.slice(-20))); } catch (e) {} };
+const guardarHistoria = (h) => { try { localStorage.setItem(LLAVE_HIST, JSON.stringify(h.slice(-TOPE_HISTORIA))); } catch (e) {} };
 
-function archivarCharla(resumen) {
-  if (!mensajes.length) return;
+// La fecha de la charla es la de su primer mensaje, no la del momento en que se
+// archiva: una conversación de anoche que se guarda sola a la mañana siguiente
+// tiene que quedar anotada anoche.
+function guardarEnHistoria({ f, dia, resumen, apertura, m }) {
+  if (!m?.length) return;
   const h = cargarHistoria();
   h.push({
-    f: new Date().toISOString(),
-    dia: diaDeHoy()?.valor ?? null,
-    r: resumen ?? '',
+    f, dia: dia ?? null, r: resumen ?? '',
     // La apertura la muestra la app, no el modelo: si no se guarda, la charla
     // vieja empieza con una respuesta a una pregunta que no está.
-    m: [{ r: 'assistant', c: aperturaMostrada }, ...mensajes.map(x => ({ r: x.role, c: x.content }))],
+    m: apertura ? [{ r: 'assistant', c: apertura }, ...m] : [...m],
   });
   guardarHistoria(h);
+}
+
+// El resumen de una charla archivada en silencio llega después que la charla: se
+// guarda primero lo que se dijo, que es lo que no se puede volver a pedir.
+function ponerResumen(f, resumen) {
+  if (!resumen) return;
+  const h = cargarHistoria();
+  const ch = h.find(x => x.f === f);
+  if (!ch) return;
+  ch.r = resumen;
+  guardarHistoria(h);
+}
+
+// ── la charla en curso ────────────────────────────────────────────────────
+// Vivía solo en memoria del navegador: recargar, cerrar la pestaña o que el
+// teléfono descarte la página se llevaba la conversación entera, sin resumen y
+// sin rastro. Ahora se guarda después de cada mensaje y vuelve como estaba.
+const LLAVE_CHARLA = 'amber.charla_en_curso.v1';
+
+// El día de Amber corta a las cuatro de la mañana y no a medianoche: quien
+// escribe a las tres está terminando el día anterior, no empezando el siguiente.
+const CORTE_DIA = 4;
+function diaAmber(f) {
+  const d = new Date(f);
+  d.setHours(d.getHours() - CORTE_DIA);
+  return d.toLocaleDateString('sv');
+}
+
+let inicioCharla = '', diaCharla = null;
+const cargarCharla = () => { try { return JSON.parse(localStorage.getItem(LLAVE_CHARLA)); } catch (e) { return null; } };
+const olvidarCharla = () => { try { localStorage.removeItem(LLAVE_CHARLA); } catch (e) {} };
+const charlaViva = () => ({ inicio: inicioCharla || new Date().toISOString(), dia: diaCharla,
+  apertura: aperturaMostrada, m: mensajes.map(x => ({ r: x.role, c: x.content })) });
+
+function guardarCharlaEnCurso() {
+  if (!mensajes.length) return olvidarCharla();
+  inicioCharla ||= new Date().toISOString();
+  // El día se marca en la home y puede marcarse después de haber empezado a
+  // hablar. Una vez que la charla lo tiene, no se lo saca.
+  diaCharla = diaDeHoy()?.valor ?? diaCharla;
+  try {
+    localStorage.setItem(LLAVE_CHARLA, JSON.stringify({
+      inicio: inicioCharla, dia: diaCharla, apertura: aperturaMostrada,
+      amb: ambiguos,   // lo dicho de bronca cuenta igual después de recargar
+      m: mensajes.map(x => ({ r: x.role, c: x.content })),
+    }));
+  } catch (e) {}
+}
+
+// Al cerrarse por cambio de día no hay despedida: la persona no cerró nada, y
+// una despedida escrita por el sistema la esperaría al otro día como si Amber se
+// hubiera ido sola. Se archiva primero y el resumen se pide después: lo que no se
+// puede volver a pedir es lo que se dijo.
+async function cerrarEnSilencio(ch) {
+  guardarEnHistoria({ f: ch.inicio, dia: ch.dia, resumen: '', apertura: ch.apertura, m: ch.m });
+  if (ch.m.filter(x => x.r === 'user').length < MINIMO_PARA_RESUMEN) return;
+  const d = await pedirCierre(ch.m.map(x => ({ role: x.r, content: x.c })));
+  if (!d?.resumen) return;
+  ponerResumen(ch.inicio, d.resumen);
+  guardarResumen(d.resumen, diaAmber(ch.inicio));
+}
+
+// Al abrir: lo de hoy sigue, lo de ayer se guarda solo.
+const charlaGuardada = cargarCharla();
+if (charlaGuardada?.m?.length) {
+  if (diaAmber(charlaGuardada.inicio) === diaAmber(Date.now())) {
+    mensajes = charlaGuardada.m.map(x => ({ role: x.r, content: x.c }));
+    aperturaMostrada = charlaGuardada.apertura ?? '';
+    inicioCharla = charlaGuardada.inicio;
+    diaCharla = charlaGuardada.dia ?? null;
+    ambiguos = charlaGuardada.amb ?? 0;
+  } else {
+    olvidarCharla();
+    cerrarEnSilencio(charlaGuardada);
+  }
 }
 
 function pintarHistoria() {
@@ -1231,45 +1332,89 @@ function anotarEnMemoria(agregar, reemplazar) {
   return cambio;
 }
 
-function guardarResumen(t) {
+// Quince: con una charla por día son dos semanas. Al prompt van solo los últimos
+// ocho; los demás quedan para la pantalla de memoria.
+const TOPE_RESUMENES = 15;
+function guardarResumen(t, fecha = hoyISO()) {
   if (!memoria || !t) return;
-  // Ocho alcanzan: más atrás deja de ser memoria y pasa a ser archivo.
-  memoria.resumenes = [...(memoria.resumenes ?? []), { t, f: hoyISO() }].slice(-8);
+  memoria.resumenes = [...(memoria.resumenes ?? []), { t, f: fecha }].slice(-TOPE_RESUMENES);
   guardarMemoria();
   pintarEntrada();
 }
 
+// La misma llamada sirve para cerrar a propósito y para archivar en silencio: lo
+// que cambia es qué se hace con la despedida. Si falla, no se pierde nada de lo
+// hablado, que ya está guardado.
+async function pedirCierre(msgs) {
+  try {
+    const r = await fetch('/api/cierre', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mensajes: msgs }),
+    });
+    return r.ok ? await r.json() : null;
+  } catch (e) { console.error(e); return null; }
+}
+
+// Lo que la persona ya vivió se guarda antes que nada; el resumen es lo que
+// puede fallar y lo que puede faltar.
+function archivarCharla(resumen) {
+  if (!mensajes.length) return;
+  guardarEnHistoria({
+    f: inicioCharla || new Date().toISOString(), dia: diaCharla, resumen,
+    apertura: aperturaMostrada, m: mensajes.map(x => ({ r: x.role, c: x.content })),
+  });
+  olvidarCharla();
+}
+
 cerrarBtn.onclick = async () => {
-  if (ocupado || cortado) return;
+  if (ocupado || cortado || cerrada) return;
   ocupado = true;
   cerrarBtn.disabled = true;
   quitarAperturas();
   quitarOferta();
-  const p = puntos();
-  let despedida = 'Lo dejamos acá por hoy. Cuando quieras seguir, estoy.';
-  try {
-    const r = await fetch('/api/cierre', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mensajes }),
-    });
-    const d = await r.json();
-    if (d.despedida) despedida = d.despedida;
-    guardarResumen(d.resumen);
-    archivarCharla(d.resumen);
-  } catch (e) { console.error(e); archivarCharla(''); }
-  p.remove();
+  let despedida = DESPEDIDA;
+  if (mensajesDeLaPersona() >= MINIMO_PARA_RESUMEN) {
+    const p = puntos();
+    const d = await pedirCierre(mensajes);
+    p.remove();
+    if (d?.despedida) despedida = d.despedida;
+    archivarCharla(d?.resumen ?? '');
+    guardarResumen(d?.resumen);
+  } else {
+    archivarCharla('');   // dos mensajes sobre nada no dan un resumen que valga una llamada
+  }
   turno('assistant', despedida);
   anunciar(despedida);
-  cortar('Cerraste la charla de hoy.');
-  const volver = el('button', 'volver-inicio', 'Volver al inicio');
-  volver.onclick = () => ir('entrada');
-  hilo.appendChild(volver); seguir(true);
+  terminarCharla();
   ocupado = false;
 };
+
+// Cerrar ya no deja la pestaña muerta. El campo sigue vivo: si escribís algo más,
+// arranca una conversación nueva y limpia. La que cerraste ya quedó guardada.
+function terminarCharla() {
+  cerrada = true;
+  pararVoz();
+  cerrarBtn.hidden = true;
+  cerrarBtn.disabled = false;
+  txt.placeholder = 'Hasta cuando quieras volver.';
+}
+
+function empezarDeNuevo() {
+  cerrada = false;
+  mensajes = []; ambiguos = 0;
+  inicioCharla = ''; diaCharla = null;
+  conversacionAbierta = false; aperturasEl = null; accesoMostrado = false;
+  ofertaEl = null;
+  hilo.innerHTML = '';
+  olvidarCharla();
+  txt.placeholder = 'Escribí lo que quieras';
+  abrirConversacion();
+}
 
 async function mandar(textoDirecto) {
   const t = (textoDirecto ?? txt.value).trim();
   if (!t || ocupado || cortado) return;
+  if (cerrada) empezarDeNuevo();   // escribir después de cerrar abre una charla nueva
   ocupado = true;
   if (grabando) pararVoz(true);   // se manda lo que está a la vista, no lo que quedó en el aire
   quitarAperturas();
@@ -1279,6 +1424,7 @@ async function mandar(textoDirecto) {
   ajustarColchon();
   anclarArriba(turno('user', t));
   mensajes.push({ role: 'user', content: t });
+  guardarCharlaEnCurso();
   const p = puntos();
   try {
     const r = await fetch('/api/chat', {
@@ -1338,6 +1484,7 @@ async function leerStream(r, p) {
   if (rev) await rev.terminar();
   if (!nodo) { turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); return; }
   mensajes.push({ role: 'assistant', content: texto });
+  guardarCharlaEnCurso();
   aprenderDeLaCharla();
   anunciar(texto);
   accesoMemoria();
@@ -1449,7 +1596,7 @@ $('#cerrar-sesion').onclick = () => {
     return;
   }
   clearTimeout(confirmandoSalir); confirmandoSalir = null;
-  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS]) localStorage.removeItem(k); } catch (e) {}
+  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS, LLAVE_CHARLA]) localStorage.removeItem(k); } catch (e) {}
   location.href = location.pathname;
 };
 

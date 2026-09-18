@@ -538,9 +538,6 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #cerrar-hoy{background:none;border:1px solid var(--borde)}
 #cerrar-hoy[hidden]{display:none}
 #cerrar-hoy:disabled{opacity:.45}
-.volver-inicio{align-self:flex-start;background:none;border:1px solid var(--borde);
-  border-radius:10px;padding:9px 14px;font-family:var(--sans);font-size:15px;
-  color:var(--ambar-claro);cursor:pointer}
 
 /* Elegir el registro: dos formas de que te hablen, no un cuestionario. */
 .opciones{display:flex;flex-direction:column;gap:10px}
@@ -664,10 +661,10 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 /* Al pasar el mouse, una respuesta chica: sube un píxel y se afirma el borde.
    Solo donde hay mouse: en el celular el hover queda pegado después de tocar. */
-.acceso,.btn,.pill,.ayuda-boton,.volver-inicio,.opcion,.apertura{
+.acceso,.btn,.pill,.ayuda-boton,.opcion,.apertura{
   transition-property:transform,background-color,border-color,filter,opacity;transition-duration:.18s;transition-timing-function:ease-out}
 @media (hover:hover){
-  .btn:not(:disabled):hover,.pill:hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:hover{transform:translateY(-1px)}
+  .btn:not(:disabled):hover,.pill:hover,.ayuda-boton:hover,.opcion:hover{transform:translateY(-1px)}
   /* En los accesos no sube la tarjeta: se mueve la piedra. La de Hablar se inclina;
      la de Respirar respira. */
   .acceso-1:not([aria-disabled="true"]):hover .piedra{transform:rotate(-6deg) translateY(-1.5px)}
@@ -675,17 +672,17 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   .dia-link:hover{color:var(--ambar-claro)}
   .dia-guardar:hover{background:color-mix(in srgb,var(--ambar) 88%,#000)}
   .acceso-1:not([aria-disabled="true"]):hover,.btn-1:not(:disabled):hover{filter:brightness(1.07)}
-  .acceso-2:hover,.btn-2:not(:disabled):hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:not([aria-checked="true"]):hover,.chip:not([aria-pressed="true"]):not(:disabled):hover{
+  .acceso-2:hover,.btn-2:not(:disabled):hover,.ayuda-boton:hover,.opcion:not([aria-checked="true"]):hover,.chip:not([aria-pressed="true"]):not(:disabled):hover{
     border-color:color-mix(in srgb,var(--ambar) 50%,transparent)}
   /* Los botones llenos de la pastilla se oscurecen apenas, como en el diseño (#5733BC). */
   #enviar.listo:hover,#micro.on:hover{background:color-mix(in srgb,var(--ambar) 88%,#000)}
 }
-.acceso:not([aria-disabled="true"]):active,.btn:not(:disabled):active,.pill:active,.ayuda-boton:active,.volver-inicio:active,.opcion:active{
+.acceso:not([aria-disabled="true"]):active,.btn:not(:disabled):active,.pill:active,.ayuda-boton:active,.opcion:active{
   transform:scale(.985)}
 @media (prefers-reduced-motion:reduce){
-  .acceso,.btn,.pill,.ayuda-boton,.volver-inicio,.opcion,.apertura{transition-property:background-color,border-color,filter,opacity}
-  .acceso:hover,.btn:hover,.pill:hover,.ayuda-boton:hover,.volver-inicio:hover,.opcion:hover,
-  .acceso:active,.btn:active,.pill:active,.ayuda-boton:active,.volver-inicio:active,.opcion:active{transform:none}
+  .acceso,.btn,.pill,.ayuda-boton,.opcion,.apertura{transition-property:background-color,border-color,filter,opacity}
+  .acceso:hover,.btn:hover,.pill:hover,.ayuda-boton:hover,.opcion:hover,
+  .acceso:active,.btn:active,.pill:active,.ayuda-boton:active,.opcion:active{transform:none}
 }
 
 /* Elegir cómo respirar. Está arriba y en voz baja: la pantalla es para respirar,

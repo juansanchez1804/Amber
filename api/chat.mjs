@@ -31,6 +31,7 @@ const MODELO_CLASIF = 'claude-sonnet-5';
 // Tope por conversación. Es un prototipo: alto, para que quien la prueba no se
 // quede sin charla. Hasta ahí Amber ve la conversación entera, no solo el final.
 const MAX_MENSAJES  = 200;
+const RESUMENES_AL_PROMPT = 8;
 
 // Red de seguridad para cuando el clasificador no responde (caída, límite, sin
 // crédito): sin él, el servidor asumía "ninguno" y "no quiero seguir viviendo"
@@ -117,8 +118,10 @@ function bloqueV3({ memoria, riesgo, clasificadorFallo, limpios, primera }) {
     linea_trabajando: m.objetivos?.length ? llenar(B.trabajando, { objetivos: enProsa(m.objetivos) }) : '',
     linea_ayudo: m.estrategias?.length ? llenar(B.ayudo, { estrategias: enProsa(m.estrategias) }) : '',
     linea_sensibles: m.sensibles?.length ? llenar(B.sensibles, { sensibles: enProsa(m.sensibles) }) : '',
+    // La app guarda quince para la pantalla de memoria; al prompt van los ocho
+    // últimos, que es lo que hace falta para saber de dónde viene la persona.
     resumenes_recientes: m.resumenes?.length
-      ? llenar(B.resumenes, { resumenes: m.resumenes.map(resumen).map(t => /[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`).join(' ') }) : '',
+      ? llenar(B.resumenes, { resumenes: m.resumenes.slice(-RESUMENES_AL_PROMPT).map(resumen).map(t => /[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`).join(' ') }) : '',
   });
 
   const partes = [memoriaTexto, llenar(B.senal, { senal: riesgo.nivel })];
