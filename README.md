@@ -57,6 +57,12 @@ vercel deploy --prod
 La API key vive como variable de entorno en Vercel (`ANTHROPIC_API_KEY`), nunca en el código.
 Para correr local hace falta un `.env` propio con esa variable.
 
+`vercel.json` pide `maxDuration: 60` para las tres funciones: con señal `alto` el
+chat hace el clasificador más una o dos llamadas sin streaming, y con el tope por
+defecto del plan Hobby (10 s sin Fluid Compute) la función se corta justo en una
+crisis. **Pendiente: Juan tiene que confirmar en qué plan está el proyecto** y que
+el tope de 60 s esté efectivamente aplicado en el panel de Vercel.
+
 ## Regla
 
 Antes de dar por buena cualquier corrección de prompt, correr `probar.mjs` antes y

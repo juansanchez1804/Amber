@@ -162,7 +162,7 @@ const TECNICAS = {
   // exhalación larga. Es la técnica del ensayo que citamos, y la que más rápido
   // baja la activación cuando ya estás acelerado. Ciclos más cortos, menos tiempo.
   bajar: { rotulo: 'Bajar de golpe', acomodo: 3000, inhala: 3000, inhala2: 900, suelta: 6500, ciclos: 6,
-           sub: 'Dos veces adentro, una larga afuera. Sirve cuando ya estás acelerado.' },
+           sub: 'Dos veces adentro, una larga afuera. Sirve cuando el cuerpo ya va acelerado.' },
 };
 let RESP = TECNICAS[prefs.respirar] ?? TECNICAS.calmar;
 const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calmaAviso = $('#calma-aviso'),
@@ -1226,7 +1226,7 @@ function pintarHistoria() {
     // El subtítulo de arriba ya dice qué es esta pantalla; repetirlo no ayuda.
     // Lo que falta acá es por dónde se empieza.
     const puerta = el('div', 'vacio-puerta');
-    puerta.append(el('div', 'vacio', 'Todavía nada. Acá va quedando cada conversación que cierres.'));
+    puerta.append(el('div', 'vacio', 'Todavía nada. Cada conversación queda acá cuando termina el día o cuando la cerrás.'));
     const b = el('button', 'btn btn-2', 'Ir a hablar');
     b.onclick = () => ir('entrada');
     puerta.append(b);
@@ -1349,7 +1349,9 @@ async function pedirCierre(msgs) {
   try {
     const r = await fetch('/api/cierre', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mensajes: msgs }),
+      // El género va con la charla: sin él, el resumen le pone uno por su cuenta y
+      // ese "estuviste agotado" vuelve después en la home y en cada prompt.
+      body: JSON.stringify({ mensajes: msgs, genero: memoria?.genero ?? null }),
     });
     return r.ok ? await r.json() : null;
   } catch (e) { console.error(e); return null; }
@@ -1372,6 +1374,7 @@ cerrarBtn.onclick = async () => {
   cerrarBtn.disabled = true;
   quitarAperturas();
   quitarOferta();
+  quitarFalla();
   let despedida = DESPEDIDA;
   if (mensajesDeLaPersona() >= MINIMO_PARA_RESUMEN) {
     const p = puntos();
@@ -1404,11 +1407,31 @@ function empezarDeNuevo() {
   mensajes = []; ambiguos = 0;
   inicioCharla = ''; diaCharla = null;
   conversacionAbierta = false; aperturasEl = null; accesoMostrado = false;
-  ofertaEl = null;
+  ofertaEl = null; fallaEl = null;
   hilo.innerHTML = '';
   olvidarCharla();
   txt.placeholder = 'Escribí lo que quieras';
   abrirConversacion();
+}
+
+// La respuesta no llegó (se cayó la conexión, la función se cortó, volvió vacía). Lo
+// que se mandó vuelve al campo y se saca de la charla y de lo guardado, para que no
+// quede huérfano; abajo queda a mano volver a intentarlo. Antes había que volver a
+// escribirlo, y la copia sin respuesta seguía en el historial.
+let fallaEl = null;
+function quitarFalla() { fallaEl?.remove(); fallaEl = null; }
+function noLlego(mio, propio, t) {
+  propio.remove();
+  if (mensajes.at(-1) === mio) { mensajes.pop(); guardarCharlaEnCurso(); }
+  if (!txt.value.trim()) escribir(t);   // si mientras tanto escribió otra cosa, eso queda
+  quitarFalla();
+  fallaEl = el('div', 'falla');
+  fallaEl.append(el('div', 'am', 'Se me cortó algo acá.'));
+  const b = el('button', 'apertura', 'Reintentar');
+  b.onclick = () => mandar(txt.value.trim() ? undefined : t);
+  fallaEl.append(b);
+  hilo.appendChild(fallaEl); seguir(true);
+  anunciar('Se me cortó algo acá. Tu mensaje volvió al campo: podés reintentar.');
 }
 
 async function mandar(textoDirecto) {
@@ -1419,11 +1442,14 @@ async function mandar(textoDirecto) {
   if (grabando) pararVoz(true);   // se manda lo que está a la vista, no lo que quedó en el aire
   quitarAperturas();
   quitarOferta();
+  quitarFalla();
   $('#ver-ayuda').hidden = true;   // mientras se escribe no ocupa el lugar de escribir
   if (textoDirecto == null) { txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo'); }
   ajustarColchon();
-  anclarArriba(turno('user', t));
-  mensajes.push({ role: 'user', content: t });
+  const propio = turno('user', t);
+  anclarArriba(propio);
+  const mio = { role: 'user', content: t };
+  mensajes.push(mio);
   guardarCharlaEnCurso();
   const p = puntos();
   try {
@@ -1434,14 +1460,15 @@ async function mandar(textoDirecto) {
       body: JSON.stringify({ mensajes: aperturaMostrada ? [{ role: 'assistant', content: aperturaMostrada }, ...mensajes] : mensajes,
                              memoria: memoriaParaEnviar(), ambiguos }),
     });
-    if ((r.headers.get('content-type') ?? '').includes('text/event-stream')) await leerStream(r, p);
-    else {
+    if (!(r.headers.get('content-type') ?? '').includes('text/event-stream')) {
       const d = await r.json().catch(() => ({}));
-      p.remove(); turno('assistant', 'Se me cortó algo acá. Probá de nuevo.');
-      console.error(d.error ?? r.status);
+      throw new Error(d.error ?? `HTTP ${r.status}`);
     }
+    await leerStream(r, p);
   } catch (e) {
-    p.remove(); turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); console.error(e);
+    console.error(e);
+    p.remove();
+    noLlego(mio, propio, t);
   }
   ocupado = false;
   // Vuelve la puerta a los teléfonos. Se esconde mientras se manda, no para siempre:
@@ -1453,36 +1480,51 @@ async function mandar(textoDirecto) {
 
 async function leerStream(r, p) {
   const lector = r.body.getReader(), dec = new TextDecoder();
-  let resto = '', nodo = null, rev = null, riesgo = 'ninguno', fin = false, crudo = '', mostrado = '';
-  for (;;) {
-    const { value, done } = await lector.read();
-    if (done) break;
-    resto += dec.decode(value, { stream: true });
-    const partes = resto.split('\n\n');
-    resto = partes.pop();
-    for (const parte of partes) {
-      const linea = parte.split('\n').find(l => l.startsWith('data: '));
-      if (!linea) continue;
-      let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
-      if (d.tipo === 'riesgo') { riesgo = d.nivel; if (d.ambiguo) ambiguos++; }
-      else if (d.tipo === 'texto') {
-        crudo += d.t;
-        const visible = sinMarca(crudo, false);
-        if (visible.length > mostrado.length) {
-          if (!nodo) { p.remove(); nodo = turno('assistant', ''); rev = revelador(nodo); }
-          rev.empujar(visible.slice(mostrado.length)); mostrado = visible;
-        }
-      } else if (d.tipo === 'fin') fin = d.fin === true;
+  let resto = '', nodo = null, rev = null, riesgo = 'ninguno', ambiguo = false, fin = false, crudo = '', mostrado = '', texto = '';
+  try {
+    for (;;) {
+      const { value, done } = await lector.read();
+      if (done) break;
+      resto += dec.decode(value, { stream: true });
+      const partes = resto.split('\n\n');
+      resto = partes.pop();
+      for (const parte of partes) {
+        const linea = parte.split('\n').find(l => l.startsWith('data: '));
+        if (!linea) continue;
+        let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
+        if (d.tipo === 'riesgo') { riesgo = d.nivel; ambiguo = !!d.ambiguo; }
+        else if (d.tipo === 'texto') {
+          crudo += d.t;
+          const visible = sinMarca(crudo, false);
+          if (visible.length > mostrado.length) {
+            if (!nodo) { p.remove(); nodo = turno('assistant', ''); rev = revelador(nodo); }
+            rev.empujar(visible.slice(mostrado.length)); mostrado = visible;
+          }
+        } else if (d.tipo === 'fin') fin = d.fin === true;
+      }
     }
+    p.remove();
+    texto = sinMarca(crudo, true);
+    if (texto.length > mostrado.length) {
+      if (!nodo) { nodo = turno('assistant', ''); rev = revelador(nodo); }
+      rev.empujar(texto.slice(mostrado.length));
+    }
+    if (rev) await rev.terminar();
+    // Llegó el final sin una palabra: la función se cortó del lado del servidor. Es lo
+    // mismo que si no hubiera llegado nada, y mandar() devuelve el mensaje al campo.
+    if (!nodo) throw new Error('respuesta vacía');
+  } catch (e) {
+    // Lo que llegó a medias no sirve suelto: se saca, y la persona reintenta.
+    nodo?.remove();
+    throw e;
+  } finally {
+    // El revelador es un reloj de 70 ms. Si el stream se cortaba antes de terminar,
+    // nadie lo apagaba y quedaba corriendo para siempre, uno más por cada corte.
+    rev?.terminar();
   }
-  p.remove();
-  const texto = sinMarca(crudo, true);
-  if (texto.length > mostrado.length) {
-    if (!nodo) { nodo = turno('assistant', ''); rev = revelador(nodo); }
-    rev.empujar(texto.slice(mostrado.length));
-  }
-  if (rev) await rev.terminar();
-  if (!nodo) { turno('assistant', 'Se me cortó algo acá. Probá de nuevo.'); return; }
+  // La frase de bronca se cuenta recién cuando la respuesta llegó entera: si se corta y
+  // se reintenta, el servidor la vuelve a ver y no hay que contarla dos veces.
+  if (ambiguo) ambiguos++;
   mensajes.push({ role: 'assistant', content: texto });
   guardarCharlaEnCurso();
   aprenderDeLaCharla();
@@ -1498,17 +1540,28 @@ async function leerStream(r, p) {
 const LAPIZ = '<svg width="18" height="18" viewBox="0 0 24 24" stroke="#9B9189"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>';
 const CRUZ  = '<svg width="18" height="18" viewBox="0 0 24 24" stroke="#6E675E"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>';
 
-function entrada(texto, alBorrar, alEditar, nota) {
+// Los rótulos de cada grupo, en un solo lugar: son el título que se ve y el nombre que
+// el lector de pantalla le da a cada entrada y a sus botones.
+const ROTULOS = {
+  apodo: 'Cómo te digo', datos: 'Personas y situaciones', objetivos: 'Lo que venís trabajando',
+  estrategias: 'Lo que te ayuda', sensibles: 'Temas sensibles', resumenes: 'Lo que me contaste',
+};
+
+function entrada(texto, alBorrar, alEditar, nota, rotulo) {
   const f = el('div', 'ent');
   const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex-grow:1';
   const s = el('span', null, texto);
   s.contentEditable = 'plaintext-only';
+  s.setAttribute('role', 'textbox');
+  s.setAttribute('aria-label', rotulo ?? 'Texto');
   s.addEventListener('blur', () => alEditar(s.textContent.trim()));
   izq.append(s);
   if (nota) izq.append(el('div', 'nota', nota));
   const acc = el('div', 'acc');
-  const bl = el('button'); bl.innerHTML = LAPIZ; bl.onclick = () => s.focus();
-  const bc = el('button'); bc.innerHTML = CRUZ;  bc.onclick = alBorrar;
+  // El lápiz y la cruz son solo un dibujo: sin nombre se anuncian como "botón".
+  const que = texto ? `: ${texto}` : '';
+  const bl = el('button'); bl.innerHTML = LAPIZ; bl.setAttribute('aria-label', `Editar${que}`); bl.onclick = () => s.focus();
+  const bc = el('button'); bc.innerHTML = CRUZ;  bc.setAttribute('aria-label', `Borrar${que}`); bc.onclick = alBorrar;
   acc.append(bl, bc);
   f.append(izq, acc);
   return f;
@@ -1527,7 +1580,7 @@ const VACIO = {
   objetivos:   'Todavía nada. Acá va apareciendo lo que venís trabajando.',
   estrategias: 'Todavía nada. Acá guardo lo que te haya servido alguna vez.',
   sensibles:   'Todavía nada. Acá van los temas que no traigo yo.',
-  resumenes:   'Todavía nada. Cada vez que cerrás una conversación queda una línea acá.',
+  resumenes:   'Todavía nada. Cada conversación deja una línea acá cuando termina el día o cuando la cerrás.',
 };
 
 const ESTILOS = [
@@ -1542,12 +1595,13 @@ function pintarMemoria() {
     entrada(v,
       () => { memoria[clave].splice(i, 1); guardar(); },
       (nuevo) => { if (nuevo && nuevo !== v) { memoria[clave][i] = nuevo; guardar(); } },
-      clave === 'sensibles' ? 'No lo saco yo. Lo traés vos cuando querés.' : null));
+      clave === 'sensibles' ? 'No lo saco yo. Lo traés vos cuando querés.' : null,
+      ROTULOS[clave]));
 
   // Siempre visible, incluso vacío: si no, borrar el apodo lo dejaba sin forma de volver a ponerlo.
-  c.append(grupo('Cómo te digo', [
+  c.append(grupo(ROTULOS.apodo, [
     entrada(memoria.apodo ?? '', () => { memoria.apodo = ''; guardar(); },
-      n => { if (n !== memoria.apodo) { memoria.apodo = n; guardar(); } })]));
+      n => { if (n !== memoria.apodo) { memoria.apodo = n; guardar(); } }, null, ROTULOS.apodo)]));
   const GENEROS = [['m', 'En masculino'], ['f', 'En femenino'], ['neutro', 'Prefiero no decirlo']];
   const og = el('div', 'opciones');
   og.style.padding = '12px';
@@ -1567,11 +1621,11 @@ function pintarMemoria() {
   // entendía qué es lo que Amber llega a tener presente cuando hablan.
   const conVacio = (clave, hijos) => (hijos.length ? hijos : [el('div', 'vacio', VACIO[clave])]);
 
-  c.append(grupo('Personas y situaciones',  conVacio('datos', lista('datos'))));
-  c.append(grupo('Lo que venís trabajando', conVacio('objetivos', lista('objetivos'))));
-  c.append(grupo('Lo que te ayuda',         conVacio('estrategias', lista('estrategias'))));
-  c.append(grupo('Temas sensibles',         conVacio('sensibles', lista('sensibles'))));
-  c.append(grupo('Lo que me contaste', conVacio('resumenes', (memoria.resumenes ?? []).map((v, i) =>
+  c.append(grupo(ROTULOS.datos,       conVacio('datos', lista('datos'))));
+  c.append(grupo(ROTULOS.objetivos,   conVacio('objetivos', lista('objetivos'))));
+  c.append(grupo(ROTULOS.estrategias, conVacio('estrategias', lista('estrategias'))));
+  c.append(grupo(ROTULOS.sensibles,   conVacio('sensibles', lista('sensibles'))));
+  c.append(grupo(ROTULOS.resumenes, conVacio('resumenes', (memoria.resumenes ?? []).map((v, i) =>
     entrada(textoResumen(v),
       () => { memoria.resumenes.splice(i, 1); guardar(); },
       (nuevo) => {
@@ -1579,7 +1633,7 @@ function pintarMemoria() {
         // Si lo editás a mano queda como lo escribiste, con la fecha que ya tenía.
         memoria.resumenes[i] = typeof v === 'string' ? nuevo : { ...v, t: nuevo };
         guardar();
-      })).reverse())));
+      }, null, ROTULOS.resumenes)).reverse())));
 
 }
 

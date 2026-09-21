@@ -327,15 +327,30 @@ export default async function handler(req, res) {
     // en los momentos difíciles (la segunda frase de riesgo del caso 24) se lo gastaba
     // entero pensando y la respuesta llegaba vacía: "Se me cortó algo acá" justo ahí.
     // Solo se cobra lo que se usa, así que subirlo no encarece las respuestas normales.
-    const pedido = (extra = '') => ({
-      model: MODELO_CHARLA,
-      max_tokens: 4096,
-      system: [
-        { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
-        { type: 'text', text: `${bloque}${extra}` },
-      ],
-      messages: historial,
-    });
+    //
+    // Lo que cambia en cada turno (la señal, la memoria, los avisos) iba en el system,
+    // antes de la conversación: el prefijo cacheado terminaba ahí y cada turno volvía a
+    // pagar el historial entero como entrada nueva. Ahora va al final, como segundo
+    // bloque del último mensaje de la persona, y el punto de caché queda en el texto
+    // de ella: el prompt de Amber más toda la charla son un prefijo que el turno
+    // siguiente encuentra cacheado, y solo se paga lo nuevo. Va entre etiquetas para
+    // que no se lea como algo que la persona escribió.
+    const ultimo = historial.at(-1);
+    const pedido = (extra = '') => {
+      const nota = `<nota_del_sistema>\n${bloque}${extra}\n</nota_del_sistema>`;
+      const messages = ultimo?.role === 'user'
+        ? [...historial.slice(0, -1), { role: 'user', content: [
+            { type: 'text', text: ultimo.content, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: nota },
+          ] }]
+        : [...historial, { role: 'user', content: nota }];   // la app siempre manda después de la persona; por si acaso
+      return {
+        model: MODELO_CHARLA,
+        max_tokens: 4096,
+        system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
+        messages,
+      };
+    };
 
     if (riesgo.nivel === 'alto') {
       // Sin streaming: hay que tener la respuesta entera para poder revisarla. No se

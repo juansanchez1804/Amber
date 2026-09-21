@@ -24,10 +24,14 @@ export default async function handler(req, res) {
   if (!key) return res.status(500).json({ error: 'falta ANTHROPIC_API_KEY' });
 
   try {
-    const { mensajes } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { mensajes, genero } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     if (!Array.isArray(mensajes) || !mensajes.length)
       return res.status(400).json({ error: 'faltan mensajes' });
 
+    // El género viene del onboarding (m, f, neutro; las memorias viejas lo traen
+    // escrito entero). Sin él, el resumen elige uno solo y se lo pone a la persona.
+    const generoTexto = { m: 'masculino', masculino: 'masculino', f: 'femenino', femenino: 'femenino',
+      neutro: 'pidió que no se lo marques' }[genero] ?? 'no se sabe: escribí sin marcarlo';
     // Toda la charla, con el mismo tope que el chat: el resumen es de lo que pasó, no del final.
     const charla = mensajes.slice(-200)
       .map(m => `${m.role === 'assistant' ? 'AMBER' : 'PERSONA'}: ${String(m.content).slice(0, 4000)}`)
@@ -43,7 +47,7 @@ export default async function handler(req, res) {
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
         { type: 'text', text: CIERRE },
       ],
-      messages: [{ role: 'user', content: charla }],
+      messages: [{ role: 'user', content: `Datos de la persona:\n- Género gramatical: ${generoTexto}\n\nLa charla:\n${charla}` }],
     }, key);
 
     // Sonnet 5 puede devolver un bloque de pensamiento antes del texto: el

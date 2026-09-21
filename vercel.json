@@ -1,7 +1,16 @@
 {
   "functions": {
-    "api/chat.mjs":    { "includeFiles": "prompts/**" },
-    "api/cierre.mjs":  { "includeFiles": "prompts/**" },
-    "api/memoria.mjs": { "includeFiles": "prompts/**" }
+    "api/chat.mjs": {
+      "includeFiles": "prompts/**",
+      "maxDuration": 60
+    },
+    "api/cierre.mjs": {
+      "includeFiles": "prompts/**",
+      "maxDuration": 60
+    },
+    "api/memoria.mjs": {
+      "includeFiles": "prompts/**",
+      "maxDuration": 60
+    }
   }
 }

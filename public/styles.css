@@ -143,9 +143,18 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 /* La salida a una persona de verdad, dicha con la voz de quien la necesita. No es
    letra chica: se ve y se toca fácil, pero no grita. */
-.ayuda-boton{align-self:center;margin-top:24px;flex-shrink:0;min-height:44px;padding:0 18px;border-radius:12px;cursor:pointer;
+.ayuda-boton{min-height:44px;padding:0 18px;border-radius:12px;cursor:pointer;
   background:var(--tarjeta);border:1px solid color-mix(in srgb,var(--ambar) 20%,transparent);
   font-family:var(--sans);font-size:15px;font-weight:500;color:var(--ambar-claro)}
+/* Va al pie y ahí se queda: en un celu bajo la home se desplaza, y esta salida tiene que
+   verse sin desplazarse. El sticky se frena en el borde del padding de la pantalla, así
+   que el botón queda donde siempre estuvo; la franja de abajo (::after) tapa con el mismo
+   fondo lo que se desplaza por debajo del padding. En una pantalla alta no hay
+   desplazamiento y nada de esto se nota. */
+.ayuda-pie{position:sticky;bottom:0;z-index:2;display:flex;justify-content:center;flex-shrink:0;
+  margin-top:16px;padding-top:8px;background:var(--fondo)}
+.ayuda-pie::after{content:'';position:absolute;left:0;right:0;top:100%;
+  height:calc(24px + env(safe-area-inset-bottom,0px));background:var(--fondo)}
 
 /* onboarding */
 .campo{width:100%;background:none;border:0;border-bottom:1px solid var(--borde);color:var(--texto);
@@ -156,8 +165,11 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .check input{width:18px;height:18px;accent-color:var(--ambar);cursor:pointer}
 
 /* conversación */
-#hilo{position:relative;flex-grow:1;display:flex;flex-direction:column;gap:30px;padding-top:28px;overflow-y:auto;min-height:0;scrollbar-width:none}
+#hilo{position:relative;flex-grow:1;display:flex;flex-direction:column;gap:30px;padding-top:28px;overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:none}
 #hilo::-webkit-scrollbar{display:none}
+/* Una palabra sin espacios ("jajajajaja…", un enlace) se corta donde haga falta:
+   si no, ensancha el hilo y la pantalla se desplaza de costado. */
+.am,.yo{overflow-wrap:anywhere}
 .am{font-family:var(--serif);font-size:19px;line-height:1.5;color:var(--texto);max-width:300px;white-space:pre-wrap}
 /* Lo que escribe la persona va del lado derecho, pero el texto arranca siempre en
    el mismo lugar: alineado a la derecha, cada renglón empezaba en otro punto y
@@ -182,10 +194,19 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   text-align:left;transition:background .2s ease}
 .apertura:hover{background:var(--tarjeta)}
 
+/* La respuesta no llegó: una línea de Amber y, abajo, volver a intentarlo. El mensaje ya
+   volvió al campo, así que reintentar es mandar lo que hay. */
+.falla{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+
 .acceso-mem{align-self:flex-start;margin-top:-16px;background:none;border:0;padding:0 0 3px;
   cursor:pointer;font-family:var(--sans);font-size:13px;color:var(--gris2);
   border-bottom:1px solid var(--borde);transition:color .2s ease}
 .acceso-mem:hover{color:var(--ambar-claro)}
+/* Los controles chicos (un enlace de 13px, un ícono de 18px) se ven como se ven, pero
+   el dedo tiene 44px: un área de toque invisible, centrada en cada uno. */
+.acceso-mem,.dia-link,.acc button{position:relative}
+.acceso-mem::before,.dia-link::before,.acc button::before{content:'';position:absolute;left:50%;top:50%;
+  width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}
 
 /* El campo es una pastilla: ella sola separa lo que escribís del hilo, así que
    no hace falta línea divisoria. Los botones van abajo, para que cuando el texto
@@ -409,7 +430,8 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .ent span{font-size:17px;line-height:1.5;flex-grow:1}
 .ent span[contenteditable]:focus{outline:0;border-bottom:1px solid var(--borde)}
 .ent span:empty::before{content:'Tocá para escribir tu nombre';color:var(--gris2)}
-.acc{display:flex;align-items:center;gap:14px;flex-shrink:0}
+/* 26px entre el lápiz y la cruz: con sus áreas de toque de 44, menos que eso y se pisan. */
+.acc{display:flex;align-items:center;gap:26px;flex-shrink:0}
 .acc button{background:none;border:0;padding:0;cursor:pointer;display:flex}
 .acc svg{fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .div{height:1px;background:color-mix(in srgb,var(--gris) 18%,transparent)}
@@ -720,7 +742,8 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   .acceso-1{height:84px;padding:16px}
   .acceso-2{min-height:76px;padding:14px 16px}
   .dia{gap:8px;padding:14px 16px}
-  .ayuda-boton{margin-top:16px}
+  .ayuda-pie{margin-top:8px}
+  .ayuda-pie::after{height:calc(16px + env(safe-area-inset-bottom,0px))}
 }
 /* Respirar solo se aprieta en pantallas muy bajas (un iPhone SE con Safari): el orbe
    es la guía, y achicarlo en un celu común no hace falta. */

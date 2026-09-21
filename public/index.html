@@ -150,7 +150,7 @@
     <div style="display:flex;flex-direction:column;gap:20px">
       <h2>Antes de empezar.</h2>
       <div class="sub" style="max-width:320px">Amber no es un servicio de emergencia. Si estás en riesgo, llamá al 135 desde CABA y Gran Buenos Aires, o al 0800 345 1435 desde el resto del país.</div>
-      <div class="sub" style="max-width:320px">Lo que hablen queda en este teléfono. No hay cuenta ni servidor: nadie puede leer tus conversaciones, nosotros tampoco.</div>
+      <div class="sub" style="max-width:320px">No hay cuenta. Lo que hablen queda en este teléfono y de acá no sale. Lo que escribís viaja a la API de Anthropic solo para que Amber pueda contestarte, y no se usa para entrenar modelos.</div>
       <label class="check">
         <input type="checkbox" id="ob-check">
         <span>Tengo 18 años o más.</span>
@@ -236,7 +236,11 @@
         <button class="dia-link dia-cambiar" id="dia-cambiar">Cambiar</button>
       </div>
     </div>
-    <button class="ayuda-boton" data-ir="ayuda">Necesito hablar con una persona ya</button>
+    <!-- Queda pegado abajo: en un celu bajo la home se desplaza, y la salida a una
+         persona es lo único que no puede depender de desplazarse. -->
+    <div class="ayuda-pie">
+      <button class="ayuda-boton" data-ir="ayuda">Necesito hablar con una persona ya</button>
+    </div>
   </section>
 
   <!-- CONVERSACIÓN -->
@@ -375,7 +379,7 @@
     <div class="cuerpo" style="padding-top:24px">
       <nav class="lista" aria-label="Menú">
         <button class="fila-menu" data-ir="historia">
-          <span class="fila-t">Historia</span><span class="fila-s">Las conversaciones que cerraste</span>
+          <span class="fila-t">Historia</span><span class="fila-s">Las conversaciones de otros días</span>
         </button>
         <button class="fila-menu" data-ir="mem">
           <span class="fila-t">Lo que recuerdo</span><span class="fila-s">Lo que tengo presente cuando hablamos</span>
@@ -408,7 +412,7 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
       <h2>Historia</h2>
-      <div class="sub">Las conversaciones que cerraste. Están solo en este teléfono.</div>
+      <div class="sub">Las conversaciones de otros días. Están solo en este teléfono.</div>
     </div>
     <div class="cuerpo" id="historia-cuerpo"></div>
   </section>
