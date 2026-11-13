@@ -832,7 +832,7 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 
 /* Directorio */
 .dir-t{font-family:var(--serif);font-weight:400;font-size:20px;margin:0 0 4px}
-.dir-f{display:flex;flex-direction:column;gap:3px;padding:14px 16px}
+.dir-f{display:flex;flex-direction:column;gap:3px;padding:12px 0}
 .dir-n{font-size:16px;color:var(--texto)}
 
 /* PIN */
@@ -844,3 +844,10 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* Feedback */
 .fb-tipos{flex-shrink:0;margin-top:18px}
 #feedback .carta-txt{margin-top:14px}
+
+/* ── pulido ─────────────────────────────────────────────────────────────────── */
+/* Lo que sube y se esconde bajo la barra se desvanece, en vez de quedar cortado al medio. */
+#hilo{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 28px);mask-image:linear-gradient(to bottom,transparent 0,#000 28px)}
+/* El contenido de las pantallas con lista no se pega al subtítulo. */
+#historia-cuerpo,#resumen-cuerpo,#prefs-cuerpo,#pensamientos-cuerpo{padding-top:16px}
+#ob2 .barra,#ob2a .barra,#ob3 .barra{margin-left:-10px}

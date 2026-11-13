@@ -67,6 +67,11 @@
 
   <!-- ONBOARDING 2: NOMBRE -->
   <section class="p" id="ob2">
+    <div class="barra">
+      <button class="ico" data-ir="ob1" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
     <div class="crece" style="flex-grow:1.4"></div>
     <div style="display:flex;flex-direction:column;gap:16px">
       <h2>¿Cómo te gusta que te digan?</h2>
@@ -81,6 +86,11 @@
 
   <!-- ONBOARDING 2a: GÉNERO GRAMATICAL -->
   <section class="p" id="ob2a">
+    <div class="barra">
+      <button class="ico" data-ir="ob2" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
     <div class="crece" style="flex-grow:1.4"></div>
     <div style="display:flex;flex-direction:column;gap:16px">
       <h2>¿Cómo te nombro?</h2>
@@ -103,11 +113,16 @@
 
   <!-- ONBOARDING 3: LÍMITES -->
   <section class="p" id="ob3">
+    <div class="barra">
+      <button class="ico" data-ir="ob2a" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
     <div class="crece" style="flex-grow:1.4"></div>
     <div style="display:flex;flex-direction:column;gap:20px">
       <h2>Antes de empezar.</h2>
       <div class="sub" style="max-width:320px">Amber no es un servicio de emergencia. Si estás en riesgo, llamá al 135 desde CABA y Gran Buenos Aires, o al 0800 345 1435 desde el resto del país.</div>
-      <div class="sub" style="max-width:320px">No hay cuenta. Lo que hablen queda en este teléfono y de acá no sale. Lo que escribís viaja a la API de Anthropic solo para que Amber pueda contestarte. Según sus condiciones, lo que llega por esa vía no se usa para entrenar modelos.</div>
+      <div class="sub" style="max-width:320px">No hay cuenta. Lo que hablen se guarda en este teléfono, no en un servidor nuestro. Para que Amber pueda contestarte, lo que escribís pasa por la API de Anthropic y no se guarda ahí. Según sus condiciones, lo que llega por esa vía no se usa para entrenar modelos.</div>
       <label class="check">
         <input type="checkbox" id="ob-check">
         <span>Tengo 18 años o más.</span>
@@ -444,7 +459,7 @@
       </nav>
     </div>
     <div style="padding-top:16px;flex-shrink:0">
-      <button class="btn btn-2" id="cerrar-sesion">Cerrar sesión</button>
+      <button class="btn btn-2" id="cerrar-sesion">Borrar todo</button>
     </div>
   </section>
 

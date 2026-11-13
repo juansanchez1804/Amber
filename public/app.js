@@ -1216,7 +1216,7 @@ function resumenDelMes(h) {
   const delMes = h.filter(ch => { const d = new Date(ch.f); return d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear() && ch.r; })
                   .reverse();
   const frag = document.createDocumentFragment();
-  if (!delMes.length) return frag;
+  if (delMes.length < 3) return frag;   // con pocas, repetiría la lista de abajo
   const g = el('div', 'grupo mes');
   g.append(el('div', 'rot', `${capitalizar(MESES[hoy.getMonth()])}, en pocas líneas`));
   const t = el('div', 'tarj mes-tarj');
@@ -1644,12 +1644,12 @@ function pintarMemoria() {
 // Cerrar sesión borra todo lo guardado y vuelve al principio. Recarga en vez de
 // resetear diez variables a mano: es la única forma de garantizar que no queda
 // nada del usuario anterior dando vueltas en memoria.
-const ROTULO_SALIR = 'Cerrar sesión';
+const ROTULO_SALIR = 'Borrar todo';
 let confirmandoSalir = null;
 $('#cerrar-sesion').onclick = () => {
   const b = $('#cerrar-sesion');
   if (!confirmandoSalir) {
-    b.textContent = 'Tocá de nuevo para cerrar sesión';
+    b.textContent = 'Tocá de nuevo: se borra todo y no se puede deshacer';
     confirmandoSalir = setTimeout(() => { confirmandoSalir = null; b.textContent = ROTULO_SALIR; }, 4000);
     return;
   }
@@ -1725,7 +1725,7 @@ function pintarPreferencias() {
   b.style.marginTop = '12px';
   b.onclick = exportar;
   datos.append(b);
-  datos.append(el('div', 'vacio', 'Para borrar todo: "Cerrar sesión", en el menú.'));
+  datos.append(el('div', 'vacio', 'Para borrar todo: "Borrar todo", al final del menú.'));
   c.append(datos);
 }
 
@@ -1846,7 +1846,7 @@ const ABOUT = [
   ['Quién la hace', 'Dos estudiantes argentinos. Está en desarrollo: lo que ves es un prototipo.'],
   ['Qué pasa con lo que contás', '<strong>No hay cuenta, no hay servidor y nadie puede leer tus conversaciones.</strong> Lo que Amber recuerda y las conversaciones de otros días viven en este teléfono, en el navegador, y de acá no salen. Lo que escribís viaja a la API de Anthropic para que Amber pueda contestarte; según sus condiciones, lo que llega por esa vía no se usa para entrenar modelos. El resumen para tu psicólogo también se arma ahí, y lo mandás vos. Si borrás los datos del navegador, no queda nada en ningún lado: tampoco nosotros podemos recuperarlo.'],
   ['Por qué se respira así', 'Hay una sola respiración, en dos versiones. La corta son nueve ciclos de cuatro segundos adentro y seis afuera: seis respiraciones por minuto, noventa segundos. Ese ritmo no es arbitrario: alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. La <strong>prolongada</strong> sale del mismo principio: baja a cinco por minuto, con la exhalación al doble de la inhalación, durante cinco minutos. Es la que aparece de noche. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar.'],
-  ['Cómo borrarlo', 'Desde "Lo que recuerdo" borrás lo que Amber sabe de vos. Desde "Historia" borrás las conversaciones. "Cerrar sesión" borra todo junto y no se puede deshacer.'],
+  ['Cómo borrarlo', 'Desde "Lo que recuerdo" borrás lo que Amber sabe de vos. Desde "Historia" borrás las conversaciones. "Borrar todo", al final del menú, borra todo junto y no se puede deshacer.'],
   ['Edad', 'Amber es para mayores de 18.'],
 ];
 
