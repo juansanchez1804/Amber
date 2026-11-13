@@ -107,7 +107,7 @@ function ir(id) {
   if (id !== 'conv') pararVoz?.();
   // Volver al chat después de "Terminé" abre una charla nueva, que arranca retomando
   // el tema de la última vez. La que se cerró ya quedó guardada en la historia.
-  if (id === 'conv') { ajustarColchon(); if (cerrada) empezarDeNuevo(); abrirConversacion(); $('#txt').focus(); seguir(false); }
+  if (id === 'conv') { ajustarColchon(); if (cerrada) empezarDeNuevo(); if (!mensajes.length) climaInicial(); else $('#conv').dataset.hora = esDeNoche() ? 'noche' : 'dia'; abrirConversacion(); $('#txt').focus(); seguir(false); }
   if (id === 'calma') empezarRespiracion(); else pararRespiracion();
   if (id === 'entrada') animarSaludo();
   if (id === 'mem') pintarMemoria();
@@ -145,6 +145,33 @@ $('#ver-ayuda').onclick   = () => ir('ayuda');
 function pintarAyuda() {
   const c = $('#ayuda-cuerpo'); c.innerHTML = '';
   c.append(tarjetasRecursos());
+  c.append(directorio());
+}
+
+// ── directorio de profesionales ───────────────────────────────────────────
+// Vive en la capa de ayuda, junto al 135. Listar psicólogos no ayuda a ordenar lo
+// que te pasa, así que no es una funcionalidad aparte: Amber lista y el contacto pasa
+// afuera de la app, sin trámite y sin comisión. Mientras no esté el listado propio,
+// van los caminos que existen para cualquiera.
+const CAMINOS = [
+  ['Tu obra social o prepaga', 'Tiene una cartilla de salud mental. Es el camino más directo si tenés cobertura.'],
+  ['El hospital público de tu zona', 'Los servicios de salud mental atienden sin costo. Puede haber lista de espera.'],
+  ['Las facultades de psicología', 'Algunas tienen servicios de atención con aranceles bajos.'],
+];
+function directorio() {
+  const g = el('div', 'grupo');
+  g.style.marginTop = '28px';
+  g.append(el('h3', 'dir-t', 'Si querés empezar con un psicólogo'));
+  const t = el('div', 'tarj');
+  CAMINOS.forEach(([titulo, texto], i) => {
+    if (i) t.append(el('div', 'div'));
+    const f = el('div', 'dir-f');
+    f.append(el('div', 'dir-n', titulo), el('div', 'rec-d', texto));
+    t.append(f);
+  });
+  g.append(t);
+  g.append(el('div', 'vacio', 'El listado de profesionales que recomienda Amber se suma cuando estén los primeros. El contacto siempre es directo con ellos, por fuera de la app.'));
+  return g;
 }
 
 // ── respirar ──────────────────────────────────────────────────────────────
@@ -1152,6 +1179,7 @@ function pintarHistoria() {
     c.append(puerta);
     return;
   }
+  c.append(resumenDelMes(h));
   const lista = el('div', 'grupo');
   lista.style.gap = '10px';
   h.forEach((ch, i) => {
@@ -1178,6 +1206,26 @@ function pintarHistoria() {
     pintarHistoria();
   };
   c.append(borrar);
+}
+
+// ── resumen del mes ───────────────────────────────────────────────────────
+// Sin ninguna valoración ni comparación entre meses: un mes "peor" que el anterior es
+// el gráfico de ánimo disfrazado. Solo los temas de cada charla, en orden.
+function resumenDelMes(h) {
+  const hoy = new Date();
+  const delMes = h.filter(ch => { const d = new Date(ch.f); return d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear() && ch.r; })
+                  .reverse();
+  const frag = document.createDocumentFragment();
+  if (!delMes.length) return frag;
+  const g = el('div', 'grupo mes');
+  g.append(el('div', 'rot', `${capitalizar(MESES[hoy.getMonth()])}, en pocas líneas`));
+  const t = el('div', 'tarj mes-tarj');
+  const ul = el('ul', 'mes-lista');
+  for (const ch of delMes) ul.append(el('li', null, ch.r));
+  t.append(ul);
+  g.append(t);
+  frag.append(g);
+  return frag;
 }
 
 function fechaLarga(iso) {
@@ -1419,6 +1467,25 @@ async function mandar(textoDirecto) {
   if (!cortado) txt.focus();
 }
 
+// ── la interfaz que responde al momento ──────────────────────────────────
+// La luz y la densidad cambian según cómo viene la cosa. Acompañamiento hecho de
+// producto, no de palabras. Lo marca la señal del clasificador, que ya llega con cada
+// respuesta: con "atencion" o "ambiguo" el lugar se aquieta y se hace más espacioso;
+// con "alto", más todavía, y queda lo esencial. Vuelve de a poco: hacen falta dos
+// respuestas tranquilas seguidas. De noche, la luz baja un poco siempre.
+let calmasSeguidas = 0;
+function ponerClima(nivel) {
+  const conv = $('#conv');
+  if (nivel === 'alto') { conv.dataset.clima = 'quieto'; calmasSeguidas = 0; }
+  else if (nivel === 'atencion' || nivel === 'ambiguo') { if (conv.dataset.clima !== 'quieto') conv.dataset.clima = 'denso'; calmasSeguidas = 0; }
+  else if (conv.dataset.clima && ++calmasSeguidas >= 2) { delete conv.dataset.clima; calmasSeguidas = 0; }
+}
+function climaInicial() {
+  const conv = $('#conv');
+  delete conv.dataset.clima; calmasSeguidas = 0;
+  conv.dataset.hora = esDeNoche() ? 'noche' : 'dia';
+}
+
 async function leerStream(r, p) {
   const lector = r.body.getReader(), dec = new TextDecoder();
   let resto = '', nodo = null, rev = null, riesgo = 'ninguno', ambiguo = false, fin = false, crudo = '', mostrado = '', texto = '';
@@ -1433,7 +1500,7 @@ async function leerStream(r, p) {
         const linea = parte.split('\n').find(l => l.startsWith('data: '));
         if (!linea) continue;
         let d; try { d = JSON.parse(linea.slice(6)); } catch (e) { continue; }
-        if (d.tipo === 'riesgo') { riesgo = d.nivel; ambiguo = !!d.ambiguo; }
+        if (d.tipo === 'riesgo') { riesgo = d.nivel; ambiguo = !!d.ambiguo; ponerClima(riesgo); }
         else if (d.tipo === 'texto') {
           crudo += d.t;
           const visible = sinMarca(crudo, false);
@@ -1641,8 +1708,136 @@ function pintarPreferencias() {
     () => { prefs.vibrar = !prefs.vibrar; guardarPrefs(); vibrar(18); pintarPreferencias(); },
     HAY_VIBRACION));
 
+  caja.append(filaPref('Bloqueo con PIN',
+    HAY_CRIPTO ? 'Cuatro números para abrir la app. Si alguien agarra el teléfono, no entra.'
+               : 'Este navegador no lo permite.',
+    !!prefs.pin,
+    () => pedirPin(prefs.pin ? 'quitar' : 'crear'),
+    HAY_CRIPTO));
+
   c.append(caja);
+
+  const datos = el('div', 'grupo');
+  datos.style.marginTop = '28px';
+  datos.append(el('div', 'rot', 'Lo tuyo'));
+  datos.append(el('div', 'vacio', 'Un archivo con lo que Amber recuerda y las conversaciones guardadas. Queda en tu teléfono; después hacés con él lo que quieras.'));
+  const b = el('button', 'btn btn-2', 'Exportar');
+  b.style.marginTop = '12px';
+  b.onclick = exportar;
+  datos.append(b);
+  datos.append(el('div', 'vacio', 'Para borrar todo: "Cerrar sesión", en el menú.'));
+  c.append(datos);
 }
+
+// ── exportar ──────────────────────────────────────────────────────────────
+// Borrar y exportar son lo que hace creíble la promesa de privacidad: lo tuyo es tuyo
+// y te lo podés llevar. Un .txt legible, no un formato que hay que saber abrir.
+function textoExportado() {
+  const l = [`Amber — lo tuyo, exportado el ${fechaLarga(new Date().toISOString())}`, ''];
+  if (memoria) {
+    l.push('LO QUE RECUERDO', '');
+    if (memoria.apodo) l.push(`${ROTULOS.apodo}: ${memoria.apodo}`);
+    for (const k of ['datos', 'objetivos', 'estrategias', 'sensibles']) {
+      if (memoria[k]?.length) { l.push('', `${ROTULOS[k]}:`); for (const x of memoria[k]) l.push(`- ${x}`); }
+    }
+    if (memoria.resumenes?.length) { l.push('', `${ROTULOS.resumenes}:`); for (const r of memoria.resumenes) l.push(`- ${textoResumen(r)}`); }
+    l.push('');
+  }
+  const h = cargarHistoria();
+  const todas = mensajes.length ? [...h, { f: inicioCharla || new Date().toISOString(), r: '', m: mensajes.map(x => ({ r: x.role, c: x.content })) }] : h;
+  if (todas.length) {
+    l.push('CONVERSACIONES');
+    for (const ch of todas) {
+      l.push('', `— ${fechaLarga(ch.f)}`);
+      if (ch.r) l.push(`(${ch.r})`);
+      for (const m of ch.m ?? []) if (m.c) l.push(`${m.r === 'user' ? 'Vos' : 'Amber'}: ${m.c}`);
+    }
+  }
+  return l.join('\n');
+}
+function exportar() {
+  const blob = new Blob([textoExportado()], { type: 'text/plain;charset=utf-8' });
+  const a = el('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `amber-${hoyISO()}.txt`;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  vibrar(12);
+  anunciar('Listo. El archivo quedó en tu teléfono.');
+}
+
+// ── bloqueo con PIN ───────────────────────────────────────────────────────
+// Opcional y apagado por defecto. La amenaza real a la privacidad es alguien que
+// agarra el teléfono. El PIN no se guarda: se guarda su huella. La ayuda nunca se
+// bloquea: la pantalla del PIN tiene la salida a una persona.
+const HAY_CRIPTO = !!window.crypto?.subtle;
+const SAL_PIN = 'amber.pin.v1';
+async function huella(pin) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SAL_PIN + pin));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+const pinEl = $('#pin'), pinNota = $('#pin-nota');
+document.querySelector('.pin-puntos').onclick = () => pinEl.focus();
+let modoPin = null, pinPrimero = '', destinoPin = 'entrada', confirmandoOlvido = null;
+const TEXTOS_PIN = {
+  abrir:     ['Tu PIN', ''],
+  crear:     ['Elegí un PIN', 'Cuatro números. Si te lo olvidás, la única forma de entrar es borrar todo.'],
+  confirmar: ['Repetilo', 'Para estar seguros de que es ese.'],
+  quitar:    ['Tu PIN actual', 'Para sacar el bloqueo.'],
+};
+function pedirPin(modo, destino) {
+  modoPin = modo;
+  if (destino) destinoPin = destino;
+  $('#pin-titulo').textContent = TEXTOS_PIN[modo][0];
+  $('#pin-sub').textContent = TEXTOS_PIN[modo][1];
+  $('#pin-cancelar').hidden = modo === 'abrir';
+  $('#pin-olvide').hidden = modo !== 'abrir';
+  $('#pin-olvide').textContent = 'Me olvidé el PIN';
+  pinEl.value = ''; pintarPuntos(); pinNota.textContent = '';
+  ir('bloqueo');
+  setTimeout(() => pinEl.focus(), 250);
+}
+function pintarPuntos() {
+  document.querySelectorAll('.pin-puntos i').forEach((p, i) => p.classList.toggle('lleno', i < pinEl.value.length));
+}
+pinEl.addEventListener('input', async () => {
+  pinEl.value = pinEl.value.replace(/\D/g, '').slice(0, 4);
+  pintarPuntos();
+  if (pinEl.value.length < 4) return;
+  const h = await huella(pinEl.value);
+  pinEl.value = '';
+  if (modoPin === 'crear') { pinPrimero = h; pedirPin('confirmar'); return; }
+  if (modoPin === 'confirmar') {
+    if (h !== pinPrimero) { pedirPin('crear'); pinNota.textContent = 'No coinciden. Elegilo de nuevo.'; return; }
+    prefs.pin = h; guardarPrefs(); vibrar(12); ir('prefs'); return;
+  }
+  if (h !== prefs.pin) { pintarPuntos(); pinNota.textContent = 'No es ese.'; vibrar(30); return; }
+  if (modoPin === 'quitar') { delete prefs.pin; guardarPrefs(); ir('prefs'); return; }
+  bloqueado = false;
+  if (memoria) pintarEntrada();
+  ir(destinoPin);
+});
+$('#pin-cancelar').onclick = () => ir('prefs');
+$('#pin-olvide').onclick = () => {
+  const b = $('#pin-olvide');
+  if (!confirmandoOlvido) {
+    b.textContent = 'Tocá de nuevo para borrar todo y empezar de cero';
+    confirmandoOlvido = setTimeout(() => { confirmandoOlvido = null; b.textContent = 'Me olvidé el PIN'; }, 4000);
+    return;
+  }
+  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS, LLAVE_CHARLA]) localStorage.removeItem(k); } catch (e) {}
+  location.href = location.pathname;
+};
+// Si la app estuvo más de un minuto en segundo plano, al volver pide el PIN de nuevo.
+let bloqueado = false, ocultaDesde = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { ocultaDesde = Date.now(); return; }
+  const actual = document.querySelector('.p.on')?.id;
+  if (!prefs.pin || bloqueado || !ocultaDesde || Date.now() - ocultaDesde < 60 * 1000) return;
+  if (['bloqueo', 'ayuda'].includes(actual)) return;
+  bloqueado = true;
+  pedirPin('abrir', actual === 'calma' ? 'entrada' : actual);
+});
 
 // ── sobre amber ───────────────────────────────────────────────────────────
 const ABOUT = [
@@ -1694,6 +1889,37 @@ function pintarPensamientos() {
   c.append(lista);
   c.append(el('div', 'vacio', 'Mientras se suman los primeros profesionales, lo que ves acá es de ejemplo.'));
 }
+
+// ── feedback ──────────────────────────────────────────────────────────────
+// Lo único de la app que viaja a un servidor nuestro, y por eso la pantalla lo dice
+// antes de escribir: es para fallas o ideas, no para contar lo que te pasa.
+let tipoFb = 'general';
+const fbTxt = $('#fb-txt'), fbMandar = $('#fb-mandar'), fbNota = $('#fb-nota');
+document.querySelectorAll('#feedback .opcion').forEach(b => {
+  b.onclick = () => {
+    tipoFb = b.dataset.fb;
+    document.querySelectorAll('#feedback .opcion').forEach(o => o.setAttribute('aria-checked', String(o === b)));
+    vibrar(10);
+  };
+});
+fbTxt.addEventListener('input', () => { fbMandar.disabled = !fbTxt.value.trim(); fbNota.textContent = ''; });
+fbMandar.onclick = async () => {
+  fbMandar.disabled = true; fbMandar.textContent = 'Mandando…';
+  try {
+    const r = await fetch('/api/feedback', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tipo: tipoFb, texto: fbTxt.value.trim() }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    fbTxt.value = '';
+    fbNota.textContent = 'Llegó. Gracias.';
+  } catch (e) {
+    console.error(e);
+    fbNota.textContent = 'No se pudo mandar. Probá de nuevo en un rato.';
+    fbMandar.disabled = false;
+  }
+  fbMandar.textContent = 'Mandar';
+};
 
 // ── actividades ───────────────────────────────────────────────────────────
 // Opcionales, para escribir, sin técnicas con nombre clínico (art. 2 de la Ley
@@ -1880,7 +2106,8 @@ obEntrar.onclick = () => {
 };
 
 // ── arranque ──────────────────────────────────────────────────────────────
-if (memoria) { pintarEntrada(); ir('entrada'); } else { ir('ob1'); }
+if (memoria && prefs.pin && HAY_CRIPTO) { bloqueado = true; pedirPin('abrir', 'entrada'); }
+else if (memoria) { pintarEntrada(); ir('entrada'); } else { ir('ob1'); }
 
 
 // El marco mide 884px de alto: en una laptop no entra. En vez de esconderlo,

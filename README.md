@@ -14,6 +14,7 @@ Prototipo funcional del acompañante emocional. Node sin dependencias, desplegad
 | `api/chat.mjs` | El servidor: lee los prompts, clasifica, arma el contexto, llama a Claude. |
 | `api/cierre.mjs` | Cierra la charla: despedida, resumen y el tema con el que Amber retoma la próxima vez. |
 | `api/resumen.mjs` + `prompts/resumen.md` | Arma el resumen para llevarle al psicólogo, con las charlas guardadas. No guarda nada. |
+| `api/feedback.mjs` | Recibe el feedback de la app y lo deja en los logs de Vercel con la marca `[feedback]`. Lo único que viaja a un servidor nuestro. |
 | `public/` | La app: `index.html`, `styles.css`, `app.js`. |
 | `memoria.json` | Memoria de arranque. Se copia al navegador de cada visitante. |
 | `set-de-prueba.md` | Las situaciones fijas para probar cada cambio de prompt. |

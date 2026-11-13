@@ -232,6 +232,46 @@
     </div>
   </section>
 
+  <!-- BLOQUEO CON PIN: opcional y apagado por defecto. La ayuda nunca se bloquea. -->
+  <section class="p" id="bloqueo">
+    <div class="crece" style="flex-grow:1.2"></div>
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center">
+      <h2 id="pin-titulo">Tu PIN</h2>
+      <div class="sub" id="pin-sub"></div>
+      <input id="pin" class="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="PIN de cuatro números">
+      <div class="pin-puntos" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p class="carta-nota" id="pin-nota" role="status" aria-live="polite"></p>
+    </div>
+    <div class="crece" style="flex-grow:1"></div>
+    <button class="link" id="pin-cancelar" hidden>Cancelar</button>
+    <button class="link" id="pin-olvide" hidden>Me olvidé el PIN</button>
+    <div class="ayuda-pie">
+      <button class="ayuda-boton" data-ir="ayuda">Necesito hablar con una persona ya</button>
+    </div>
+  </section>
+
+  <!-- FEEDBACK: lo único que viaja a un servidor nuestro -->
+  <section class="p" id="feedback">
+    <div class="barra">
+      <button class="ico" data-ir="menu" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2>Contanos qué falla</h2>
+      <div class="sub">Esto sí viaja a nuestro servidor y lo leemos nosotros. Es para fallas o ideas sobre la app, no para contar lo que te pasa: eso va en el chat, que no sale del teléfono.</div>
+    </div>
+    <div class="opciones fb-tipos" role="radiogroup" aria-label="Tipo de comentario">
+      <button class="opcion" data-fb="general" role="radio" aria-checked="true"><span class="opcion-t">General</span></button>
+      <button class="opcion" data-fb="tecnico" role="radio" aria-checked="false"><span class="opcion-t">Algo técnico no anda</span></button>
+    </div>
+    <textarea id="fb-txt" class="carta-txt" maxlength="2000" placeholder="Qué pasó o qué cambiarías."></textarea>
+    <div class="carta-pie">
+      <button class="btn btn-1" id="fb-mandar" disabled>Mandar</button>
+      <p class="carta-nota" id="fb-nota" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
   <!-- RESUMEN PARA EL PSICÓLOGO -->
   <section class="p" id="resumen">
     <div class="barra">
@@ -394,6 +434,9 @@
         </button>
         <button class="fila-menu" data-ir="ayuda">
           <span class="fila-t">Si necesitás ayuda ahora</span><span class="fila-s">Teléfonos que atienden hoy</span>
+        </button>
+        <button class="fila-menu" data-ir="feedback">
+          <span class="fila-t">Contanos qué falla</span><span class="fila-s">Ideas o problemas de la app</span>
         </button>
         <button class="fila-menu" data-ir="about">
           <span class="fila-t">Sobre Amber</span><span class="fila-s">Qué es, qué no es, y qué pasa con lo que contás</span>

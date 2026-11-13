@@ -809,3 +809,38 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-user-select:text;user-select:text}
 .resumen-acciones{display:flex;gap:10px;margin-top:14px}
 .resumen-acciones .btn{flex:1}
+
+/* ── funcionalidades que faltaban ───────────────────────────────────────────── */
+
+/* La interfaz que responde al momento: la luz baja y el texto respira más. Cambia
+   despacio, para que se sienta y no se note. */
+#conv{transition:background-color 1.8s ease}
+#conv .am{transition:line-height 1.8s ease,font-size 1.8s ease}
+#conv[data-hora="noche"]{background:color-mix(in srgb,var(--fondo) 96%,var(--ambar))}
+#conv[data-clima="denso"]{background:color-mix(in srgb,var(--fondo) 92%,var(--ambar))}
+#conv[data-clima="denso"] .am{line-height:1.65}
+#conv[data-clima="quieto"]{background:color-mix(in srgb,var(--fondo) 86%,var(--ambar))}
+#conv[data-clima="quieto"] .am{line-height:1.7;font-size:20px}
+#conv[data-clima="quieto"] .acceso-mem,#conv[data-clima="quieto"] .pista{display:none}
+@media (prefers-reduced-motion:reduce){ #conv,#conv .am{transition:none} }
+
+/* Resumen del mes */
+.mes{margin-bottom:22px}
+.mes-tarj{padding:4px 16px}
+.mes-lista{margin:0;padding:10px 0 10px 18px;display:flex;flex-direction:column;gap:10px;
+  font-size:15px;line-height:1.5;color:var(--texto)}
+
+/* Directorio */
+.dir-t{font-family:var(--serif);font-weight:400;font-size:20px;margin:0 0 4px}
+.dir-f{display:flex;flex-direction:column;gap:3px;padding:14px 16px}
+.dir-n{font-size:16px;color:var(--texto)}
+
+/* PIN */
+.pin{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.pin-puntos{display:flex;gap:18px;padding:12px 0;cursor:text}
+.pin-puntos i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--ambar);transition:background .3s ease}
+.pin-puntos i.lleno{background:var(--ambar)}
+
+/* Feedback */
+.fb-tipos{flex-shrink:0;margin-top:18px}
+#feedback .carta-txt{margin-top:14px}
