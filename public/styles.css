@@ -756,3 +756,50 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   .calma-pie{margin-top:12px}
   .calma-texto{min-height:76px}
 }
+
+/* ── pirámide del 12/11 ─────────────────────────────────────────────────────── */
+
+/* Las transiciones son lentas: nada rebota, nada aparece de golpe. Es lo que hace
+   sentir que el lugar está tranquilo. */
+.p.on{animation:aparecer .45s cubic-bezier(.37,0,.63,1)}
+@keyframes aparecer{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){ .p.on{animation:none} }
+
+/* La barra de abajo: la casa y los pensamientos, separados. */
+.pestanas{position:sticky;bottom:0;z-index:3;display:flex;gap:8px;flex-shrink:0;
+  margin-top:12px;padding-top:8px;background:var(--fondo);border-top:1px solid var(--borde)}
+.pestana{flex:1;height:44px;background:none;border:0;border-radius:10px;cursor:pointer;
+  font-family:var(--sans);font-size:15px;color:var(--gris);transition:color .4s ease,background .4s ease}
+.pestana[aria-current="page"]{color:var(--ambar-claro);background:var(--tarjeta)}
+#entrada .ayuda-pie{bottom:64px}
+#entrada .ayuda-pie::after,#pensamientos .ayuda-pie::after{display:none}
+.pestanas::after{content:'';position:absolute;left:0;right:0;top:100%;
+  height:calc(24px + env(safe-area-inset-bottom,0px));background:var(--fondo)}
+
+/* La línea chica y opcional para arrancar. No es un mensaje de Amber: es una pista. */
+.pista{font-size:13px;line-height:1.5;color:var(--gris2);margin-top:-12px}
+.pista:first-child{margin-top:8px}
+
+/* Pensamientos */
+.pensamientos{display:flex;flex-direction:column;gap:14px;padding:16px 0 12px}
+.pensamiento{background:var(--tarjeta);border-radius:16px;padding:18px 18px 16px}
+.pensamiento-t{font-family:var(--serif);font-size:18px;line-height:1.45;margin:0 0 12px;color:var(--texto)}
+.pensamiento-autor{font-size:12px;line-height:1.4;color:var(--gris2)}
+
+/* La carta */
+.carta-txt{flex-grow:1;min-height:0;margin-top:20px;width:100%;resize:none;border:0;outline:none;
+  background:var(--tarjeta);border-radius:16px;padding:18px;color:var(--texto);
+  font-family:var(--serif);font-size:18px;line-height:1.55;-webkit-user-select:text;user-select:text;
+  transition:opacity .9s ease,filter .9s ease}
+.carta-txt::placeholder{color:var(--gris)}
+.carta-txt.soltando{opacity:0;filter:blur(6px)}
+.carta-pie{flex-shrink:0;padding-top:16px;display:flex;flex-direction:column;gap:8px}
+.carta-nota{font-size:13px;color:var(--gris2);margin:0;min-height:18px;text-align:center}
+@media (prefers-reduced-motion:reduce){ .carta-txt{transition:none} }
+
+/* Resumen para el psicólogo */
+.resumen-txt{width:100%;min-height:300px;margin-top:12px;resize:vertical;border:1px solid var(--borde);
+  border-radius:12px;padding:14px;background:var(--fondo);color:var(--texto);
+  font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-user-select:text;user-select:text}
+.resumen-acciones{display:flex;gap:10px;margin-top:14px}
+.resumen-acciones .btn{flex:1}

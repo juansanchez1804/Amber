@@ -56,7 +56,9 @@ export default async function handler(req, res) {
     const j = JSON.parse(txt.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
     const str = (v) => (typeof v === 'string' ? v.trim() : '');
 
-    res.json({ despedida: str(j.despedida), resumen: str(j.resumen).slice(0, 300) });
+    // El tema es lo que Amber nombra al retomar: "¿Cómo venís con {tema}?". Un hecho
+    // corto, nunca un sentimiento. Vacío si hubo riesgo o no quedó nada concreto.
+    res.json({ despedida: str(j.despedida), resumen: str(j.resumen).slice(0, 300), tema: str(j.tema).slice(0, 80) });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'no se pudo cerrar' });

@@ -12,6 +12,8 @@ Prototipo funcional del acompañante emocional. Node sin dependencias, desplegad
 | `prompts/system.md` | **La voz de Amber.** Lo más importante del proyecto. |
 | `prompts/clasificador.md` | Detecta riesgo. Devuelve `ninguno` / `ambiguo` / `atencion` / `alto`. |
 | `api/chat.mjs` | El servidor: lee los prompts, clasifica, arma el contexto, llama a Claude. |
+| `api/cierre.mjs` | Cierra la charla: despedida, resumen y el tema con el que Amber retoma la próxima vez. |
+| `api/resumen.mjs` + `prompts/resumen.md` | Arma el resumen para llevarle al psicólogo, con las charlas guardadas. No guarda nada. |
 | `public/` | La app: `index.html`, `styles.css`, `app.js`. |
 | `memoria.json` | Memoria de arranque. Se copia al navegador de cada visitante. |
 | `set-de-prueba.md` | Las situaciones fijas para probar cada cambio de prompt. |

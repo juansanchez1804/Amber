@@ -11,6 +11,10 @@
     "api/memoria.mjs": {
       "includeFiles": "prompts/**",
       "maxDuration": 60
+    },
+    "api/resumen.mjs": {
+      "includeFiles": "prompts/**",
+      "maxDuration": 60
     }
   }
 }

@@ -8,7 +8,11 @@ if (TEMA === 'oscuro' || (TEMA !== 'claro' && prefs.oscuro)) document.documentEl
 // Vibración: existe en Android y en casi ningún iPhone. Si el navegador no la
 // tiene, el interruptor no se ofrece en vez de ofrecerse y no hacer nada.
 const HAY_VIBRACION = typeof navigator.vibrate === 'function';
-const HAY_AVISOS = 'Notification' in window;
+// Los avisos se sacaron: un lugar al que vas no te busca. Si alguien los había
+// prendido, se apagan.
+if ('avisos' in prefs) { delete prefs.avisos; guardarPrefs(); }
+// "Bajar de golpe" ya no existe: la respiración es una sola, corta o prolongada.
+if (prefs.respirar && !['calmar', 'dormir'].includes(prefs.respirar)) { delete prefs.respirar; guardarPrefs(); }
 const vibrar = (ms) => { if (prefs.vibrar && HAY_VIBRACION) { try { navigator.vibrate(ms); } catch (e) {} } };
 
 const $ = s => document.querySelector(s);
@@ -28,6 +32,7 @@ const SEMILLA = {
   "sensibles": [
     "Lo de tu ex"
   ],
+  "ultimoTema": "lo de si seguís en la carrera",
   "resumenes": [
     "Hace dos semanas dormiste mal varios días por el final de Análisis, que al final aprobaste.",
     "La semana pasada, un jueves cerca de medianoche, estuviste dándole vueltas a si seguís en la carrera.",
@@ -68,13 +73,9 @@ if (memoria) {
   if (GENERO_VIEJO[memoria.genero]) { memoria.genero = GENERO_VIEJO[memoria.genero]; cambio = true; }
   if ('registro' in memoria) { memoria.estilo ??= memoria.registro; delete memoria.registro; cambio = true; }
   if (!Array.isArray(memoria.datos)) { memoria.datos = []; cambio = true; }
-  // Dos temas le ponían género a quien los leía. Se guarda el texto del chip, así
-  // que quien los eligió con un nombre anterior pasa al de ahora.
-  const TEMA_VIEJO = {
-    'La exigencia conmigo mismo': 'Exigirme demasiado', 'La exigencia que me pongo': 'Exigirme demasiado',
-    'Dormir o estar cansado': 'Dormir mal o el cansancio', 'Dormir o el cansancio': 'Dormir mal o el cansancio',
-  };
-  if (memoria.temas?.some(t => TEMA_VIEJO[t])) { memoria.temas = [...new Set(memoria.temas.map(t => TEMA_VIEJO[t] ?? t))]; cambio = true; }
+  // El tono, los temas del onboarding y la barra del día se sacaron (pirámide del
+  // 12/11): Lola no elige nada ni se puntúa. Lo que quedó guardado de antes se borra.
+  for (const k of ['estilo', 'temas', 'dia']) if (k in memoria) { delete memoria[k]; cambio = true; }
   if (cambio) guardarMemoria();
 }
 let mensajes = [];   // historial que va a la API
@@ -104,12 +105,16 @@ function ir(id) {
   if (actual && actual.id !== id) pantallaPrevia = actual.id;
   document.querySelectorAll('.p').forEach(p => p.classList.toggle('on', p.id === id));
   if (id !== 'conv') pararVoz?.();
-  if (id === 'conv') { ajustarColchon(); abrirConversacion(); $('#txt').focus(); seguir(false); }
+  // Volver al chat después de "Terminé" abre una charla nueva, que arranca retomando
+  // el tema de la última vez. La que se cerró ya quedó guardada en la historia.
+  if (id === 'conv') { ajustarColchon(); if (cerrada) empezarDeNuevo(); abrirConversacion(); $('#txt').focus(); seguir(false); }
   if (id === 'calma') empezarRespiracion(); else pararRespiracion();
   if (id === 'entrada') animarSaludo();
   if (id === 'mem') pintarMemoria();
   if (id === 'historia') pintarHistoria();
-  if (id === 'pers') pintarPersonalizacion();
+  if (id === 'pensamientos') pintarPensamientos();
+  if (id === 'resumen') pintarResumen();
+  if (id === 'carta') abrirCarta();
   if (id === 'prefs') pintarPreferencias();
   if (id === 'about') pintarAbout();
   if (id === 'ayuda') pintarAyuda();
@@ -128,8 +133,6 @@ document.addEventListener('pointerdown', e => {
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ir]');
   if (!b) return;
-  // Cerrado no es lo mismo que roto: si no se puede pasar, decí por qué.
-  if (b.getAttribute('aria-disabled') === 'true') { senalarDia(); return; }
   if (b.dataset.ir === 'calma') desbloquearAudio();
   ir(b.dataset.ir);
 });
@@ -149,20 +152,20 @@ function pintarAyuda() {
 // sin retener el aire: es el ritmo donde la variabilidad cardíaca llega a su
 // máximo, y retener o respirar "hondo" puede disparar sobrerrespiración en
 // alguien con ansiedad. Nueve ciclos de diez segundos: los noventa de la home.
+// Una sola respiración en dos versiones (pirámide del 12/11): la corta, de noventa
+// segundos, y la prolongada, de unos cinco minutos, que es la que la home ofrece de noche.
 const TECNICAS = {
   // 6 por minuto: la frecuencia de resonancia, donde la variabilidad cardíaca
-  // llega a su amplitud máxima. Es la de siempre.
-  calmar: { rotulo: 'Calmarme', acomodo: 4000, inhala: 4000, inhala2: 0, suelta: 6000, ciclos: 9,
-            sub: 'Seguí el círculo. No hace falta respirar hondo.' },
+  // llega a su amplitud máxima. Nueve ciclos de diez segundos: noventa segundos.
+  calmar: { rotulo: 'Corta', acomodo: 4000, inhala: 4000, inhala2: 0, suelta: 6000, ciclos: 9,
+            sub: 'Seguí el círculo. No hace falta respirar hondo.',
+            anuncio: 'Noventa segundos de respiración.' },
   // 5 por minuto, con la exhalación al doble de la inhalación: más lento y más
-  // pesado del lado de soltar, que es el lado que baja la activación.
-  dormir: { rotulo: 'Para dormir', acomodo: 5000, inhala: 4000, inhala2: 0, suelta: 8000, ciclos: 8,
-            sub: 'Más lento que antes. Soltá el aire sin apuro.' },
-  // El suspiro fisiológico: una inhalada, una segunda corta arriba, y una
-  // exhalación larga. Es la técnica del ensayo que citamos, y la que más rápido
-  // baja la activación cuando ya estás acelerado. Ciclos más cortos, menos tiempo.
-  bajar: { rotulo: 'Bajar de golpe', acomodo: 3000, inhala: 3000, inhala2: 900, suelta: 6500, ciclos: 6,
-           sub: 'Dos veces adentro, una larga afuera. Sirve cuando el cuerpo ya va acelerado.' },
+  // pesado del lado de soltar, que es el lado que baja la activación. Veinticinco
+  // ciclos de doce segundos: cinco minutos.
+  dormir: { rotulo: 'Prolongada', acomodo: 5000, inhala: 4000, inhala2: 0, suelta: 8000, ciclos: 25,
+            sub: 'Más lento. Soltá el aire sin apuro.',
+            anuncio: 'Cinco minutos de respiración.' },
 };
 let RESP = TECNICAS[prefs.respirar] ?? TECNICAS.calmar;
 const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calmaAviso = $('#calma-aviso'),
@@ -179,11 +182,14 @@ const avisarCalma = t => { calmaAviso.textContent = ''; setTimeout(() => { calma
 // Elegir técnica: se guarda, y si tocás una mientras ya está andando, el
 // ejercicio arranca de nuevo con la nueva en vez de quedar a mitad de camino.
 const tecnicasEl = $('#calma-tecnicas');
+function elegirRespiracion(tec) {
+  prefs.respirar = TECNICAS[tec] ? tec : 'calmar';
+  guardarPrefs();
+  RESP = TECNICAS[prefs.respirar];
+}
 tecnicasEl.querySelectorAll('.calma-tec').forEach(b => {
   b.onclick = () => {
-    prefs.respirar = b.dataset.tec;
-    guardarPrefs();
-    RESP = TECNICAS[prefs.respirar] ?? TECNICAS.calmar;
+    elegirRespiracion(b.dataset.tec);
     pintarTecnicas();
     vibrar(10);
     avisarCalma(`${RESP.rotulo}. ${RESP.sub}`);
@@ -422,7 +428,7 @@ function empezarRespiracion() {
   if (sonidoElegido()) resp.ola = crearOla();
   pintarSonido();
   mantenerPantalla();
-  avisarCalma('Noventa segundos de respiración. Acomodate como estés.');
+  avisarCalma(`${RESP.anuncio} Acomodate como estés.`);
   resp.timer = setTimeout(inhalar, RESP.acomodo);
 }
 
@@ -489,18 +495,20 @@ function terminarRespiracion() {
 // arrancar con un toque. Al volver, termine o salga antes, Amber ya dejó escrito que
 // sigue ahí: nunca se vuelve a una charla que quedó muda.
 const MARCA_RESPIRAR = '[RESPIRAR]';
-const VUELTA_RESPIRAR = 'Acá estoy. Seguimos cuando quieras.';
+// Amber no se personifica: ni "acá estoy" ni "estoy". Lo que retoma es el lugar.
+const VUELTA_RESPIRAR = 'Seguimos cuando quieras.';
 const PIEDRA_CHICA = '<svg viewBox="6 5 70 90" aria-hidden="true"><path d="M28 9 C42 28 65 48 70.5 67 C72.5 73 71 82 67.5 86.5 L42.5 91 L14.5 85.5 C10.5 83 9.5 78 11 72.5 C16 50 22 26 28 9 Z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 74 C31 75.6 45 75.6 56 73.6" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>';
 let respiracionDesdeCharla = false, vueltaRespirar = null, ofertaEl = null;
 function ofrecerRespirar() {
   quitarOferta();
   const b = el('button', 'oferta-respirar');
   b.innerHTML = PIEDRA_CHICA;
-  b.append(el('span', null, 'Respiramos noventa segundos'));
+  b.append(el('span', null, 'Noventa segundos de respiración'));
   b.onclick = () => {
     if (cortado) return;
     quitarOferta();
     respiracionDesdeCharla = true;
+    elegirRespiracion('calmar');
     desbloquearAudio();
     ir('calma');
   };
@@ -658,130 +666,38 @@ function pintarEntrada() {
   // La hora ya está arriba en la barra del teléfono, y repetirla acá convertía
   // el encabezado en un reloj. Lo que importa es qué día es.
   $('#fecha').textContent = `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`;
-  const apodo = memoria?.apodo;
-  const saludo = saludoDeLaHora(d.getHours());
-  escribirSaludo(memoria?.activa && apodo ? `${saludo}, ${capitalizar(apodo)}.` : `${saludo}.`);
-  // Sin memoria previa no hay línea: el saludo queda solo. Se muestra el último,
-  // que desde que existe el cierre es el de la conversación que acaba de pasar.
-  const rs = memoria?.activa ? memoria.resumenes : null;
-  const r = rs?.length ? textoResumen(rs[rs.length - 1]) : null;
-  const sabe = $('#sabe');
-  sabe.textContent = r ?? '';
-  sabe.hidden = !r;
-  pintarDia();
+  // El reconocimiento del espacio es el nombre: que el lugar sepa quién entró. El
+  // tema de la última vez no va acá, va al entrar al chat: son dos momentos
+  // distintos, para no dar dos bienvenidas seguidas.
+  const apodo = memoria?.activa ? memoria.apodo : '';
+  escribirSaludo(apodo ? `Hola, ${capitalizar(apodo)}.` : 'Hola.');
+  pintarActividad();
 }
 
-// ── cómo estuvo el día ────────────────────────────────────────────────────
-// Cinco puntos, sin números a la vista: poner "3/5" convierte un día en una nota.
-// Arranca sin tocar, porque un valor por defecto ya sería una respuesta puesta
-// en la boca de alguien que todavía no dijo nada.
-const DIA_PALABRA = { 1:'Muy difícil', 2:'Difícil', 3:'Ni bien ni mal', 4:'Bien', 5:'Muy bien' };
+// ── la actividad de la home ────────────────────────────────────────────────
+// Cambia según la hora, no según el día: una actividad nueva cada día empuja al uso
+// diario, y el uso que buscamos es episódico. De noche, la prolongada para dormir;
+// el resto del día, la corta de noventa segundos.
+const esDeNoche = (h = new Date().getHours()) => h >= 22 || h < 6;
+function pintarActividad() {
+  const noche = esDeNoche();
+  $('#resp-t').textContent = noche ? 'Respirar para dormir' : 'Respirar';
+  $('#resp-s').textContent = noche ? 'Cinco minutos' : 'Noventa segundos';
+}
+$('#ir-respirar').onclick = () => {
+  elegirRespiracion(esDeNoche() ? 'dormir' : 'calmar');
+  desbloquearAudio();
+  ir('calma');
+};
 const hoyISO = () => new Date().toLocaleDateString('sv');   // sv da AAAA-MM-DD
 
-const diaCaja = $('#dia-caja'), diaInput = $('#dia'), diaValor = $('#dia-v');
-const diaBarra = $('#dia-barra'), diaGuardar = $('#dia-guardar');
-
-const diaDeHoy = () => (memoria?.dia?.fecha === hoyISO() ? memoria.dia : null);
-
-// Contestada, la barra deja de ser un control y pasa a ser una respuesta dada.
-// No desaparece: un día no termina cuando abrís la app. Quien puso "bien" a las
-// seis puede estar destrozado a las once, y la home no puede quedar mintiendo.
-let diaEditando = false;
-
-// "Prefiero no decir" también es una respuesta: abre la puerta, pero se guarda
-// sin valor, así Amber no abre preguntando por un día que no le contaron.
-function pintarDia() {
-  const d = diaDeHoy();
-  diaCaja.classList.toggle('sin-tocar', !d);
-  diaCaja.classList.remove('tocada');
-  diaCaja.classList.toggle('sin-decir', !!d && !d.valor);
-  diaCaja.classList.toggle('cerrada', !!d && !diaEditando);
-  diaGuardar.hidden = true;
-  moverPiedra(d?.valor || 3);
-  diaValor.textContent = !d ? 'Movela' : d.valor ? DIA_PALABRA[d.valor] : 'Prefiero no decir';
-  puertaChat();
-}
-
-// El pulgar es la piedra: se dibuja aparte y sigue al control nativo, que queda encima.
-function moverPiedra(v) {
-  diaInput.value = v;
-  diaBarra.style.setProperty('--pct', `${(v - 1) * 25}%`);
-  diaInput.setAttribute('aria-valuetext', DIA_PALABRA[v]);
-}
-
-$('#dia-cambiar').onclick = () => {
-  diaEditando = true;
-  pintarDia();
-  diaInput.focus({ preventScroll: true });
-  anunciar('Podés volver a marcar cómo estuvo tu día.');
-};
-
-// Hablar espera a que la barra se haya movido. Respirar y los teléfonos NO
-// esperan a nada: quien está mal a las tres de la mañana no puede toparse con
-// un formulario antes de pedir ayuda.
-function puertaChat() {
-  const abierta = !!diaDeHoy();
-  const b = $('#ir-hablar');
-  b.setAttribute('aria-disabled', String(!abierta));
-  b.querySelector('.acceso-s').textContent = abierta
-    ? 'Contame lo que quieras'
-    : 'Antes, movés la barra de abajo';
-}
-
-function senalarDia() {
-  diaCaja.classList.remove('pide');
-  void diaCaja.offsetWidth;              // reinicia la animación si ya venía corriendo
-  diaCaja.classList.add('pide');
-  anunciar('Para empezar a hablar, primero marcá cómo estuvo tu día en la barra.');
-  diaInput.focus({ preventScroll: true });
-  mostrar(diaCaja);
-}
-
-// En un celu bajo la home se desplaza: lo que se señala o se enciende tiene que quedar
-// a la vista, no abajo del borde.
-const mostrar = (nodo) => nodo.scrollIntoView({ block: 'nearest',
-  behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-
-// Mover la barra no guarda: guarda la flecha que aparece al moverla. Así se puede
-// ir y venir hasta encontrar la palabra.
-diaInput.addEventListener('input', () => {
-  const v = Number(diaInput.value);
-  moverPiedra(v);
-  diaCaja.classList.remove('sin-tocar', 'sin-decir');
-  diaCaja.classList.add('tocada');
-  diaValor.textContent = DIA_PALABRA[v];
-  diaGuardar.hidden = false;
-});
-// El servidor corre en UTC; el "hoy" lo decide el reloj de quien escribe.
-// Una puntuación de anteayer no le sirve a Amber para nada, así que no viaja.
+// Lo que va al servidor: sin restos de lo que se sacó (tono, temas, día), por si
+// quedaron en una memoria vieja.
 function memoriaParaEnviar() {
   if (!memoria) return memoria;
-  if (memoria.dia?.fecha === hoyISO()) return memoria;
-  const { dia, ...resto } = memoria;
+  const { dia, estilo, temas, registro, ...resto } = memoria;
   return resto;
 }
-
-// Guardar el día no te mete en el chat: abre la puerta y te deja elegir entre hablar
-// y respirar. Quien marcó "muy difícil" puede necesitar respirar antes de contar nada.
-function guardarDia(valor) {
-  if (!memoria) return;
-  memoria.dia = { valor, fecha: hoyISO() };
-  guardarMemoria();
-  diaEditando = false;
-  pintarDia();
-  vibrar(12);
-  // La pregunta con la que Amber abre depende del día. Si cambió y todavía no
-  // hablaron, se rehace; si ya hablaron, el pasado no se reescribe.
-  if (!mensajes.length) { conversacionAbierta = false; aperturasEl = null; accesoMostrado = false; hilo.innerHTML = ''; }
-  const anotado = valor
-    ? `Tu día quedó anotado como ${DIA_PALABRA[valor].toLowerCase()}.`
-    : 'Listo, no hace falta decir cómo estuvo tu día.';
-  anunciar(`${anotado} Ya podés hablar o respirar.`);
-  $('#ir-hablar').focus({ preventScroll: true });
-  mostrar($('#ir-hablar'));
-}
-diaGuardar.onclick = () => guardarDia(Number(diaInput.value));
-$('#dia-no-decir').onclick = () => guardarDia(null);
 
 // ── conversación ──────────────────────────────────────────────────────────
 const hilo = $('#hilo'), bajar = $('#bajar'), aviso = $('#aviso');
@@ -846,30 +762,16 @@ function puntos() {
   hilo.appendChild(n); seguir(true); return n;
 }
 
-// Nadie tiene que enfrentarse a una caja vacía: Amber abre, y deja tres puertas
-// de entrada para el que no sabe cómo arrancar. Se van con el primer mensaje.
-const APERTURA = 'Estoy acá. Contame lo que quieras, no hace falta que tenga sentido.';
-const APERTURAS = ['No sé por dónde empezar', 'Tuve un día horrible', 'No puedo dormir'];
-
-// Si movió la barra, Amber no abre con una frase de bienvenida: abre por donde
-// el otro ya dijo que viene. La salida de "prefiero no hablar de eso" está
-// siempre a mano, porque obligar a alguien a explicar un día malo es pedirle
-// justo lo que no puede.
-const APERTURA_DIA = {
-  1: { texto: 'Un día muy difícil. No hace falta contarlo ordenado: estoy acá para lo que quieras decir.',
-       opciones: ['No sé por dónde empezar', 'Fue todo el día', 'Prefiero no entrar en eso'] },
-  2: { texto: 'Uf, un día difícil. ¿Qué fue lo que más te pesó?',
-       opciones: ['No sé por dónde empezar', 'Una cosa puntual', 'Prefiero no entrar en eso'] },
-  3: { texto: 'Ni bien ni mal. Esos días a veces son los más difíciles de nombrar, así que contalo como te salga.',
-       opciones: ['Fue un día raro', 'No pasó nada en especial', 'No sé por dónde empezar'] },
-  4: { texto: 'Qué bueno que el día estuvo bien. ¿Qué fue lo que lo hizo bueno?',
-       opciones: ['Pasó algo bueno', 'Fue tranquilo nomás', 'No sé por dónde empezar'] },
-  5: { texto: 'Un día muy bueno, eso merece contarse. ¿Qué pasó?',
-       opciones: ['Pasó algo bueno', 'Fue un buen día nomás', 'No sé por dónde empezar'] },
-};
+// Al entrar al chat, Amber retoma el tema de la última vez y nombra el hecho, nunca
+// cómo se sentía: "lo de tu ex" sí, "estabas dolida" no. Lola no elige nada ni hace
+// trámites: si hoy es otra cosa, arranca por ahí. Sin historia, el chat arranca en
+// blanco, con una línea chica y opcional para quien no sabe por dónde empezar.
+const PISTA_RETOME = 'Si hoy es otra cosa, arrancá por ahí.';
+const PISTA_BLANCO = 'Si no sabés por dónde empezar, contá qué pasó, sin ordenarlo.';
 const aperturaDeHoy = () => {
-  const d = diaDeHoy();
-  return d?.valor ? APERTURA_DIA[d.valor] : { texto: APERTURA, opciones: APERTURAS };
+  const tema = memoria?.activa ? memoria.ultimoTema?.trim() : '';
+  return tema ? { texto: `¿Cómo venís con ${minuscula(tema)}?`, pista: PISTA_RETOME }
+              : { texto: '', pista: PISTA_BLANCO };
 };
 let aperturasEl = null, conversacionAbierta = false, aperturaMostrada = '';
 function abrirConversacion() {
@@ -884,15 +786,10 @@ function abrirConversacion() {
     seguir(false);
     return;
   }
-  const { texto, opciones } = aperturaDeHoy();
+  const { texto, pista } = aperturaDeHoy();
   aperturaMostrada = texto;
-  turno('assistant', texto);
-  const c = el('div', 'aperturas');
-  for (const t of opciones) {
-    const b = el('button', 'apertura', t);
-    b.onclick = () => mandar(t);
-    c.append(b);
-  }
+  if (texto) turno('assistant', texto);
+  const c = el('div', 'pista', pista);
   hilo.appendChild(c); seguir(true);
   aperturasEl = c;
 }
@@ -938,7 +835,7 @@ function escribir(v, seguirElFinal) {
 // Escribir con los dedos cierra el micrófono. Los dos escriben en el mismo campo:
 // si siguen a la vez, lo que llega de la voz pisa lo que estás tecleando. Lo que
 // se venía dictando queda donde está y la tecla que apretaste, también.
-txt.addEventListener('input', () => { if (grabando) pararVoz(true); escribir(txt.value); });
+txt.addEventListener('input', () => { tocarActividad(); if (grabando) pararVoz(true); escribir(txt.value); });
 txt.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && !ocupado) { e.preventDefault(); mandar(); }
 });
@@ -949,7 +846,10 @@ enviar.onclick = () => mandar();
 // A las tres de la mañana escribir cuesta; decirlo en voz alta, menos. Pero lo
 // dictado NO se manda solo: cae en el campo de siempre y queda editable. Nadie
 // manda sin leer lo que dijo, menos todavía si lo dijo llorando.
-const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
+// Sin micrófono en la v1: el dictado del navegador manda el audio a un servidor
+// ajeno (en Chrome, a Google), y eso rompe "todo vive en el teléfono". La voz
+// quedó para la v2. El código queda para cuando vuelva.
+const Reconocimiento = null;
 const micro = $('#micro'), escucha = $('#escucha'), reloj = $('#reloj');
 
 let rec = null, grabando = false, dictado = '', desde = 0, tic = null, cerrando = false;
@@ -1111,7 +1011,8 @@ const MINIMO_PARA_CERRAR = 1;   // cualquier charla se puede cerrar, hasta la de
 // Resumir dos mensajes sobre nada llena "Lo que me contaste" de ruido y gasta una
 // llamada. Abajo de cuatro, la charla se guarda igual pero sin resumen.
 const MINIMO_PARA_RESUMEN = 4;
-const DESPEDIDA = 'Lo dejamos acá por hoy. Cuando quieras seguir, estoy.';
+// Sin "estoy": Amber no se personifica. La puerta queda abierta porque el hilo sigue.
+const DESPEDIDA = 'Lo dejamos acá por hoy. Cuando vuelvas, seguimos desde acá.';
 
 const mensajesDeLaPersona = () => mensajes.filter(m => m.role === 'user').length;
 
@@ -1171,6 +1072,12 @@ function diaAmber(f) {
 }
 
 let inicioCharla = '', diaCharla = null;
+// La sesión se cierra sola después de una hora sin actividad (pirámide del 12/11):
+// el cierre es mutuo, pero la decisión está del lado de ella. Si no dice que
+// terminó, pasada la hora se guarda sola y la próxima vez Amber retoma el tema.
+const HORA_SIN_ACTIVIDAD = 60 * 60 * 1000;
+let ultimaActividad = Date.now();
+const tocarActividad = () => { ultimaActividad = Date.now(); };
 const cargarCharla = () => { try { return JSON.parse(localStorage.getItem(LLAVE_CHARLA)); } catch (e) { return null; } };
 const olvidarCharla = () => { try { localStorage.removeItem(LLAVE_CHARLA); } catch (e) {} };
 const charlaViva = () => ({ inicio: inicioCharla || new Date().toISOString(), dia: diaCharla,
@@ -1181,11 +1088,11 @@ function guardarCharlaEnCurso() {
   inicioCharla ||= new Date().toISOString();
   // El día se marca en la home y puede marcarse después de haber empezado a
   // hablar. Una vez que la charla lo tiene, no se lo saca.
-  diaCharla = diaDeHoy()?.valor ?? diaCharla;
   try {
     localStorage.setItem(LLAVE_CHARLA, JSON.stringify({
       inicio: inicioCharla, dia: diaCharla, apertura: aperturaMostrada,
       amb: ambiguos,   // lo dicho de bronca cuenta igual después de recargar
+      ult: ultimaActividad,
       m: mensajes.map(x => ({ r: x.role, c: x.content })),
     }));
   } catch (e) {}
@@ -1199,20 +1106,32 @@ async function cerrarEnSilencio(ch) {
   guardarEnHistoria({ f: ch.inicio, dia: ch.dia, resumen: '', apertura: ch.apertura, m: ch.m });
   if (ch.m.filter(x => x.r === 'user').length < MINIMO_PARA_RESUMEN) return;
   const d = await pedirCierre(ch.m.map(x => ({ role: x.r, content: x.c })));
+  guardarTema(d);
   if (!d?.resumen) return;
   ponerResumen(ch.inicio, d.resumen);
   guardarResumen(d.resumen, diaAmber(ch.inicio));
 }
 
+// El tema con el que Amber retoma la próxima vez. Viene del cierre y es un hecho
+// ("lo de tu ex"), nunca un sentimiento. Si el cierre devolvió vacío (hubo riesgo,
+// o no quedó nada concreto), se borra: mejor arrancar en blanco que retomar algo viejo.
+function guardarTema(d) {
+  if (!memoria || !d) return;
+  memoria.ultimoTema = typeof d.tema === 'string' ? d.tema.trim() : '';
+  guardarMemoria();
+}
+
 // Al abrir: lo de hoy sigue, lo de ayer se guarda solo.
 const charlaGuardada = cargarCharla();
 if (charlaGuardada?.m?.length) {
-  if (diaAmber(charlaGuardada.inicio) === diaAmber(Date.now())) {
+  const ult = charlaGuardada.ult ?? Date.parse(charlaGuardada.inicio);
+  if (diaAmber(charlaGuardada.inicio) === diaAmber(Date.now()) && Date.now() - ult < HORA_SIN_ACTIVIDAD) {
     mensajes = charlaGuardada.m.map(x => ({ role: x.r, content: x.c }));
     aperturaMostrada = charlaGuardada.apertura ?? '';
     inicioCharla = charlaGuardada.inicio;
     diaCharla = charlaGuardada.dia ?? null;
     ambiguos = charlaGuardada.amb ?? 0;
+    ultimaActividad = ult;
   } else {
     olvidarCharla();
     cerrarEnSilencio(charlaGuardada);
@@ -1238,7 +1157,6 @@ function pintarHistoria() {
   h.forEach((ch, i) => {
     const b = el('button', 'charla-f');
     const cuando = el('div', 'charla-cuando');
-    if (ch.dia) { const p = el('i', 'punto-dia'); p.style.opacity = 0.3 + ch.dia * 0.14; cuando.append(p); }
     cuando.append(el('span', 'charla-c', fechaLarga(ch.f)));
     b.append(cuando, el('div', 'charla-r', ch.r || 'Sin resumen.'));
     b.onclick = () => abrirCharla(h.length - 1 - i);
@@ -1271,8 +1189,8 @@ function abrirCharla(i) {
   const ch = cargarHistoria()[i];
   if (!ch) return;
   $('#charla-fecha').textContent = fechaLarga(ch.f);
-  $('#charla-dia').textContent = ch.dia ? `Ese día lo marcaste como ${DIA_PALABRA[ch.dia].toLowerCase()}.` : '';
-  $('#charla-dia').hidden = !ch.dia;
+  $('#charla-dia').textContent = '';
+  $('#charla-dia').hidden = true;
   const c = $('#charla-cuerpo'); c.innerHTML = '';
   const hilo2 = el('div');
   hilo2.style.cssText = 'display:flex;flex-direction:column;gap:24px;padding-top:8px';
@@ -1382,6 +1300,7 @@ cerrarBtn.onclick = async () => {
     p.remove();
     if (d?.despedida) despedida = d.despedida;
     archivarCharla(d?.resumen ?? '');
+    guardarTema(d);
     guardarResumen(d?.resumen);
   } else {
     archivarCharla('');   // dos mensajes sobre nada no dan un resumen que valga una llamada
@@ -1401,6 +1320,27 @@ function terminarCharla() {
   cerrarBtn.disabled = false;
   txt.placeholder = 'Hasta cuando quieras volver.';
 }
+
+// Una hora sin actividad: la charla se guarda sola, sin despedida escrita por el
+// sistema, y la pantalla queda lista para empezar otra.
+function cerrarPorInactividad() {
+  if (!mensajes.length || ocupado || cortado) return;
+  const ch = charlaViva();
+  olvidarCharla();
+  pararVoz();
+  cerrada = false;
+  mensajes = []; ambiguos = 0;
+  inicioCharla = ''; diaCharla = null; aperturaMostrada = '';
+  conversacionAbierta = false; aperturasEl = null; accesoMostrado = false;
+  ofertaEl = null; fallaEl = null;
+  hilo.innerHTML = '';
+  cerrarBtn.hidden = true;
+  cerrarEnSilencio(ch);
+  if (document.querySelector('.p.on')?.id === 'conv') ir('entrada');
+}
+const revisarInactividad = () => { if (Date.now() - ultimaActividad >= HORA_SIN_ACTIVIDAD) cerrarPorInactividad(); };
+setInterval(revisarInactividad, 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) revisarInactividad(); });
 
 function empezarDeNuevo() {
   cerrada = false;
@@ -1439,6 +1379,7 @@ async function mandar(textoDirecto) {
   if (!t || ocupado || cortado) return;
   if (cerrada) empezarDeNuevo();   // escribir después de cerrar abre una charla nueva
   ocupado = true;
+  tocarActividad();
   if (grabando) pararVoz(true);   // se manda lo que está a la vista, no lo que quedó en el aire
   quitarAperturas();
   quitarOferta();
@@ -1525,6 +1466,7 @@ async function leerStream(r, p) {
   // La frase de bronca se cuenta recién cuando la respuesta llegó entera: si se corta y
   // se reintenta, el servidor la vuelve a ver y no hay que contarla dos veces.
   if (ambiguo) ambiguos++;
+  tocarActividad();
   mensajes.push({ role: 'assistant', content: texto });
   guardarCharlaEnCurso();
   aprenderDeLaCharla();
@@ -1543,7 +1485,7 @@ const CRUZ  = '<svg width="18" height="18" viewBox="0 0 24 24" stroke="#6E675E">
 // Los rótulos de cada grupo, en un solo lugar: son el título que se ve y el nombre que
 // el lector de pantalla le da a cada entrada y a sus botones.
 const ROTULOS = {
-  apodo: 'Cómo te digo', datos: 'Personas y situaciones', objetivos: 'Lo que venís trabajando',
+  apodo: 'Cómo te digo', datos: 'Personas y situaciones', objetivos: 'Los temas de estos días',
   estrategias: 'Lo que te ayuda', sensibles: 'Temas sensibles', resumenes: 'Lo que me contaste',
 };
 
@@ -1577,16 +1519,11 @@ function grupo(rotulo, hijos) {
 
 const VACIO = {
   datos:       'Todavía nada. Acá va quedando lo que me contás mientras hablamos: gente, lo que hacés, lo que está pasando.',
-  objetivos:   'Todavía nada. Acá va apareciendo lo que venís trabajando.',
+  objetivos:   'Todavía nada. Acá van apareciendo los temas de estos días.',
   estrategias: 'Todavía nada. Acá guardo lo que te haya servido alguna vez.',
   sensibles:   'Todavía nada. Acá van los temas que no traigo yo.',
   resumenes:   'Todavía nada. Cada conversación deja una línea acá cuando termina el día o cuando la cerrás.',
 };
-
-const ESTILOS = [
-  ['escuchar', 'Que te escuche', 'Sin devoluciones, sin que opine.'],
-  ['devolver', 'Que te devuelva lo que veo', 'Aunque a veces incomode.'],
-];
 
 function pintarMemoria() {
   const c = $('#mem-cuerpo'); c.innerHTML = '';
@@ -1665,37 +1602,10 @@ $('#borrar-mem').onclick = () => {
     return;
   }
   clearTimeout(confirmando); confirmando = null;
-  memoria = { activa: true, apodo: '', estilo: null, datos: [], objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  memoria = { activa: true, apodo: '', genero: memoria?.genero ?? null, ultimoTema: '', datos: [], objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria(); pintarMemoria(); pintarEntrada();
   b.textContent = ROTULO_BORRAR;
 };
-
-// ── personalización ───────────────────────────────────────────────────────
-function pintarPersonalizacion() {
-  const c = $('#pers-cuerpo'); c.innerHTML = '';
-  const o = el('div', 'opciones');
-  o.style.paddingTop = '8px';
-  o.setAttribute('role', 'radiogroup');
-  for (const [k, t, d] of ESTILOS) {
-    const b = el('button', 'opcion');
-    b.setAttribute('role', 'radio');
-    b.setAttribute('aria-checked', String(memoria?.estilo === k));
-    b.append(el('span', 'opcion-t', t), el('span', 'opcion-s', d));
-    // Volver a tocar la elegida la apaga: se puede volver a la voz de siempre.
-    b.onclick = () => {
-      if (!memoria) return;
-      memoria.estilo = memoria.estilo === k ? null : k;
-      guardarMemoria(); vibrar(10); pintarPersonalizacion();
-    };
-    o.append(b);
-  }
-  c.append(o);
-  const nota = el('div', 'vacio', memoria?.estilo
-    ? 'Tocá la elegida de nuevo para volver a mi voz de siempre.'
-    : 'Sin elegir ninguna, hablo como hablo siempre.');
-  nota.style.paddingTop = '14px';
-  c.append(nota);
-}
 
 // ── preferencias ──────────────────────────────────────────────────────────
 function filaPref(titulo, detalle, encendida, alTocar, disponible = true) {
@@ -1731,30 +1641,16 @@ function pintarPreferencias() {
     () => { prefs.vibrar = !prefs.vibrar; guardarPrefs(); vibrar(18); pintarPreferencias(); },
     HAY_VIBRACION));
 
-  caja.append(filaPref('Avisos',
-    !HAY_AVISOS ? 'Este navegador no los permite.'
-    : Notification.permission === 'denied' ? 'Los bloqueaste en el navegador. Se destraba desde ahí.'
-    : 'Permiso para avisarte. El recordatorio de todas las noches llega con la app.',
-    !!prefs.avisos && HAY_AVISOS && Notification.permission === 'granted',
-    async () => {
-      if (prefs.avisos) { prefs.avisos = false; guardarPrefs(); pintarPreferencias(); return; }
-      const r = await Notification.requestPermission();
-      prefs.avisos = r === 'granted';
-      guardarPrefs(); vibrar(10); pintarPreferencias();
-      if (prefs.avisos) new Notification('Amber', { body: 'Listo. Te voy a avisar por acá.' });
-    },
-    HAY_AVISOS && Notification.permission !== 'denied'));
-
   c.append(caja);
 }
 
 // ── sobre amber ───────────────────────────────────────────────────────────
 const ABOUT = [
-  ['Qué es', 'Amber es una inteligencia artificial para hablar de lo que te pasa, a la hora que sea. No hay turno, no hay que explicar de nuevo quién sos.'],
+  ['Qué es', 'Amber es un lugar para ordenar lo que te pasa sin hacerlo solo. Escribís lo que te pasa, Amber te lo devuelve ordenado, y la próxima vez retoma donde quedaron. Funciona con inteligencia artificial.'],
   ['Qué no es', '<strong>No es terapia y no reemplaza a un profesional.</strong> No diagnostica, no receta y no es un servicio de emergencia. Si estás en riesgo, los teléfonos están en el menú, en "Si necesitás ayuda ahora".'],
   ['Quién la hace', 'Dos estudiantes argentinos. Está en desarrollo: lo que ves es un prototipo.'],
-  ['Qué pasa con lo que contás', '<strong>No hay cuenta, no hay servidor y nadie puede leer tus conversaciones.</strong> Lo que Amber recuerda y las conversaciones de otros días viven en este teléfono, en el navegador, y de acá no salen. Lo que escribís viaja a la API de Anthropic para que Amber pueda contestarte, y no se usa para entrenar modelos. Si borrás los datos del navegador, no queda nada en ningún lado: tampoco nosotros podemos recuperarlo.'],
-  ['Por qué se respira así', 'La de siempre son nueve ciclos de cuatro segundos adentro y seis afuera: seis respiraciones por minuto. Ese ritmo no es arbitrario. Alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar. Las otras dos salen del mismo principio: <strong>Para dormir</strong> baja a cinco por minuto con la exhalación al doble de la inhalación, y <strong>Bajar de golpe</strong> es el suspiro fisiológico —una inhalada, una segunda corta arriba, y una exhalación larga—, que es justamente la técnica que ganó en ese ensayo.'],
+  ['Qué pasa con lo que contás', '<strong>No hay cuenta, no hay servidor y nadie puede leer tus conversaciones.</strong> Lo que Amber recuerda y las conversaciones de otros días viven en este teléfono, en el navegador, y de acá no salen. Lo que escribís viaja a la API de Anthropic para que Amber pueda contestarte; según sus condiciones, lo que llega por esa vía no se usa para entrenar modelos. El resumen para tu psicólogo también se arma ahí, y lo mandás vos. Si borrás los datos del navegador, no queda nada en ningún lado: tampoco nosotros podemos recuperarlo.'],
+  ['Por qué se respira así', 'Hay una sola respiración, en dos versiones. La corta son nueve ciclos de cuatro segundos adentro y seis afuera: seis respiraciones por minuto, noventa segundos. Ese ritmo no es arbitrario: alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. La <strong>prolongada</strong> sale del mismo principio: baja a cinco por minuto, con la exhalación al doble de la inhalación, durante cinco minutos. Es la que aparece de noche. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar.'],
   ['Cómo borrarlo', 'Desde "Lo que recuerdo" borrás lo que Amber sabe de vos. Desde "Historia" borrás las conversaciones. "Cerrar sesión" borra todo junto y no se puede deshacer.'],
   ['Edad', 'Amber es para mayores de 18.'],
 ];
@@ -1774,6 +1670,118 @@ function pintarAbout() {
   pie.textContent = 'Datos de salud son datos sensibles según la Ley 25.326. Los términos definitivos están en preparación.';
   t.append(pie);
   c.append(t);
+}
+
+// ── pensamientos ──────────────────────────────────────────────────────────
+// Solo lectura, sin interacción entre usuarios y solo de matriculados (pirámide del
+// 12/11). Se llaman pensamientos, no consejos: si un texto dice "hacé", "intentá" o
+// "probá", no sale. Hasta que se sumen los profesionales, lo que hay es de ejemplo y
+// lo dice: no se inventa un nombre ni una matrícula.
+const PENSAMIENTOS = [
+  'Muchas veces lo que más pesa de una separación no es la persona que se fue, sino la versión de uno que existía con ella. Eso también se extraña, y tiene sentido que se extrañe.',
+  'Contarle siempre lo mismo a la misma amiga no es ser una carga. A veces es la forma que encontramos de ir entendiendo algo de a poco, en voz alta.',
+  'Que algo te siga afectando después de un tiempo no quiere decir que estés haciendo algo mal. Los tiempos de cada uno no se eligen.',
+];
+function pintarPensamientos() {
+  const c = $('#pensamientos-cuerpo'); c.innerHTML = '';
+  const lista = el('div', 'pensamientos');
+  for (const t of PENSAMIENTOS) {
+    const a = el('article', 'pensamiento');
+    a.append(el('p', 'pensamiento-t', t));
+    a.append(el('div', 'pensamiento-autor', 'Texto de ejemplo · Nombre, apellido y matrícula del profesional'));
+    lista.append(a);
+  }
+  c.append(lista);
+  c.append(el('div', 'vacio', 'Mientras se suman los primeros profesionales, lo que ves acá es de ejemplo.'));
+}
+
+// ── la carta que no vas a mandar ───────────────────────────────────────────
+// No viaja a ningún lado y no se guarda: es escribir para sacarlo. Al soltarla se
+// borra, y si salís sin soltarla, también.
+const cartaTxt = $('#carta-txt'), cartaSoltar = $('#carta-soltar'), cartaNota = $('#carta-nota');
+function abrirCarta() {
+  cartaTxt.value = ''; cartaSoltar.disabled = true; cartaNota.textContent = '';
+  setTimeout(() => cartaTxt.focus(), 300);
+}
+cartaTxt.addEventListener('input', () => { cartaSoltar.disabled = !cartaTxt.value.trim(); cartaNota.textContent = ''; });
+cartaSoltar.onclick = () => {
+  cartaTxt.classList.add('soltando');
+  vibrar(12);
+  setTimeout(() => {
+    cartaTxt.value = ''; cartaTxt.classList.remove('soltando'); cartaSoltar.disabled = true;
+    cartaNota.textContent = 'Listo. No quedó guardada en ningún lado.';
+  }, 900);
+};
+
+// ── resumen para el psicólogo ──────────────────────────────────────────────
+// Lo arma Amber con todas las charlas guardadas, cuando Lola lo pide. Ella lo lee,
+// lo edita y lo manda: Amber no tiene canal con nadie. Lo que se arma no se guarda.
+const TOPE_RESUMEN = { charlas: 30, porMensaje: 1200, total: 60000 };
+function charlasParaResumir() {
+  const todas = [...cargarHistoria()];
+  if (mensajes.length) todas.push({ f: inicioCharla || new Date().toISOString(), m: mensajes.map(x => ({ r: x.role, c: x.content })) });
+  let total = 0;
+  const out = [];
+  for (const ch of todas.slice(-TOPE_RESUMEN.charlas).reverse()) {
+    const m = (ch.m ?? []).filter(x => x.c).map(x => ({ r: x.r, c: String(x.c).slice(0, TOPE_RESUMEN.porMensaje) }));
+    const largo = m.reduce((n, x) => n + x.c.length, 0);
+    if (total + largo > TOPE_RESUMEN.total) break;
+    total += largo;
+    out.unshift({ f: ch.f, m });
+  }
+  return out;
+}
+function pintarResumen(borrador) {
+  const c = $('#resumen-cuerpo'); c.innerHTML = '';
+  const charlas = charlasParaResumir();
+  if (!charlas.length) {
+    c.append(el('div', 'vacio', 'Todavía no hay conversaciones para resumir. Cuando hablen, acá se puede armar.'));
+    return;
+  }
+  if (borrador == null) {
+    c.append(el('div', 'vacio', `Se arma con ${charlas.length === 1 ? 'la conversación guardada' : `las ${charlas.length} conversaciones guardadas`}. Para armarlo, viajan a la API de Anthropic, igual que cuando hablás.`));
+    const b = el('button', 'btn btn-1', 'Armar el resumen');
+    b.style.marginTop = '20px';
+    b.onclick = async () => {
+      b.disabled = true; b.textContent = 'Armándolo…';
+      try {
+        const r = await fetch('/api/resumen', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ charlas, genero: memoria?.genero ?? null }),
+        });
+        const d = r.ok ? await r.json() : null;
+        if (!d?.resumen) throw new Error('vacío');
+        pintarResumen(d.resumen);
+      } catch (e) {
+        console.error(e);
+        b.disabled = false; b.textContent = 'Armar el resumen';
+        anunciar('No se pudo armar. Probá de nuevo en un rato.');
+        b.insertAdjacentElement('afterend', el('div', 'vacio', 'No se pudo armar. Probá de nuevo en un rato.'));
+      }
+    };
+    c.append(b);
+    return;
+  }
+  const area = el('textarea', 'resumen-txt');
+  area.value = borrador;
+  area.setAttribute('aria-label', 'Resumen para tu psicólogo, editable');
+  c.append(el('div', 'vacio', 'Es un borrador: cambiá lo que quieras antes de mandarlo.'), area);
+  const acciones = el('div', 'resumen-acciones');
+  const copiar = el('button', 'btn btn-1', 'Copiar');
+  copiar.onclick = async () => {
+    try { await navigator.clipboard.writeText(area.value); copiar.textContent = 'Copiado'; }
+    catch (e) { area.select(); copiar.textContent = 'Seleccionado: copialo'; }
+    setTimeout(() => { copiar.textContent = 'Copiar'; }, 2500);
+  };
+  acciones.append(copiar);
+  if (navigator.share) {
+    const compartir = el('button', 'btn btn-2', 'Mandarlo');
+    compartir.onclick = () => navigator.share({ text: area.value }).catch(() => {});
+    acciones.append(compartir);
+  }
+  const otra = el('button', 'link', 'Volver a armarlo');
+  otra.onclick = () => pintarResumen();
+  c.append(acciones, otra);
 }
 
 // ── onboarding ────────────────────────────────────────────────────────────
@@ -1802,50 +1810,13 @@ document.querySelectorAll('#ob2a .opcion').forEach(b => {
     vibrar(10);
   };
 });
-obGenSeguir.onclick = () => ir('ob2b');
-
-// El estilo no es una preferencia cosmética: la voz es el producto. Se elige
-// una vez, se guarda con todo lo demás y se cambia desde la memoria.
-let estiloOnboarding = null;
-const obRegSeguir = $('#ob-reg-seguir');
-
-document.querySelectorAll('#ob2b .opcion').forEach(b => {
-  b.onclick = () => {
-    estiloOnboarding = b.dataset.estilo;
-    document.querySelectorAll('#ob2b .opcion').forEach(o =>
-      o.setAttribute('aria-checked', String(o === b)));
-    obRegSeguir.disabled = false;
-  };
-});
-obRegSeguir.onclick = () => ir('ob2c');
-// Nadie tiene que contestar para poder entrar. Sin elegir, Amber usa su voz de siempre.
-$('#ob-reg-saltar').onclick = () => { estiloOnboarding = null; ir('ob2c'); };
-
-// Temas: hasta tres, para no tener que explicar de nuevo de qué se trata. Se guarda
-// el texto tal cual se ve. Con tres elegidos los demás se apagan.
-let temasOnboarding = [];
-const chipsTemas = [...document.querySelectorAll('#ob2c .chip')], obTemasSeguir = $('#ob-temas-seguir');
-chipsTemas.forEach(b => {
-  b.onclick = () => {
-    const t = b.textContent.trim();
-    temasOnboarding = temasOnboarding.includes(t) ? temasOnboarding.filter(x => x !== t) : [...temasOnboarding, t].slice(0, 3);
-    chipsTemas.forEach(c => {
-      const elegido = temasOnboarding.includes(c.textContent.trim());
-      c.setAttribute('aria-pressed', String(elegido));
-      c.disabled = !elegido && temasOnboarding.length >= 3;
-    });
-    obTemasSeguir.disabled = !temasOnboarding.length;
-    vibrar(10);
-  };
-});
-obTemasSeguir.onclick = () => ir('ob3');
-$('#ob-temas-saltar').onclick = () => { temasOnboarding = []; ir('ob3'); };
+obGenSeguir.onclick = () => ir('ob3');
 
 const obCheck = $('#ob-check'), obEntrar = $('#ob-entrar');
 obCheck.addEventListener('change', () => { obEntrar.disabled = !obCheck.checked; });
 obEntrar.onclick = () => {
-  memoria = { activa: true, apodo: apodoOnboarding, genero: generoOnboarding, estilo: estiloOnboarding,
-              temas: temasOnboarding, datos: [], objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
+  memoria = { activa: true, apodo: apodoOnboarding, genero: generoOnboarding, ultimoTema: '',
+              datos: [], objetivos: [], estrategias: [], sensibles: [], resumenes: [] };
   guardarMemoria();
   pintarEntrada();
   ir('entrada');
