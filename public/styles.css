@@ -851,3 +851,226 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* El contenido de las pantallas con lista no se pega al subtítulo. */
 #historia-cuerpo,#resumen-cuerpo,#prefs-cuerpo,#pensamientos-cuerpo{padding-top:16px}
 #ob2 .barra,#ob2a .barra,#ob3 .barra{margin-left:-10px}
+
+/* ── más violeta, más personalidad (13/11) ──────────────────────────────────── */
+/* El alto del margen de arriba de cada pantalla, para que las franjas violetas
+   lleguen hasta el borde (y, en la compu, hasta atrás de la isla). */
+.p{--pt:24px}
+#marco .p{--pt:70px}
+@media (max-width:520px){ #marco .p{--pt:calc(24px + env(safe-area-inset-top))} }
+:root{--violeta-hondo:#2E1F66;--violeta-medio:#7C5CE3;
+  --franja:radial-gradient(120% 90% at 88% 0%,#8D6EEA 0%,rgba(141,110,234,0) 62%),linear-gradient(162deg,#6340C9 0%,#4A2CAD 100%);
+  --linea:color-mix(in srgb,var(--texto) 9%,transparent)}
+
+/* La home: arriba el violeta con el saludo; abajo los accesos llenan lo que queda. */
+#entrada{background:var(--tarjeta)}
+.hero{position:relative;overflow:hidden;flex-shrink:0;margin:calc(-1 * var(--pt)) -24px 0;
+  padding:var(--pt) 24px 104px;background:var(--franja);border-radius:0 0 36px 36px;color:#fff}
+.hero > *{position:relative}
+.hero .hero-piedra{position:absolute;right:-46px;top:18px;width:214px;height:276px;
+  fill:rgba(255,255,255,.08);transform:rotate(-13deg);pointer-events:none}
+.hero .ico svg{stroke:#fff;stroke-width:1.6}
+.hero .marca{color:#fff}
+.hero .saludo-bloque{margin-top:52px}
+.hero .cap{color:rgba(255,255,255,.82)}
+.hero #saludo{color:#fff;font-size:40px}
+#tel:has(#entrada.on) #estado,#tel:has(#pensamientos.on) #estado{color:#fff}
+#tel:has(#entrada.on) #estado svg,#tel:has(#pensamientos.on) #estado svg{fill:#fff;stroke:#fff}
+
+#entrada .accesos{flex:1 1 auto;min-height:0;margin-top:-72px;position:relative;z-index:1;gap:12px}
+#entrada .accesos-fila{flex:1 1 0;min-height:0;gap:12px}
+
+/* Hablar: la tarjeta blanca que se apoya sobre el violeta. Es lo principal. */
+#entrada .acceso-1{flex:.9 1 0;height:auto;min-height:112px;padding:22px;gap:18px;
+  background:var(--fondo);border-radius:24px;box-shadow:0 14px 34px rgba(67,40,160,.20),0 2px 6px rgba(67,40,160,.08)}
+#entrada .acceso-1 .piedra{height:46px}
+#entrada .acceso-1 .piedra-cuerpo{fill:var(--ambar);stroke:var(--ambar)}
+#entrada .acceso-1 .piedra-ojo{fill:#fff}
+#entrada .acceso-1 .piedra-veta{stroke:#fff}
+#entrada .acceso-1 .acceso-t{color:var(--texto);font-size:27px}
+#entrada .acceso-1 .acceso-s{color:var(--gris);opacity:1;font-size:14px}
+.acceso-flecha{flex:none;margin-left:auto;width:42px;height:42px;padding:11px;border-radius:50%;
+  background:var(--ambar);fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .5s cubic-bezier(.37,0,.63,1)}
+#entrada .acceso-1:hover .acceso-flecha{transform:translateX(3px)}
+#entrada .acceso-1[aria-disabled="true"] .piedra-cuerpo{fill:none;stroke:var(--gris)}
+#entrada .acceso-1[aria-disabled="true"] .piedra-ojo{fill:var(--gris)}
+#entrada .acceso-1[aria-disabled="true"] .piedra-veta{stroke:var(--gris)}
+#entrada .acceso-1[aria-disabled="true"] .acceso-flecha{background:var(--gris)}
+
+/* Respirar y Actividades: el mismo violeta lleno. */
+#entrada .acceso-2{flex:1;min-height:112px;padding:18px;border:0;border-radius:24px;
+  flex-direction:column;align-items:flex-start;justify-content:space-between;gap:14px}
+#entrada .acceso-2{background:var(--violeta-medio)}
+#entrada .acceso-2 .piedra{height:22px;padding:11px;border-radius:14px;color:#fff;
+  background:rgba(255,255,255,.16);box-sizing:content-box}
+#entrada .acceso-2 .acceso-t{color:#fff;font-size:21px}
+#entrada .acceso-2 .acceso-s{color:#fff;opacity:.9}
+
+/* La salida a una persona sigue a la vista, ahora sobre el fondo lavanda. */
+#entrada .ayuda-pie{background:var(--tarjeta);bottom:74px}
+#entrada .ayuda-boton{background:var(--fondo);border-color:color-mix(in srgb,var(--ambar) 28%,transparent)}
+
+/* La barra de abajo: íconos con nombre corto. La pestaña en la que estás se
+   prende con una pastilla violeta atrás del ícono, que se llena. */
+.pestanas{margin:12px -24px 0;padding:6px 24px 0;gap:0;border-top:0;background:var(--fondo);
+  box-shadow:0 -1px 0 var(--linea)}
+#entrada .pestanas{margin-top:10px}
+.pestana{height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:none!important;border-radius:0;color:var(--gris)}
+.pestana-ico{width:60px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  transition:background .45s ease}
+.pestana-ico svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.pestana-t{font-size:12px;font-weight:500;letter-spacing:.01em}
+.pestana[aria-current="page"]{color:var(--ambar-claro)}
+.pestana[aria-current="page"] .pestana-t{font-weight:600}
+.pestana[aria-current="page"] .pestana-ico{background:color-mix(in srgb,var(--ambar) 15%,transparent)}
+.pestana[aria-current="page"] .pestana-ico svg path:not(.pestana-ico-2){fill:currentColor}
+
+/* El foro: la misma franja violeta arriba, y abajo una línea de tiempo. */
+.foro-cab{flex-shrink:0;display:flex;flex-direction:column;gap:10px;margin:calc(-1 * var(--pt)) -24px 0;
+  padding:calc(var(--pt) + 22px) 24px 24px;background:var(--franja);border-radius:0 0 28px 28px;color:#fff}
+.foro-cab h2{color:#fff}
+.foro-cab .sub{color:#fff;opacity:.88;max-width:320px}
+.foro-aviso{font-size:13px;line-height:1.45;color:var(--ambar-claro);background:var(--tarjeta);
+  border-radius:12px;padding:10px 14px}
+.foro{display:flex;flex-direction:column;margin-top:-8px}
+.posteo{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--linea);animation:entra .6s cubic-bezier(.16,1,.3,1) both}
+.posteo:nth-child(2){animation-delay:.08s}
+.posteo:nth-child(3){animation-delay:.16s}
+.posteo:last-child{border-bottom:0}
+.posteo-foto{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;
+  background:linear-gradient(150deg,#9B80EE 0%,#5733BC 100%)}
+.posteo-foto svg{width:40px;height:40px;fill:rgba(255,255,255,.92)}
+.posteo-cuerpo{flex:1;min-width:0}
+.posteo-cab{display:flex;align-items:center;gap:5px;font-size:15px;line-height:1.3;white-space:nowrap}
+.posteo-nombre{font-weight:600;color:var(--texto);overflow:hidden;text-overflow:ellipsis}
+.posteo-sello{flex:none;width:17px;height:17px}
+.posteo-sello path:first-child{fill:var(--ambar)}
+.posteo-sello path:last-child{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.posteo-cuando{color:var(--gris);font-size:14px}
+.posteo-mat{font-size:13px;line-height:1.3;color:var(--gris);margin-top:2px}
+.posteo-t{margin:8px 0 0;font-size:16px;line-height:1.52;color:var(--texto);-webkit-user-select:text;user-select:text}
+@media (prefers-reduced-motion:reduce){ .posteo{animation:none} .acceso-flecha{transition:none} }
+
+/* Pantallas bajas: el saludo se acerca y los accesos se aprietan, sin perder el violeta. */
+@media (max-height:700px){
+  .hero{padding-bottom:64px}
+  .hero .saludo-bloque{margin-top:20px}
+  .hero #saludo{font-size:34px}
+  #entrada .acceso-1,#entrada .acceso-2{min-height:92px}
+}
+
+/* ── respirar: cada una con su escena (13/11) ───────────────────────────────── */
+/* Antes las dos se veían iguales y solo cambiaba el ritmo. Ahora:
+   - la corta es para bajar un cambio ahora: más luz, un anillo que marca hasta dónde
+     llega el aire (se llena al inhalar, se vacía al soltar) y la cuenta de segundos;
+   - la prolongada es para soltar, muchas veces de noche: un cielo oscuro con
+     estrellas, una marea que sube y baja con la respiración, y sin números. */
+
+/* El selector dice cuánto dura cada una. */
+.calma-tec{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px}
+.calma-tec small{font-family:var(--sans);font-size:11px;letter-spacing:.02em;opacity:.75}
+.calma-tec-linea{bottom:4px}
+
+/* Vuelta y tiempo: "3 de 9" debajo de la barrita. */
+.calma-ciclo{margin:8px 0 0;text-align:center;font-size:12px;letter-spacing:.04em;font-variant-numeric:tabular-nums;
+  color:var(--crema);opacity:.55;min-height:16px}
+
+/* La cuenta de segundos, abajo de la palabra. */
+.calma-cuenta{position:absolute;top:calc(50% + 26px);left:0;right:0;text-align:center;
+  font-family:var(--sans);font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--crema);opacity:.7}
+#calma .orbe{position:relative}
+
+/* El anillo. */
+#calma .anillo{position:absolute;width:196px;height:196px;transform:rotate(-90deg);overflow:visible;pointer-events:none;
+  transition:opacity .8s ease}
+.anillo-base{fill:none;stroke:color-mix(in srgb,var(--crema) 16%,transparent);stroke-width:1.5}
+.anillo-prog{fill:none;stroke:var(--crema);stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ambar) 80%,#fff));
+  transition:stroke-dashoffset .6s ease}
+#calma[data-fase="inhala"] .anillo-prog,#calma[data-fase="inhala2"] .anillo-prog{stroke-dashoffset:0;transition:stroke-dashoffset var(--dur) linear}
+#calma[data-fase="suelta"] .anillo-prog{stroke-dashoffset:1;transition:stroke-dashoffset var(--dur) linear}
+
+/* Corta: más luz en la escena. */
+#calma[data-tec="calmar"]{background:radial-gradient(130% 95% at 50% 42%,color-mix(in srgb,var(--ambar) 62%,var(--noche)) 0%,color-mix(in srgb,var(--ambar) 22%,var(--noche)) 48%,var(--noche) 88%)}
+#calma[data-tec="calmar"]::before{opacity:.5}
+
+/* Prolongada: noche. */
+#calma[data-tec="dormir"]{background:linear-gradient(180deg,#07060F 0%,#120C2B 55%,#1C1145 100%)}
+#calma[data-tec="dormir"]::before{opacity:.12}
+#calma[data-tec="dormir"] .anillo,#calma[data-tec="dormir"] .calma-cuenta{opacity:0}
+#calma[data-tec="dormir"] .calma-niebla{opacity:.35}
+/* El orbe se vuelve una luna: pálida, con un brillo frío. */
+#calma[data-tec="dormir"] .o2{background:radial-gradient(circle at 42% 36%,#FFFFFF 0%,#E4DCFA 38%,#B9A5F5 100%)}
+#calma[data-tec="dormir"] .o2::after{box-shadow:0 0 60px rgba(214,202,250,.55),0 0 140px rgba(140,110,234,.35)}
+#calma[data-tec="dormir"] .o1{background:radial-gradient(circle,rgba(214,202,250,.35) 0%,rgba(140,110,234,.12) 45%,transparent 70%)}
+#calma[data-tec="dormir"] .pal span{color:#2A1A66}
+
+.calma-estrellas,.calma-marea{position:absolute;opacity:0;transition:opacity 1.6s ease}
+#calma[data-tec="dormir"] .calma-estrellas,#calma[data-tec="dormir"] .calma-marea{opacity:1}
+.calma-estrellas{inset:0 0 35% 0;
+  background:
+    radial-gradient(1.4px 1.4px at 12% 18%,#fff 98%,transparent),radial-gradient(1px 1px at 27% 8%,#fff 98%,transparent),
+    radial-gradient(1.2px 1.2px at 44% 22%,#fff 98%,transparent),radial-gradient(1px 1px at 63% 12%,#fff 98%,transparent),
+    radial-gradient(1.6px 1.6px at 81% 26%,#fff 98%,transparent),radial-gradient(1px 1px at 90% 9%,#fff 98%,transparent),
+    radial-gradient(1px 1px at 8% 42%,#fff 98%,transparent),radial-gradient(1.2px 1.2px at 35% 46%,#fff 98%,transparent),
+    radial-gradient(1px 1px at 72% 40%,#fff 98%,transparent),radial-gradient(1.3px 1.3px at 55% 4%,#fff 98%,transparent),
+    radial-gradient(1px 1px at 18% 60%,#fff 98%,transparent),radial-gradient(1px 1px at 92% 55%,#fff 98%,transparent)}
+#calma[data-tec="dormir"] .calma-estrellas{animation:titilar 7s ease-in-out infinite alternate}
+@keyframes titilar{from{opacity:.55}to{opacity:1}}
+
+/* La marea: abajo en reposo, sube al inhalar y baja al soltar, con la duración de la
+   fase. Las dos olas se corren de costado muy lento, para que el agua nunca esté quieta. */
+.calma-marea{left:-10%;right:-10%;width:120%;bottom:0;height:62%;
+  transform:translateY(58%);transition:transform 1.2s cubic-bezier(.45,0,.55,1),opacity 1.6s ease}
+#calma[data-fase="inhala"] .calma-marea,#calma[data-fase="inhala2"] .calma-marea{transform:translateY(8%);transition:transform var(--dur) cubic-bezier(.45,0,.55,1),opacity 1.6s ease}
+#calma[data-fase="suelta"] .calma-marea{transform:translateY(58%);transition:transform var(--dur) cubic-bezier(.45,0,.55,1),opacity 1.6s ease}
+.marea-1{animation:ola-lado 14s ease-in-out infinite alternate}
+.marea-2{animation:ola-lado 19s ease-in-out infinite alternate-reverse}
+@keyframes ola-lado{from{transform:translateX(-4%)}to{transform:translateX(4%)}}
+/* El texto y los botones quedan arriba de la marea. */
+#calma[data-tec="dormir"] .calma-pie,#calma[data-tec="dormir"] .calma-fin{position:relative;z-index:2}
+
+@media (prefers-reduced-motion:reduce){
+  .calma-marea,.anillo-prog,.calma-estrellas,.marea-1,.marea-2{animation:none!important}
+  #calma[data-fase] .calma-marea{transition:opacity 1.6s ease}
+}
+
+/* ── el violeta en el resto de las pantallas (13/11) ───────────────────────── */
+/* Cada pantalla abre con la misma franja violeta que la home y el foro: el título
+   adentro, en blanco, y la flecha para volver. */
+.cab-violeta{position:relative;flex-shrink:0;margin:calc(-1 * var(--pt)) -24px 0;
+  padding:var(--pt) 24px 26px;background:var(--franja);border-radius:0 0 28px 28px;color:#fff}
+.cab-violeta .ico svg{stroke:#fff;stroke-width:1.6}
+.cab-violeta .marca{color:#fff}
+.cab-violeta h2{color:#fff}
+.cab-violeta .sub{color:#fff;opacity:.88;max-width:320px}
+.cab-menu{padding-bottom:14px}
+#tel:has(.p.on > .cab-violeta) #estado{color:#fff}
+#tel:has(.p.on > .cab-violeta) #estado svg{fill:#fff;stroke:#fff}
+
+/* Listas (menú y actividades): fondo lavanda y cada opción en su tarjeta blanca,
+   con una flecha violeta que dice que se puede entrar. */
+#menu,#actividades{background:var(--tarjeta)}
+#menu .ayuda-pie,#actividades .ayuda-pie{background:var(--tarjeta)}
+#menu .lista,#actividades .lista{gap:10px}
+#menu .fila-menu,#actividades .fila-menu{background:var(--fondo);border:0;border-radius:18px;
+  padding:16px 52px 16px 18px;box-shadow:0 1px 2px rgba(67,40,160,.06),0 6px 18px rgba(67,40,160,.06)}
+#menu .fila-menu::before,#actividades .fila-menu::before{inset:0;border-radius:18px}
+#menu .fila-menu::after,#actividades .fila-menu::after{content:'';position:absolute;right:18px;top:50%;
+  width:9px;height:9px;margin-top:-5px;border-right:2px solid var(--ambar);border-top:2px solid var(--ambar);
+  transform:rotate(45deg);border-radius:1px}
+[data-tema="oscuro"] #menu .fila-menu::after,[data-tema="oscuro"] #actividades .fila-menu::after{border-color:var(--ambar-claro)}
+#menu .fila-menu:hover,#actividades .fila-menu:hover{border-bottom-color:transparent}
+#menu .cuerpo{padding-top:18px!important}
+#actividades-cuerpo .lista{padding-top:18px!important}
+/* Borrar todo queda abajo, sobre lavanda, sin competir con las opciones. */
+#menu #cerrar-sesion{background:var(--fondo)}
+
+/* Dentro de una actividad: el botón para soltarla es violeta lleno. */
+#actividad .btn-2,#feedback .btn-1{background:var(--ambar);color:#fff;border:0}
+#actividad .act-campos{margin-top:18px}
+
+/* El chat: los botones de arriba (Respirar, Terminé) con un poco más de violeta. */
+#conv .pill{background:color-mix(in srgb,var(--ambar) 12%,transparent)}

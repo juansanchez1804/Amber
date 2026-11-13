@@ -200,9 +200,22 @@ const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calma
 const orbeHalo = $('#calma-o1'), orbeCentro = $('#calma-o2'), orbeRastro = $('#calma-rastro'), calmaLuz = $('#calma-luz');
 let resp = null, bloqueo = null;
 
+// La cuenta de segundos de cada fase. Solo se ve en la corta: en la prolongada,
+// que es para soltar y muchas veces con los ojos cerrados, los números sobran.
+const calmaCuenta = $('#calma-cuenta'), calmaCiclo = $('#calma-ciclo');
+let cuentaTimer = null;
+function contar(ms) {
+  clearInterval(cuentaTimer);
+  let n = Math.round(ms / 1000);
+  calmaCuenta.textContent = n > 0 ? n : '';
+  if (n <= 1) return;
+  cuentaTimer = setInterval(() => { n--; calmaCuenta.textContent = n > 0 ? n : ''; if (n <= 1) clearInterval(cuentaTimer); }, 1000);
+}
 function fase(nombre, ms) {
   calma.style.setProperty('--dur', ms + 'ms');
   calma.dataset.fase = nombre;
+  if (nombre === 'inhala' || nombre === 'suelta') contar(ms);
+  else { clearInterval(cuentaTimer); calmaCuenta.textContent = ''; }
 }
 const avisarCalma = t => { calmaAviso.textContent = ''; setTimeout(() => { calmaAviso.textContent = t; }, 50); };
 
@@ -444,6 +457,10 @@ function empezarRespiracion() {
   pararRespiracion();
   resp = { ciclo: 0, timer: null, ola: null, pausada: false };
   delete calma.dataset.terminado;
+  // Cada una tiene su escena: la corta es un círculo con anillo y cuenta; la
+  // prolongada, un cielo de noche con una marea.
+  calma.dataset.tec = prefs.respirar ?? 'calmar';
+  calmaCiclo.textContent = '';
   calma.style.setProperty('--brillo', 1);
   $('#salir-calma').textContent = 'Terminar';
   calmaT.textContent = 'Acomodate como estés.';
@@ -471,6 +488,7 @@ function inhalar() {
   ola('inhala', RESP.inhala, quieto);
   vibrar(24);
   avisarCalma('Inhalá');
+  calmaCiclo.textContent = `${resp.ciclo + 1} de ${RESP.ciclos}`;
   progreso.style.transition = `width ${RESP.inhala + RESP.inhala2 + RESP.suelta}ms linear`;
   progreso.style.width = `${(resp.ciclo + 1) / RESP.ciclos * 100}%`;
   resp.timer = setTimeout(RESP.inhala2 ? inhalarDeNuevo : soltar, RESP.inhala);
@@ -506,6 +524,7 @@ function terminarRespiracion() {
   aquietarEscena(2400);
   callarOla(2400);
   soltarPantalla();
+  calmaCiclo.textContent = '';
   calmaT.textContent = 'Ya está.';
   calmaS.textContent = 'Quedate un momento así. Si querés, seguimos un rato más.';
   calma.dataset.terminado = '';
@@ -1872,22 +1891,42 @@ function pintarAbout() {
 // 12/11). Se llaman pensamientos, no consejos: si un texto dice "hacé", "intentá" o
 // "probá", no sale. Hasta que se sumen los profesionales, lo que hay es de ejemplo y
 // lo dice: no se inventa un nombre ni una matrícula.
+// En pantalla se llama Foro mientras se elige el nombre definitivo. Cada posteo
+// tiene autor con foto, como en una red social, pero no hay nada para tocar:
+// ni responder, ni me gusta, ni seguir. Más adelante, tocar el autor abre su perfil.
 const PENSAMIENTOS = [
-  'Muchas veces lo que más pesa de una separación no es la persona que se fue, sino la versión de uno que existía con ella. Eso también se extraña, y tiene sentido que se extrañe.',
-  'Contarle siempre lo mismo a la misma amiga no es ser una carga. A veces es la forma que encontramos de ir entendiendo algo de a poco, en voz alta.',
-  'Que algo te siga afectando después de un tiempo no quiere decir que estés haciendo algo mal. Los tiempos de cada uno no se eligen.',
+  { cuando: 'hace 2 h', t: 'Muchas veces lo que más pesa de una separación no es la persona que se fue, sino la versión de uno que existía con ella. Eso también se extraña, y tiene sentido que se extrañe.' },
+  { cuando: 'ayer', t: 'Contarle siempre lo mismo a la misma amiga no es ser una carga. A veces es la forma que encontramos de ir entendiendo algo de a poco, en voz alta.' },
+  { cuando: 'hace 3 días', t: 'Que algo te siga afectando después de un tiempo no quiere decir que estés haciendo algo mal. Los tiempos de cada uno no se eligen.' },
 ];
+const SVG = 'http://www.w3.org/2000/svg';
+function svgDe(viewBox, paths, clase) {
+  const s = document.createElementNS(SVG, 'svg');
+  s.setAttribute('viewBox', viewBox); s.setAttribute('aria-hidden', 'true');
+  if (clase) s.setAttribute('class', clase);
+  for (const d of paths) { const p = document.createElementNS(SVG, 'path'); p.setAttribute('d', d); s.append(p); }
+  return s;
+}
 function pintarPensamientos() {
   const c = $('#pensamientos-cuerpo'); c.innerHTML = '';
-  const lista = el('div', 'pensamientos');
-  for (const t of PENSAMIENTOS) {
-    const a = el('article', 'pensamiento');
-    a.append(el('p', 'pensamiento-t', t));
-    a.append(el('div', 'pensamiento-autor', 'Texto de ejemplo · Nombre, apellido y matrícula del profesional'));
+  c.append(el('div', 'foro-aviso', 'Por ahora son textos de ejemplo, hasta que se sumen los primeros profesionales.'));
+  const lista = el('div', 'foro');
+  for (const p of PENSAMIENTOS) {
+    const a = el('article', 'posteo');
+    // La foto: hasta que haya profesionales reales, una silueta sobre violeta.
+    const foto = el('div', 'posteo-foto');
+    foto.append(svgDe('0 0 40 40', ['M20 21a7 7 0 1 0 0-14 7 7 0 0 0 0 14z', 'M7 37c1.6-7 6.8-11 13-11s11.4 4 13 11z']));
+    const cuerpo = el('div', 'posteo-cuerpo');
+    const cab = el('div', 'posteo-cab');
+    const nombre = el('span', 'posteo-nombre', 'Nombre Apellido');
+    const sello = svgDe('0 0 24 24', ['M12 2.5l2.4 1.8 3-.1.9 2.8 2.4 1.8-.9 2.9.9 2.9-2.4 1.8-.9 2.8-3-.1L12 21.5l-2.4-1.8-3 .1-.9-2.8-2.4-1.8.9-2.9-.9-2.9 2.4-1.8.9-2.8 3 .1z', 'M8.3 12.2l2.5 2.5 4.9-5'], 'posteo-sello');
+    sello.setAttribute('aria-label', 'Matriculado'); sello.removeAttribute('aria-hidden'); sello.setAttribute('role', 'img');
+    cab.append(nombre, sello, el('span', 'posteo-cuando', '· ' + p.cuando));
+    cuerpo.append(cab, el('div', 'posteo-mat', 'Lic. en Psicología · M.N. 00000'), el('p', 'posteo-t', p.t));
+    a.append(foto, cuerpo);
     lista.append(a);
   }
   c.append(lista);
-  c.append(el('div', 'vacio', 'Mientras se suman los primeros profesionales, lo que ves acá es de ejemplo.'));
 }
 
 // ── feedback ──────────────────────────────────────────────────────────────
