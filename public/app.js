@@ -114,7 +114,7 @@ function ir(id) {
   if (id === 'historia') pintarHistoria();
   if (id === 'pensamientos') pintarPensamientos();
   if (id === 'resumen') pintarResumen();
-  if (id === 'carta') abrirCarta();
+  if (id === 'actividades') pintarActividades();
   if (id === 'prefs') pintarPreferencias();
   if (id === 'about') pintarAbout();
   if (id === 'ayuda') pintarAyuda();
@@ -1695,23 +1695,80 @@ function pintarPensamientos() {
   c.append(el('div', 'vacio', 'Mientras se suman los primeros profesionales, lo que ves acá es de ejemplo.'));
 }
 
-// ── la carta que no vas a mandar ───────────────────────────────────────────
-// No viaja a ningún lado y no se guarda: es escribir para sacarlo. Al soltarla se
-// borra, y si salís sin soltarla, también.
-const cartaTxt = $('#carta-txt'), cartaSoltar = $('#carta-soltar'), cartaNota = $('#carta-nota');
-function abrirCarta() {
-  cartaTxt.value = ''; cartaSoltar.disabled = true; cartaNota.textContent = '';
-  setTimeout(() => cartaTxt.focus(), 300);
+// ── actividades ───────────────────────────────────────────────────────────
+// Opcionales, para escribir, sin técnicas con nombre clínico (art. 2 de la Ley
+// 23.277) y sin decirle a nadie qué hacer. Ninguna viaja a ningún lado ni se guarda:
+// al soltarla se borra, y si salís sin soltarla, también.
+const ACTIVIDADES = [
+  { id: 'carta', titulo: 'Una carta que no vas a mandar',
+    resumen: 'A una persona, a vos de antes, a algo que pasó.',
+    intro: 'A quien sea: una persona, vos de antes, algo que pasó. No se manda y no la lee nadie.',
+    campos: [{ placeholder: 'Empezá por donde te salga.' }], soltar: 'Soltarla' },
+  { id: 'vaciar', titulo: 'Vaciar la cabeza',
+    resumen: 'Todo lo que da vueltas, un renglón por cosa.',
+    intro: 'Todo lo que está dando vueltas, un renglón por cosa, sin orden y sin explicar nada. Sirve sobre todo de noche.',
+    campos: [{ placeholder: 'Lo primero que aparezca.' }], soltar: 'Soltarlo' },
+  { id: 'sesupone', titulo: 'Lo que sé y lo que estoy suponiendo',
+    resumen: 'Separar lo que pasó de lo que te imaginás.',
+    intro: 'Algo que te esté pasando, partido en dos. Por ejemplo: "sé que no me contestó" y "supongo que está enojada".',
+    campos: [{ rotulo: 'Lo que sé', placeholder: 'Lo que pasó, tal cual.' },
+             { rotulo: 'Lo que estoy suponiendo', placeholder: 'Lo que te imaginás o temés.' }], soltar: 'Soltarlo' },
+  { id: 'depende', titulo: 'Lo que depende de mí',
+    resumen: 'Una preocupación, partida en dos.',
+    intro: 'Algo que te preocupe, partido en lo que está en tus manos y lo que no.',
+    campos: [{ rotulo: 'Depende de mí', placeholder: 'Lo que está en tus manos.' },
+             { rotulo: 'No depende de mí', placeholder: 'Lo que no.' }], soltar: 'Soltarlo' },
+];
+function pintarActividades() {
+  const c = $('#actividades-cuerpo'); c.innerHTML = '';
+  const lista = el('nav', 'lista');
+  lista.style.paddingTop = '16px';
+  lista.setAttribute('aria-label', 'Actividades');
+  for (const a of ACTIVIDADES) {
+    const b = el('button', 'fila-menu');
+    b.append(el('span', 'fila-t', a.titulo), el('span', 'fila-s', a.resumen));
+    b.onclick = () => abrirActividad(a);
+    lista.append(b);
+  }
+  c.append(lista);
 }
-cartaTxt.addEventListener('input', () => { cartaSoltar.disabled = !cartaTxt.value.trim(); cartaNota.textContent = ''; });
-cartaSoltar.onclick = () => {
-  cartaTxt.classList.add('soltando');
+const actSoltar = $('#act-soltar'), actNota = $('#act-nota'), actCampos = $('#act-campos');
+function abrirActividad(a) {
+  $('#act-titulo').textContent = a.titulo;
+  $('#act-intro').textContent = a.intro;
+  actSoltar.textContent = a.soltar; actSoltar.disabled = true; actNota.textContent = '';
+  actCampos.innerHTML = '';
+  actCampos.classList.toggle('dos', a.campos.length > 1);
+  for (const f of a.campos) {
+    const caja = el('label', 'act-campo');
+    if (f.rotulo) caja.append(el('span', 'act-rotulo', f.rotulo));
+    const t = el('textarea', 'carta-txt');
+    t.placeholder = f.placeholder;
+    t.setAttribute('aria-label', f.rotulo ?? a.titulo);
+    t.addEventListener('input', () => {
+      actSoltar.disabled = ![...actCampos.querySelectorAll('textarea')].some(x => x.value.trim());
+      actNota.textContent = '';
+    });
+    caja.append(t);
+    actCampos.append(caja);
+  }
+  ir('actividad');
+  setTimeout(() => actCampos.querySelector('textarea')?.focus(), 300);
+}
+actSoltar.onclick = () => {
+  const ts = [...actCampos.querySelectorAll('textarea')];
+  ts.forEach(t => t.classList.add('soltando'));
   vibrar(12);
   setTimeout(() => {
-    cartaTxt.value = ''; cartaTxt.classList.remove('soltando'); cartaSoltar.disabled = true;
-    cartaNota.textContent = 'Listo. No quedó guardada en ningún lado.';
+    ts.forEach(t => { t.value = ''; t.classList.remove('soltando'); });
+    actSoltar.disabled = true;
+    actNota.textContent = 'Listo. No quedó guardado en ningún lado.';
   }, 900);
 };
+// Salir de una actividad sin soltarla también la borra: nada queda escrito.
+document.addEventListener('click', e => {
+  if (e.target.closest('#actividad [data-ir]')) actCampos.querySelectorAll('textarea').forEach(t => { t.value = ''; });
+}, true);
 
 // ── resumen para el psicólogo ──────────────────────────────────────────────
 // Lo arma Amber con todas las charlas guardadas, cuando Lola lo pide. Ella lo lee,

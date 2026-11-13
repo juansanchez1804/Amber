@@ -786,6 +786,12 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .pensamiento-t{font-family:var(--serif);font-size:18px;line-height:1.45;margin:0 0 12px;color:var(--texto)}
 .pensamiento-autor{font-size:12px;line-height:1.4;color:var(--gris2)}
 
+/* Actividades: uno o dos campos para escribir */
+.act-campos{flex-grow:1;min-height:0;display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.act-campo{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.act-campo .carta-txt{margin-top:0}
+.act-rotulo{font-size:13px;color:var(--gris)}
+
 /* La carta */
 .carta-txt{flex-grow:1;min-height:0;margin-top:20px;width:100%;resize:none;border:0;outline:none;
   background:var(--tarjeta);border-radius:16px;padding:18px;color:var(--texto);

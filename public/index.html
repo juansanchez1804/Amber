@@ -167,11 +167,11 @@
             <span class="acceso-s" id="resp-s">Noventa segundos</span>
           </span>
         </button>
-        <button class="acceso acceso-2" data-ir="carta">
-          <svg class="piedra" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16v11H4z"/><path d="M4.5 7l7.5 6 7.5-6"/></svg>
+        <button class="acceso acceso-2" data-ir="actividades">
+          <svg class="piedra" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4.5h12v15H6z"/><path d="M9 9h6M9 12.5h6M9 16h3.5"/></svg>
           <span class="acceso-textos">
-            <span class="acceso-t">Una carta</span>
-            <span class="acceso-s">Que no vas a mandar</span>
+            <span class="acceso-t">Actividades</span>
+            <span class="acceso-s">Un par de minutos</span>
           </span>
         </button>
       </div>
@@ -200,21 +200,35 @@
     </nav>
   </section>
 
-  <!-- LA CARTA QUE NO VAS A MANDAR -->
-  <section class="p" id="carta">
+  <!-- ACTIVIDADES: opcionales, sin técnicas con nombre clínico, nada se guarda -->
+  <section class="p" id="actividades">
     <div class="barra">
       <button class="ico" data-ir="entrada" aria-label="Volver">
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
-      <h2>Una carta que no vas a mandar</h2>
-      <div class="sub">A quien sea: una persona, vos de antes, algo que pasó. No se manda, no la lee nadie y no se guarda.</div>
+      <h2>Actividades</h2>
+      <div class="sub">Cortas y para escribir. Ninguna se guarda ni la lee nadie.</div>
     </div>
-    <textarea id="carta-txt" class="carta-txt" placeholder="Empezá por donde te salga."></textarea>
+    <div class="cuerpo" id="actividades-cuerpo"></div>
+  </section>
+
+  <!-- UNA ACTIVIDAD -->
+  <section class="p" id="actividad">
+    <div class="barra">
+      <button class="ico" data-ir="actividades" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;flex-shrink:0">
+      <h2 id="act-titulo"></h2>
+      <div class="sub" id="act-intro"></div>
+    </div>
+    <div class="act-campos" id="act-campos"></div>
     <div class="carta-pie">
-      <button class="btn btn-2" id="carta-soltar" disabled>Soltarla</button>
-      <p class="carta-nota" id="carta-nota" role="status" aria-live="polite"></p>
+      <button class="btn btn-2" id="act-soltar" disabled>Soltarla</button>
+      <p class="carta-nota" id="act-nota" role="status" aria-live="polite"></p>
     </div>
   </section>
 
