@@ -1894,10 +1894,20 @@ function pintarAbout() {
 // En pantalla se llama Foro mientras se elige el nombre definitivo. Cada posteo
 // tiene autor con foto, como en una red social, pero no hay nada para tocar:
 // ni responder, ni me gusta, ni seguir. Más adelante, tocar el autor abre su perfil.
+// Quienes escriben: se arranca con cinco o seis matriculados fijos (pirámide del
+// 12/11). Hasta que estén, hay tres de ejemplo y los lugares que faltan dicen
+// "Pronto". Cada uno tiene su tono de violeta, así se reconocen en la lista.
+const AUTORES = [
+  { tono: ['#9B80EE', '#5733BC'] },
+  { tono: ['#B49CF5', '#7C5CE3'] },
+  { tono: ['#7E62D8', '#3B2A86'] },
+];
+const LUGARES_AUTORES = 6;
 const PENSAMIENTOS = [
-  { cuando: 'hace 2 h', t: 'Muchas veces lo que más pesa de una separación no es la persona que se fue, sino la versión de uno que existía con ella. Eso también se extraña, y tiene sentido que se extrañe.' },
-  { cuando: 'ayer', t: 'Contarle siempre lo mismo a la misma amiga no es ser una carga. A veces es la forma que encontramos de ir entendiendo algo de a poco, en voz alta.' },
-  { cuando: 'hace 3 días', t: 'Que algo te siga afectando después de un tiempo no quiere decir que estés haciendo algo mal. Los tiempos de cada uno no se eligen.' },
+  { autor: 0, tema: 'Separaciones', cuando: 'hace 2 h', t: 'Muchas veces lo que más pesa de una separación no es la persona que se fue, sino la versión de uno que existía con ella. Eso también se extraña, y tiene sentido que se extrañe.' },
+  { autor: 1, tema: 'Amistades', cuando: 'ayer', t: 'Contarle siempre lo mismo a la misma amiga no es ser una carga. A veces es la forma que encontramos de ir entendiendo algo de a poco, en voz alta.' },
+  { autor: 2, tema: 'Los tiempos', cuando: 'hace 3 días', t: 'Que algo te siga afectando después de un tiempo no quiere decir que estés haciendo algo mal. Los tiempos de cada uno no se eligen.' },
+  { autor: 0, tema: 'Lo que no se dice', cuando: 'hace 5 días', t: 'Hay cosas que no contamos porque todavía no tienen palabras. No es que no queramos decirlas: es que recién se están armando.' },
 ];
 const SVG = 'http://www.w3.org/2000/svg';
 function svgDe(viewBox, paths, clase) {
@@ -1907,26 +1917,55 @@ function svgDe(viewBox, paths, clase) {
   for (const d of paths) { const p = document.createElementNS(SVG, 'path'); p.setAttribute('d', d); s.append(p); }
   return s;
 }
+// La foto: hasta que haya profesionales reales, una silueta sobre su tono de violeta.
+function fotoDe(autor, clase) {
+  const f = el('div', clase);
+  f.style.background = `linear-gradient(150deg,${autor.tono[0]} 0%,${autor.tono[1]} 100%)`;
+  f.append(svgDe('0 0 40 40', ['M20 21a7 7 0 1 0 0-14 7 7 0 0 0 0 14z', 'M7 37c1.6-7 6.8-11 13-11s11.4 4 13 11z']));
+  return f;
+}
+function selloMatriculado() {
+  const s = svgDe('0 0 24 24', ['M12 2.5l2.4 1.8 3-.1.9 2.8 2.4 1.8-.9 2.9.9 2.9-2.4 1.8-.9 2.8-3-.1L12 21.5l-2.4-1.8-3 .1-.9-2.8-2.4-1.8.9-2.9-.9-2.9 2.4-1.8.9-2.8 3 .1z', 'M8.3 12.2l2.5 2.5 4.9-5'], 'posteo-sello');
+  s.setAttribute('aria-label', 'Matriculado'); s.removeAttribute('aria-hidden'); s.setAttribute('role', 'img');
+  return s;
+}
 function pintarPensamientos() {
   const c = $('#pensamientos-cuerpo'); c.innerHTML = '';
+
+  // Arriba, quiénes escriben: una fila de fotos, como las historias de una red
+  // social. Todavía no se tocan; cuando haya perfiles, cada foto abre el suyo.
+  const quienes = el('section', 'foro-autores');
+  quienes.setAttribute('aria-label', 'Quiénes escriben');
+  quienes.append(el('div', 'foro-rotulo', 'Quiénes escriben'));
+  const fila = el('div', 'foro-autores-fila');
+  for (let i = 0; i < LUGARES_AUTORES; i++) {
+    const a = AUTORES[i];
+    const lugar = el('div', 'autor' + (a ? '' : ' autor-pronto'));
+    if (a) { const anillo = el('div', 'autor-anillo'); anillo.append(fotoDe(a, 'autor-foto')); lugar.append(anillo, el('span', 'autor-n', 'Ejemplo ' + (i + 1))); }
+    else { lugar.append(el('div', 'autor-anillo'), el('span', 'autor-n', 'Pronto')); }
+    fila.append(lugar);
+  }
+  quienes.append(fila);
+  c.append(quienes);
+
   c.append(el('div', 'foro-aviso', 'Por ahora son textos de ejemplo, hasta que se sumen los primeros profesionales.'));
+
   const lista = el('div', 'foro');
   for (const p of PENSAMIENTOS) {
+    const autor = AUTORES[p.autor];
     const a = el('article', 'posteo');
-    // La foto: hasta que haya profesionales reales, una silueta sobre violeta.
-    const foto = el('div', 'posteo-foto');
-    foto.append(svgDe('0 0 40 40', ['M20 21a7 7 0 1 0 0-14 7 7 0 0 0 0 14z', 'M7 37c1.6-7 6.8-11 13-11s11.4 4 13 11z']));
-    const cuerpo = el('div', 'posteo-cuerpo');
     const cab = el('div', 'posteo-cab');
-    const nombre = el('span', 'posteo-nombre', 'Nombre Apellido');
-    const sello = svgDe('0 0 24 24', ['M12 2.5l2.4 1.8 3-.1.9 2.8 2.4 1.8-.9 2.9.9 2.9-2.4 1.8-.9 2.8-3-.1L12 21.5l-2.4-1.8-3 .1-.9-2.8-2.4-1.8.9-2.9-.9-2.9 2.4-1.8.9-2.8 3 .1z', 'M8.3 12.2l2.5 2.5 4.9-5'], 'posteo-sello');
-    sello.setAttribute('aria-label', 'Matriculado'); sello.removeAttribute('aria-hidden'); sello.setAttribute('role', 'img');
-    cab.append(nombre, sello, el('span', 'posteo-cuando', '· ' + p.cuando));
-    cuerpo.append(cab, el('div', 'posteo-mat', 'Lic. en Psicología · M.N. 00000'), el('p', 'posteo-t', p.t));
-    a.append(foto, cuerpo);
+    const quien = el('div', 'posteo-quien');
+    const linea1 = el('div', 'posteo-l1');
+    linea1.append(el('span', 'posteo-nombre', 'Nombre Apellido'), selloMatriculado());
+    quien.append(linea1, el('div', 'posteo-mat', 'Lic. en Psicología · M.N. 00000'));
+    cab.append(fotoDe(autor, 'posteo-foto'), quien, el('span', 'posteo-cuando', p.cuando));
+    // El texto es lo principal: grande, en la letra de Amber, como una reflexión.
+    a.append(cab, el('p', 'posteo-t', p.t), el('span', 'posteo-tema', p.tema));
     lista.append(a);
   }
   c.append(lista);
+  c.append(el('div', 'foro-fin', 'Eso es todo por ahora.'));
 }
 
 // ── feedback ──────────────────────────────────────────────────────────────
