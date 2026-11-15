@@ -200,6 +200,43 @@ const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calma
 const orbeHalo = $('#calma-o1'), orbeCentro = $('#calma-o2'), orbeRastro = $('#calma-rastro'), calmaLuz = $('#calma-luz');
 let resp = null, bloqueo = null;
 
+// ── la prolongada es una meditación guiada ───────────────────────────────────
+// Cinco minutos: veinticinco vueltas de doce segundos. La guía va por vuelta y no por
+// reloj, así una pausa (la app en segundo plano) no la desfasa. Las primeras tres
+// vueltas marcan el ritmo con la marea; después la respiración va sola y la palabra
+// del centro se apaga. Sin nombres de técnicas, sin promesas, sin "estoy acá".
+const GUIA_PROLONGADA = {
+  0:  'Seguí la marea. Inhalá cuando sube, soltá cuando baja.',
+  3:  'Ahora dejá que la respiración vaya sola. No hace falta hacerla bien.',
+  6:  'La frente.',
+  7:  'La mandíbula, si está apretada.',
+  8:  'Los hombros.',
+  9:  'Las manos.',
+  10: 'La panza, que sube y baja.',
+  12: 'Van a aparecer pensamientos. Está bien. No hace falta seguirlos ni echarlos.',
+  15: 'Si te fuiste lejos, volvé a la respiración. Volver es todo lo que hay que hacer.',
+  17: '',
+  21: 'Empezá a notar los sonidos de alrededor.',
+  23: 'Mové un poco los dedos.',
+};
+const VUELTA_LIBRE = 3;
+const calmaGuia = $('#calma-guia');
+let guiaTimer = null;
+function guiar(texto) {
+  clearTimeout(guiaTimer);
+  calmaGuia.classList.remove('on');
+  guiaTimer = setTimeout(() => {
+    calmaGuia.textContent = texto;
+    if (texto) { calmaGuia.classList.add('on'); avisarCalma(texto); }
+  }, 700);
+}
+function guiaDeLaVuelta(ciclo) {
+  if (calma.dataset.tec !== 'dormir') return;
+  if (ciclo >= VUELTA_LIBRE) calma.dataset.libre = ''; else delete calma.dataset.libre;
+  if (ciclo in GUIA_PROLONGADA) guiar(GUIA_PROLONGADA[ciclo]);
+}
+function callarGuia() { clearTimeout(guiaTimer); calmaGuia.classList.remove('on'); calmaGuia.textContent = ''; delete calma.dataset.libre; }
+
 // La cuenta de segundos de cada fase. Solo se ve en la corta: en la prolongada,
 // que es para soltar y muchas veces con los ojos cerrados, los números sobran.
 const calmaCuenta = $('#calma-cuenta'), calmaCiclo = $('#calma-ciclo');
@@ -461,6 +498,7 @@ function empezarRespiracion() {
   // prolongada, un cielo de noche con una marea.
   calma.dataset.tec = prefs.respirar ?? 'calmar';
   calmaCiclo.textContent = '';
+  callarGuia();
   calma.style.setProperty('--brillo', 1);
   $('#salir-calma').textContent = 'Terminar';
   calmaT.textContent = 'Acomodate como estés.';
@@ -487,8 +525,9 @@ function inhalar() {
   aclarar(LUZ_PICO * b, RESP.inhala, m.curva);
   ola('inhala', RESP.inhala, quieto);
   vibrar(24);
-  avisarCalma('Inhalá');
+  if (!calma.hasAttribute('data-libre')) avisarCalma('Inhalá');
   calmaCiclo.textContent = `${resp.ciclo + 1} de ${RESP.ciclos}`;
+  guiaDeLaVuelta(resp.ciclo);
   progreso.style.transition = `width ${RESP.inhala + RESP.inhala2 + RESP.suelta}ms linear`;
   progreso.style.width = `${(resp.ciclo + 1) / RESP.ciclos * 100}%`;
   resp.timer = setTimeout(RESP.inhala2 ? inhalarDeNuevo : soltar, RESP.inhala);
@@ -514,7 +553,7 @@ function soltar() {
   aclarar(0, RESP.suelta, m.suelta);
   ola('suelta', RESP.suelta);
   vibrar(12);
-  avisarCalma('Soltá');
+  if (!calma.hasAttribute('data-libre')) avisarCalma('Soltá');
   resp.timer = setTimeout(() => { resp.ciclo++; resp.ciclo < RESP.ciclos ? inhalar() : terminarRespiracion(); }, RESP.suelta);
 }
 
@@ -525,6 +564,7 @@ function terminarRespiracion() {
   callarOla(2400);
   soltarPantalla();
   calmaCiclo.textContent = '';
+  callarGuia();
   calmaT.textContent = 'Ya está.';
   calmaS.textContent = 'Quedate un momento así. Si querés, seguimos un rato más.';
   calma.dataset.terminado = '';
@@ -590,6 +630,7 @@ function pararRespiracion() {
   callarOla(400);
   soltarPantalla();
   resp = null;
+  callarGuia();
   fase('quieto', 600);
   for (const n of [orbeCentro, orbeHalo, orbeRastro, calmaLuz]) n.getAnimations().forEach(a => a.cancel());
   delete calma.dataset.terminado;
