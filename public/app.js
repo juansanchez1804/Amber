@@ -237,6 +237,16 @@ function guiaDeLaVuelta(ciclo) {
   if (ciclo >= VUELTA_LIBRE) calma.dataset.libre = ''; else delete calma.dataset.libre;
   if (ciclo in GUIA_PROLONGADA) guiar(GUIA_PROLONGADA[ciclo]);
 }
+// Los puntos de la corta: uno por respiración. El que está pasando late; los que
+// ya pasaron quedan llenos.
+const calmaPuntos = $('#calma-puntos');
+function pintarPuntosCalma() {
+  calmaPuntos.innerHTML = '';
+  for (let i = 0; i < RESP.ciclos; i++) calmaPuntos.append(el('i'));
+}
+function marcarPuntoCalma(n) {
+  [...calmaPuntos.children].forEach((p, i) => { p.classList.toggle('hecho', i < n); p.classList.toggle('ahora', i === n); });
+}
 function callarGuia() { clearTimeout(guiaTimer); calmaGuia.classList.remove('on'); calmaGuia.textContent = ''; delete calma.dataset.libre; }
 
 // La cuenta de segundos de cada fase. Solo se ve en la corta: en la prolongada,
@@ -501,6 +511,7 @@ function empezarRespiracion() {
   calma.dataset.tec = prefs.respirar ?? 'calmar';
   calmaCiclo.textContent = '';
   callarGuia();
+  pintarPuntosCalma();
   calma.style.setProperty('--brillo', 1);
   $('#salir-calma').textContent = 'Terminar';
   calmaT.textContent = 'Acomodate como estés.';
@@ -529,6 +540,7 @@ function inhalar() {
   vibrar(24);
   if (!calma.hasAttribute('data-libre')) avisarCalma('Inhalá');
   calmaCiclo.textContent = `${resp.ciclo + 1} de ${RESP.ciclos}`;
+  marcarPuntoCalma(resp.ciclo);
   guiaDeLaVuelta(resp.ciclo);
   progreso.style.transition = `width ${RESP.inhala + RESP.inhala2 + RESP.suelta}ms linear`;
   progreso.style.width = `${(resp.ciclo + 1) / RESP.ciclos * 100}%`;
@@ -567,6 +579,8 @@ function terminarRespiracion() {
   soltarPantalla();
   calmaCiclo.textContent = '';
   callarGuia();
+  marcarPuntoCalma(RESP.ciclos);
+  $('#calma-otro').textContent = calma.dataset.tec === 'dormir' ? 'Otros cinco minutos' : 'Otro minuto';
   calmaT.textContent = 'Ya está.';
   calmaS.textContent = 'Quedate un momento así. Si querés, seguimos un rato más.';
   calma.dataset.terminado = '';

@@ -1262,3 +1262,16 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* El aviso de ejemplo, en una línea chica en vez de una caja. */
 .foro-aviso{background:none;border:0;padding:0 4px;font-size:12.5px;color:var(--gris2);margin-top:-6px}
 .foro-cab{padding-bottom:20px}
+
+/* ── respirar: los puntos de la corta (16/11) ───────────────────────────────── */
+/* En la corta, en vez de la barrita y el "1 de 6", una fila de puntos: uno por
+   respiración. El que está pasando late despacio; los que ya pasaron quedan llenos. */
+.calma-puntos{display:none;justify-content:center;gap:12px;margin-top:16px;min-height:12px}
+#calma[data-tec="calmar"] .calma-puntos{display:flex}
+#calma[data-tec="calmar"] .barrita,#calma[data-tec="calmar"] .calma-ciclo{display:none}
+.calma-puntos i{width:9px;height:9px;border-radius:50%;background:color-mix(in srgb,var(--crema) 22%,transparent);
+  transition:background .8s ease,transform .8s ease}
+.calma-puntos i.hecho{background:var(--crema)}
+.calma-puntos i.ahora{background:color-mix(in srgb,var(--crema) 70%,transparent);animation:punto 2.4s ease-in-out infinite}
+@keyframes punto{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
+@media (prefers-reduced-motion:reduce){ .calma-puntos i.ahora{animation:none} }
