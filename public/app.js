@@ -2005,8 +2005,6 @@ function tarjetaPosteo(p) {
   return a;
 }
 
-// El filtro por tema: solo para leer lo que te toca. No se guarda.
-let temaForo = null;
 function pintarPensamientos() {
   const c = $('#pensamientos-cuerpo'); c.innerHTML = '';
 
@@ -2034,22 +2032,11 @@ function pintarPensamientos() {
   quienes.append(fila);
   c.append(quienes);
 
-  c.append(el('div', 'foro-aviso', 'Por ahora son textos de ejemplo, hasta que se sumen los primeros profesionales.'));
+  c.append(el('div', 'foro-aviso', 'Por ahora, textos de ejemplo.'));
 
-  // Los temas, como pastillas: "Todos" y uno por cada tema que haya.
-  const temas = [...new Set(PENSAMIENTOS.map(p => p.tema))];
-  const filtro = el('div', 'foro-temas');
-  filtro.setAttribute('role', 'radiogroup'); filtro.setAttribute('aria-label', 'Filtrar por tema');
-  for (const t of [null, ...temas]) {
-    const b = el('button', 'foro-tema', t ?? 'Todos');
-    b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(temaForo === t));
-    b.onclick = () => { temaForo = t; pintarPensamientos(); };
-    filtro.append(b);
-  }
-  c.append(filtro);
 
   const lista = el('div', 'foro');
-  for (const p of PENSAMIENTOS.filter(p => !temaForo || p.tema === temaForo)) lista.append(tarjetaPosteo(p));
+  for (const p of PENSAMIENTOS) lista.append(tarjetaPosteo(p));
   c.append(lista);
   c.append(el('div', 'foro-fin', 'Eso es todo por ahora.'));
 }
