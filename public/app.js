@@ -178,15 +178,17 @@ function directorio() {
 // Seis respiraciones por minuto, con la exhalación más larga que la inhalación y
 // sin retener el aire: es el ritmo donde la variabilidad cardíaca llega a su
 // máximo, y retener o respirar "hondo" puede disparar sobrerrespiración en
-// alguien con ansiedad. Nueve ciclos de diez segundos: los noventa de la home.
-// Una sola respiración en dos versiones (pirámide del 12/11): la corta, de noventa
-// segundos, y la prolongada, de unos cinco minutos, que es la que la home ofrece de noche.
+// alguien con ansiedad. Seis ciclos de nueve segundos y medio, más tres para
+// acomodarse: un minuto justo.
+// Una sola respiración en dos versiones (pirámide del 12/11): la corta, de un
+// minuto, y la prolongada, de unos cinco minutos, que es la que la home ofrece de noche.
 const TECNICAS = {
-  // 6 por minuto: la frecuencia de resonancia, donde la variabilidad cardíaca
-  // llega a su amplitud máxima. Nueve ciclos de diez segundos: noventa segundos.
-  calmar: { rotulo: 'Corta', acomodo: 4000, inhala: 4000, inhala2: 0, suelta: 6000, ciclos: 9,
+  // Unas 6 por minuto: la frecuencia de resonancia, donde la variabilidad cardíaca
+  // llega a su amplitud máxima. Como mucho un minuto en total (decisión del 16/11):
+  // tres segundos para acomodarse y seis ciclos de 4 adentro y 5,5 afuera.
+  calmar: { rotulo: 'Corta', acomodo: 3000, inhala: 4000, inhala2: 0, suelta: 5500, ciclos: 6,
             sub: 'Seguí el círculo. No hace falta respirar hondo.',
-            anuncio: 'Noventa segundos de respiración.' },
+            anuncio: 'Un minuto de respiración.' },
   // 5 por minuto, con la exhalación al doble de la inhalación: más lento y más
   // pesado del lado de soltar, que es el lado que baja la activación. Veinticinco
   // ciclos de doce segundos: cinco minutos.
@@ -589,7 +591,7 @@ function ofrecerRespirar() {
   quitarOferta();
   const b = el('button', 'oferta-respirar');
   b.innerHTML = PIEDRA_CHICA;
-  b.append(el('span', null, 'Noventa segundos de respiración'));
+  b.append(el('span', null, 'Un minuto de respiración'));
   b.onclick = () => {
     if (cortado) return;
     quitarOferta();
@@ -770,12 +772,12 @@ function pintarEntrada() {
 // ── la actividad de la home ────────────────────────────────────────────────
 // Cambia según la hora, no según el día: una actividad nueva cada día empuja al uso
 // diario, y el uso que buscamos es episódico. De noche, la prolongada para dormir;
-// el resto del día, la corta de noventa segundos.
+// el resto del día, la corta de un minuto.
 const esDeNoche = (h = new Date().getHours()) => h >= 22 || h < 6;
 function pintarActividad() {
   const noche = esDeNoche();
   $('#resp-t').textContent = noche ? 'Respirar para dormir' : 'Respirar';
-  $('#resp-s').textContent = noche ? 'Cinco minutos' : 'Noventa segundos';
+  $('#resp-s').textContent = noche ? 'Cinco minutos' : 'Un minuto';
 }
 $('#ir-respirar').onclick = () => {
   elegirRespiracion(esDeNoche() ? 'dormir' : 'calmar');
@@ -1922,7 +1924,7 @@ const ABOUT = [
   ['Qué no es', '<strong>No es terapia y no reemplaza a un profesional.</strong> No diagnostica, no receta y no es un servicio de emergencia. Si estás en riesgo, los teléfonos están en el menú, en "Si necesitás ayuda ahora".'],
   ['Quién la hace', 'Dos estudiantes argentinos. Está en desarrollo: lo que ves es un prototipo.'],
   ['Qué pasa con lo que contás', '<strong>No hay cuenta, no hay servidor y nadie puede leer tus conversaciones.</strong> Lo que Amber recuerda y las conversaciones de otros días viven en este teléfono, en el navegador, y de acá no salen. Lo que escribís viaja a la API de Anthropic para que Amber pueda contestarte; según sus condiciones, lo que llega por esa vía no se usa para entrenar modelos. El resumen para tu psicólogo también se arma ahí, y lo mandás vos. Si borrás los datos del navegador, no queda nada en ningún lado: tampoco nosotros podemos recuperarlo.'],
-  ['Por qué se respira así', 'Hay una sola respiración, en dos versiones. La corta son nueve ciclos de cuatro segundos adentro y seis afuera: seis respiraciones por minuto, noventa segundos. Ese ritmo no es arbitrario: alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. La <strong>prolongada</strong> sale del mismo principio: baja a cinco por minuto, con la exhalación al doble de la inhalación, durante cinco minutos. Es la que aparece de noche. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar.'],
+  ['Por qué se respira así', 'Hay una sola respiración, en dos versiones. La corta son seis ciclos de cuatro segundos adentro y cinco y medio afuera: unas seis respiraciones por minuto, un minuto en total. Ese ritmo no es arbitrario: alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. La <strong>prolongada</strong> sale del mismo principio: baja a cinco por minuto, con la exhalación al doble de la inhalación, durante cinco minutos. Es la que aparece de noche. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar.'],
   ['Cómo borrarlo', 'Desde "Lo que recuerdo" borrás lo que Amber sabe de vos. Desde "Historia" borrás las conversaciones. "Borrar todo", al final del menú, borra todo junto y no se puede deshacer.'],
   ['Edad', 'Amber es para mayores de 18.'],
 ];
