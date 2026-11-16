@@ -181,7 +181,7 @@ function directorio() {
 // alguien con ansiedad. Seis ciclos de nueve segundos y medio, más tres para
 // acomodarse: un minuto justo.
 // Una sola respiración en dos versiones (pirámide del 12/11): la corta, de un
-// minuto, y la prolongada, de unos cinco minutos, que es la que la home ofrece de noche.
+// minuto, y la prolongada, de tres minutos, que es la que la home ofrece de noche.
 const TECNICAS = {
   // Unas 6 por minuto: la frecuencia de resonancia, donde la variabilidad cardíaca
   // llega a su amplitud máxima. Como mucho un minuto en total (decisión del 16/11):
@@ -190,11 +190,11 @@ const TECNICAS = {
             sub: 'Seguí el círculo. No hace falta respirar hondo.',
             anuncio: 'Un minuto de respiración.' },
   // 5 por minuto, con la exhalación al doble de la inhalación: más lento y más
-  // pesado del lado de soltar, que es el lado que baja la activación. Veinticinco
-  // ciclos de doce segundos: cinco minutos.
-  dormir: { rotulo: 'Prolongada', acomodo: 5000, inhala: 4000, inhala2: 0, suelta: 8000, ciclos: 25,
+  // pesado del lado de soltar, que es el lado que baja la activación. Quince
+  // ciclos de doce segundos: tres minutos (decisión del 16/11; antes eran cinco).
+  dormir: { rotulo: 'Prolongada', acomodo: 4000, inhala: 4000, inhala2: 0, suelta: 8000, ciclos: 15,
             sub: 'Más lento. Soltá el aire sin apuro.',
-            anuncio: 'Cinco minutos de respiración.' },
+            anuncio: 'Tres minutos de respiración.' },
 };
 let RESP = TECNICAS[prefs.respirar] ?? TECNICAS.calmar;
 const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calmaAviso = $('#calma-aviso'),
@@ -203,25 +203,25 @@ const orbeHalo = $('#calma-o1'), orbeCentro = $('#calma-o2'), orbeRastro = $('#c
 let resp = null, bloqueo = null;
 
 // ── la prolongada es una meditación guiada ───────────────────────────────────
-// Cinco minutos: veinticinco vueltas de doce segundos. La guía va por vuelta y no por
-// reloj, así una pausa (la app en segundo plano) no la desfasa. Las primeras tres
+// Tres minutos: quince vueltas de doce segundos. La guía va por vuelta y no por
+// reloj, así una pausa (la app en segundo plano) no la desfasa. Las primeras dos
 // vueltas marcan el ritmo con la marea; después la respiración va sola y la palabra
 // del centro se apaga. Sin nombres de técnicas, sin promesas, sin "estoy acá".
 const GUIA_PROLONGADA = {
   0:  'Seguí la marea. Inhalá cuando sube, soltá cuando baja.',
-  3:  'Ahora dejá que la respiración vaya sola. No hace falta hacerla bien.',
-  6:  'La frente.',
-  7:  'La mandíbula, si está apretada.',
-  8:  'Los hombros.',
-  9:  'Las manos.',
-  10: 'La panza, que sube y baja.',
-  12: 'Van a aparecer pensamientos. Está bien. No hace falta seguirlos ni echarlos.',
-  15: 'Si te fuiste lejos, volvé a la respiración. Volver es todo lo que hay que hacer.',
-  17: '',
-  21: 'Empezá a notar los sonidos de alrededor.',
-  23: 'Mové un poco los dedos.',
+  2:  'Ahora dejá que la respiración vaya sola. No hace falta hacerla bien.',
+  3:  'La frente.',
+  4:  'La mandíbula, si está apretada.',
+  5:  'Los hombros.',
+  6:  'Las manos.',
+  7:  'La panza, que sube y baja.',
+  8:  'Van a aparecer pensamientos. Está bien. No hace falta seguirlos ni echarlos.',
+  10: 'Si te fuiste lejos, volvé a la respiración. Volver es todo lo que hay que hacer.',
+  11: '',
+  12: 'Empezá a notar los sonidos de alrededor.',
+  13: 'Mové un poco los dedos.',
 };
-const VUELTA_LIBRE = 3;
+const VUELTA_LIBRE = 2;
 const calmaGuia = $('#calma-guia');
 let guiaTimer = null;
 function guiar(texto) {
@@ -580,7 +580,7 @@ function terminarRespiracion() {
   calmaCiclo.textContent = '';
   callarGuia();
   marcarPuntoCalma(RESP.ciclos);
-  $('#calma-otro').textContent = calma.dataset.tec === 'dormir' ? 'Otros cinco minutos' : 'Otro minuto';
+  $('#calma-otro').textContent = calma.dataset.tec === 'dormir' ? 'Otros tres minutos' : 'Otro minuto';
   calmaT.textContent = 'Ya está.';
   calmaS.textContent = 'Quedate un momento así. Si querés, seguimos un rato más.';
   calma.dataset.terminado = '';
@@ -791,7 +791,7 @@ const esDeNoche = (h = new Date().getHours()) => h >= 22 || h < 6;
 function pintarActividad() {
   const noche = esDeNoche();
   $('#resp-t').textContent = noche ? 'Respirar para dormir' : 'Respirar';
-  $('#resp-s').textContent = noche ? 'Cinco minutos' : 'Un minuto';
+  $('#resp-s').textContent = noche ? 'Tres minutos' : 'Un minuto';
 }
 $('#ir-respirar').onclick = () => {
   elegirRespiracion(esDeNoche() ? 'dormir' : 'calmar');
@@ -1938,7 +1938,7 @@ const ABOUT = [
   ['Qué no es', '<strong>No es terapia y no reemplaza a un profesional.</strong> No diagnostica, no receta y no es un servicio de emergencia. Si estás en riesgo, los teléfonos están en el menú, en "Si necesitás ayuda ahora".'],
   ['Quién la hace', 'Dos estudiantes argentinos. Está en desarrollo: lo que ves es un prototipo.'],
   ['Qué pasa con lo que contás', '<strong>No hay cuenta, no hay servidor y nadie puede leer tus conversaciones.</strong> Lo que Amber recuerda y las conversaciones de otros días viven en este teléfono, en el navegador, y de acá no salen. Lo que escribís viaja a la API de Anthropic para que Amber pueda contestarte; según sus condiciones, lo que llega por esa vía no se usa para entrenar modelos. El resumen para tu psicólogo también se arma ahí, y lo mandás vos. Si borrás los datos del navegador, no queda nada en ningún lado: tampoco nosotros podemos recuperarlo.'],
-  ['Por qué se respira así', 'Hay una sola respiración, en dos versiones. La corta son seis ciclos de cuatro segundos adentro y cinco y medio afuera: unas seis respiraciones por minuto, un minuto en total. Ese ritmo no es arbitrario: alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. La <strong>prolongada</strong> sale del mismo principio: baja a cinco por minuto, con la exhalación al doble de la inhalación, durante cinco minutos. Es la que aparece de noche. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar.'],
+  ['Por qué se respira así', 'Hay una sola respiración, en dos versiones. La corta son seis ciclos de cuatro segundos adentro y cinco y medio afuera: unas seis respiraciones por minuto, un minuto en total. Ese ritmo no es arbitrario: alrededor de esa frecuencia —entre 4,5 y 7 por minuto, según la persona— es donde la variabilidad de la frecuencia cardíaca alcanza su amplitud máxima, lo que se conoce como frecuencia de resonancia. Y de todo lo que se puede cambiar en una respiración, alargar la exhalación más que la inhalación es lo que más se asoció a mejoras en el ánimo en un ensayo aleatorizado de Stanford, publicado en <em>Cell Reports Medicine</em> en 2023 (Balban y otros). Ese trabajo probó una técnica distinta a la nuestra, así que lo que tomamos de ahí es el principio, no el protocolo. La <strong>prolongada</strong> sale del mismo principio: baja a cinco por minuto, con la exhalación al doble de la inhalación, durante tres minutos, con una guía. Es la que aparece de noche. Tampoco te pedimos que respires hondo ni que retengas el aire arriba: en alguien con ansiedad, eso puede empujar a sobrerrespirar.'],
   ['Cómo borrarlo', 'Desde "Lo que recuerdo" borrás lo que Amber sabe de vos. Desde "Historia" borrás las conversaciones. "Borrar todo", al final del menú, borra todo junto y no se puede deshacer.'],
   ['Edad', 'Amber es para mayores de 18.'],
 ];
