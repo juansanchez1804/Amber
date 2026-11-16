@@ -1129,7 +1129,9 @@ const cerrarBtn = $('#cerrar-hoy');
 const MINIMO_PARA_CERRAR = 1;   // cualquier charla se puede cerrar, hasta la de un mensaje
 // Resumir dos mensajes sobre nada llena "Lo que me contaste" de ruido y gasta una
 // llamada. Abajo de cuatro, la charla se guarda igual pero sin resumen.
-const MINIMO_PARA_RESUMEN = 4;
+// Tres: la sesión tiene forma y Amber propone cerrar después del tercer mensaje.
+// Con cuatro, la sesión que cierra cuando se propone no dejaba tema para retomar.
+const MINIMO_PARA_RESUMEN = 3;
 // Sin "estoy": Amber no se personifica. La puerta queda abierta porque el hilo sigue.
 const DESPEDIDA = 'Lo dejamos acá por hoy. Cuando vuelvas, seguimos desde acá.';
 
