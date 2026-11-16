@@ -1182,12 +1182,15 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 /* ── el resumen para el psicólogo (15/11) ───────────────────────────────────── */
 /* Dentro del saludo: una pastilla translúcida sobre el violeta, que aparece recién
    cuando hay charlas para resumir. */
-.hero-resumen{margin-top:16px;align-self:flex-start;display:inline-flex;align-items:center;gap:8px;
-  min-height:40px;padding:0 16px 0 12px;border:1px solid rgba(255,255,255,.28);border-radius:20px;cursor:pointer;
-  background:rgba(255,255,255,.16);color:#fff;font-family:var(--sans);font-size:14px;font-weight:500;
-  transition:background .3s ease}
-.hero-resumen:hover{background:rgba(255,255,255,.24)}
-.hero-resumen svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* Un enlace subrayado, sin caja: lo más sutil sobre el violeta. */
+.hero-resumen{margin-top:14px;align-self:flex-start;display:inline-flex;align-items:center;gap:6px;
+  min-height:44px;padding:0;background:none;border:0;cursor:pointer;
+  color:#fff;font-family:var(--sans);font-size:14px;font-weight:500}
+.hero-resumen span{border-bottom:1px solid rgba(255,255,255,.55);padding-bottom:2px;transition:border-color .3s ease}
+.hero-resumen:hover span{border-bottom-color:#fff}
+.hero-resumen svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .4s cubic-bezier(.37,0,.63,1)}
+.hero-resumen:hover svg{transform:translateX(3px)}
 .hero-resumen[hidden]{display:none}
-.hero:has(.hero-resumen:not([hidden])){padding-bottom:88px}
+.hero:has(.hero-resumen:not([hidden])){padding-bottom:84px}
 .oferta-resumen svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
