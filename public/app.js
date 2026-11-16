@@ -759,6 +759,12 @@ function pintarEntrada() {
   const apodo = memoria?.activa ? memoria.apodo : '';
   escribirSaludo(apodo ? `Hola, ${capitalizar(apodo)}.` : 'Hola.');
   pintarActividad();
+  // El resumen para el psicólogo se ofrece en el saludo recién cuando hay algo que
+  // resumir: una charla guardada o una en curso.
+  let hayCharlas = false;
+  try { hayCharlas = (JSON.parse(localStorage.getItem('amber.historia.v1')) ?? []).length > 0
+                  || !!localStorage.getItem('amber.charla_en_curso.v1'); } catch (e) {}
+  $('#hero-resumen').hidden = !hayCharlas;
 }
 
 // ── la actividad de la home ────────────────────────────────────────────────
@@ -1416,8 +1422,19 @@ cerrarBtn.onclick = async () => {
   turno('assistant', despedida);
   anunciar(despedida);
   terminarCharla();
+  ofrecerResumen();
   ocupado = false;
 };
+
+// Al terminar, justo cuando hay algo nuevo para resumir, abajo de la despedida queda
+// la puerta al resumen para el psicólogo. No se arma solo: lo pide ella.
+function ofrecerResumen() {
+  const b = el('button', 'oferta-respirar oferta-resumen');
+  b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7.5L19 8v12.5H7z"/><path d="M14.5 3.5V8H19"/><path d="M10 12h6M10 15.5h6M10 19h3.5"/></svg>';
+  b.append(el('span', null, 'Armar el resumen para tu psicólogo'));
+  b.onclick = () => ir('resumen');
+  hilo.appendChild(b); seguir(true);
+}
 
 // Cerrar ya no deja la pestaña muerta. El campo sigue vivo: si escribís algo más,
 // arranca una conversación nueva y limpia. La que cerraste ya quedó guardada.
