@@ -493,32 +493,27 @@
     </div>
     </div>
     <div class="cuerpo" style="padding-top:24px">
-      <nav class="lista" aria-label="Menú">
-        <button class="fila-menu" data-ir="historia">
-          <span class="fila-t">Historia</span><span class="fila-s">Las conversaciones de otros días</span>
-        </button>
-        <button class="fila-menu" data-ir="mem">
-          <span class="fila-t">Lo que recuerdo</span><span class="fila-s">Lo que tengo presente cuando hablamos</span>
-        </button>
-        <button class="fila-menu" data-ir="resumen">
-          <span class="fila-t">Resumen para tu psicólogo</span><span class="fila-s">Lo arma Amber, lo mandás vos</span>
-        </button>
-        <button class="fila-menu" data-ir="prefs">
-          <span class="fila-t">Preferencias</span><span class="fila-s">Tema y vibración</span>
-        </button>
-        <button class="fila-menu" data-ir="ayuda">
-          <span class="fila-t">Si necesitás ayuda ahora</span><span class="fila-s">Teléfonos que atienden hoy</span>
-        </button>
-        <button class="fila-menu" data-ir="feedback">
-          <span class="fila-t">Contanos qué falla</span><span class="fila-s">Ideas o problemas de la app</span>
-        </button>
-        <button class="fila-menu" data-ir="about">
-          <span class="fila-t">Sobre Amber</span><span class="fila-s">Qué es, qué no es, y qué pasa con lo que contás</span>
-        </button>
+      <nav class="menu-grupos" aria-label="Menú">
+        <div class="menu-rot">Lo tuyo</div>
+        <div class="grupo-menu">
+          <button class="fila-menu" data-ir="historia"><span class="menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7.5V12l3 2"/><path d="M4.2 9.5A8.5 8.5 0 1 1 3.5 12"/><path d="M3.5 5v4.5H8"/></svg></span><span class="fila-t">Historia</span></button>
+          <button class="fila-menu" data-ir="mem"><span class="menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.6L7 20z"/></svg></span><span class="fila-t">Lo que recuerdo</span></button>
+          <button class="fila-menu" data-ir="resumen"><span class="menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h7.5L19 8v12.5H7z"/><path d="M14.5 3.5V8H19"/><path d="M10 12h6M10 15.5h6M10 19h3.5"/></svg></span><span class="fila-t">Resumen para tu psicólogo</span></button>
+        </div>
+        <div class="grupo-menu grupo-ayuda">
+          <button class="fila-menu" data-ir="ayuda"><span class="menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5.5 4h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 5.6 5.6l1.4-2.3 4.5 1.8v3.5a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 4 5.5 1.5 1.5 0 0 1 5.5 4z"/></svg></span><span class="fila-t">Si necesitás ayuda ahora</span></button>
+        </div>
+        <div class="menu-rot">La app</div>
+        <div class="grupo-menu">
+          <button class="fila-menu" data-ir="prefs"><span class="menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><path d="M15 5v4M9 15v4"/></svg></span><span class="fila-t">Preferencias</span></button>
+          <button class="fila-menu" data-ir="feedback"><span class="menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v10.5H9.5L5.5 19v-3H4z"/><path d="M12 8.3v3.2M12 13.6v.1"/></svg></span><span class="fila-t">Contanos qué falla</span></button>
+          <button class="fila-menu" data-ir="about"><span class="menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/><path d="M12 11v5M12 7.9v.1"/></svg></span><span class="fila-t">Sobre Amber</span></button>
+        </div>
       </nav>
     </div>
-    <div style="padding-top:16px;flex-shrink:0">
-      <button class="btn btn-2" id="cerrar-sesion">Borrar todo</button>
+    <!-- Borrar todo queda abajo, en rojo y sin caja: es lo único del menú que no se deshace. -->
+    <div style="padding-top:8px;flex-shrink:0">
+      <button class="borrar-todo" id="cerrar-sesion">Borrar todo</button>
     </div>
   </section>
 

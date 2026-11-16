@@ -1065,8 +1065,6 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #menu .fila-menu:hover,#actividades .fila-menu:hover{border-bottom-color:transparent}
 #menu .cuerpo{padding-top:18px!important}
 #actividades-cuerpo .lista{padding-top:18px!important}
-/* Borrar todo queda abajo, sobre lavanda, sin competir con las opciones. */
-#menu #cerrar-sesion{background:var(--fondo)}
 
 /* Dentro de una actividad: el botón para soltarla es violeta lleno. */
 #actividad .btn-2,#feedback .btn-1{background:var(--ambar);color:#fff;border:0}
@@ -1194,3 +1192,32 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .hero-resumen[hidden]{display:none}
 .hero:has(.hero-resumen:not([hidden])){padding-bottom:84px}
 .oferta-resumen svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── el menú, agrupado con íconos (15/11) ───────────────────────────────────── */
+/* Tres bloques: lo tuyo, la ayuda sola y en violeta, y lo de la app. Cada opción con
+   su ícono en una baldosa lavanda. Borrar todo queda abajo, en rojo y sin caja. */
+.menu-grupos{display:flex;flex-direction:column;gap:10px}
+.menu-rot{font-size:13px;font-weight:500;color:var(--ambar-claro);margin:6px 4px -2px}
+.grupo-menu{background:var(--fondo);border-radius:18px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(67,40,160,.06),0 6px 18px rgba(67,40,160,.06)}
+#menu .grupo-menu .fila-menu{flex-direction:row;align-items:center;gap:12px;background:none;box-shadow:none;border-radius:0;
+  padding:12px 44px 12px 12px;border-bottom:1px solid var(--linea)}
+#menu .grupo-menu .fila-menu:last-child{border-bottom:0}
+#menu .grupo-menu .fila-menu::before{inset:0;border-radius:0}
+#menu .grupo-menu .fila-menu::after{right:18px}
+#menu .grupo-menu .fila-t{font-family:var(--sans);font-size:16px;line-height:1.3;color:var(--texto)}
+.menu-ico{flex:none;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:var(--tarjeta)}
+.menu-ico svg{width:19px;height:19px;fill:none;stroke:var(--ambar);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+[data-tema="oscuro"] .menu-ico svg{stroke:var(--ambar-claro)}
+/* La ayuda: un bloque violeta lleno, separado del resto. */
+.grupo-ayuda{background:var(--ambar)}
+#menu .grupo-ayuda .fila-t{color:#fff;font-weight:500}
+.grupo-ayuda .menu-ico{background:rgba(255,255,255,.18)}
+.grupo-ayuda .menu-ico svg{stroke:#fff}
+#menu .grupo-ayuda .fila-menu::after{border-color:#fff}
+#menu .grupo-ayuda .fila-menu::before{background:#fff}
+.borrar-todo{width:100%;height:44px;background:none;border:0;cursor:pointer;
+  font-family:var(--sans);font-size:15px;font-weight:500;color:#B3261E}
+[data-tema="oscuro"] .borrar-todo{color:#F2B8B5}
+.borrar-todo:focus-visible{outline:2px solid #B3261E;outline-offset:2px;border-radius:10px}
