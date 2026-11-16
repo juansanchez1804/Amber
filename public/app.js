@@ -618,6 +618,13 @@ function ofrecerRespirar() {
   ofertaEl = b;
 }
 function quitarOferta() { ofertaEl?.remove(); ofertaEl = null; }
+function ofrecerCierre() {
+  quitarOferta();
+  const b = el('button', 'apertura oferta-cierre', 'Dejarlo acá por hoy');
+  b.onclick = () => { quitarOferta(); cerrarBtn.click(); };
+  hilo.appendChild(b); seguir(true);
+  ofertaEl = b;
+}
 function volverDeRespirar() {
   if (!respiracionDesdeCharla) return false;
   respiracionDesdeCharla = false;
@@ -878,7 +885,10 @@ function puntos() {
 const PISTA_RETOME = 'Si hoy es otra cosa, arrancá por ahí.';
 const PISTA_BLANCO = 'Si no sabés por dónde empezar, contá qué pasó, sin ordenarlo.';
 const aperturaDeHoy = () => {
-  const tema = memoria?.activa ? memoria.ultimoTema?.trim() : '';
+  let tema = memoria?.activa ? memoria.ultimoTema?.trim() : '';
+  // Si el tema quedó entre los sensibles, no se retoma: esos los trae ella.
+  const norm = t => String(t).toLowerCase().replace(/^lo de /, '').trim();
+  if (tema && (memoria.sensibles ?? []).some(x => norm(x) && (norm(x).includes(norm(tema)) || norm(tema).includes(norm(x))))) tema = '';
   return tema ? { texto: `¿Cómo venís con ${minuscula(tema)}?`, pista: PISTA_RETOME }
               : { texto: '', pista: PISTA_BLANCO };
 };
@@ -1399,7 +1409,9 @@ async function pedirCierre(msgs) {
       method: 'POST', headers: { 'content-type': 'application/json' },
       // El género va con la charla: sin él, el resumen le pone uno por su cuenta y
       // ese "estuviste agotado" vuelve después en la home y en cada prompt.
-      body: JSON.stringify({ mensajes: msgs, genero: memoria?.genero ?? null }),
+      // Los temas sensibles van para que el cierre no los elija como tema a retomar:
+      // Amber no saca lo que la persona prefiere traer ella.
+      body: JSON.stringify({ mensajes: msgs, genero: memoria?.genero ?? null, sensibles: memoria?.sensibles ?? [] }),
     });
     return r.ok ? await r.json() : null;
   } catch (e) { console.error(e); return null; }
@@ -1636,6 +1648,9 @@ async function leerStream(r, p) {
   if (riesgo === 'alto') recursos();
   if (fin) cortar();
   else if (crudo.includes(MARCA_RESPIRAR)) ofrecerRespirar();
+  // La tercera respuesta ordena lo que escribió y propone dejarlo ahí (cierre suave):
+  // abajo queda el botón, para que cerrar sea un toque y no otra frase que escribir.
+  else if (riesgo !== 'alto' && mensajes.filter(m => m.role === 'assistant').length === 3) ofrecerCierre();
 }
 
 // ── memoria ───────────────────────────────────────────────────────────────

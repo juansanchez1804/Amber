@@ -134,6 +134,19 @@ function bloqueV3({ memoria, riesgo, clasificadorFallo, limpios, primera }) {
   const ultimaDeAmber = [...limpios].reverse().find(x => x.role === 'assistant');
   if (riesgo.nivel !== 'alto' && ultimaDeAmber && /\?\s*$/.test(ultimaDeAmber.content.trim())) partes.push(B.preguntas);
   if (primera) partes.push(B.primer_mensaje);
+  // La sesión tiene forma (pirámide del 12/11): la tercera respuesta de Amber ordena lo
+  // que la persona escribió y propone dejarlo ahí; las dos siguientes pueden corregir
+  // ese orden. Es un cierre suave: si quiere seguir, sigue. Con riesgo alto no aplica:
+  // ahí manda el protocolo.
+  const deAmber = limpios.filter(x => x.role === 'assistant').length;
+  // No se ordena si la persona está pidiendo que aclares o escribió casi nada ("como",
+  // "qué"): primero se aclara. El orden llega en la respuesta siguiente que tenga con qué.
+  const ultimoDeElla = [...limpios].reverse().find(x => x.role === 'user')?.content ?? '';
+  const conQue = ultimoDeElla.trim().split(/\s+/).length >= 4;
+  if (riesgo.nivel !== 'alto') {
+    if (deAmber === 2 && conQue) partes.push(B.ordenar);
+    else if (deAmber === 3 || deAmber === 4) partes.push(llenar(B.correccion, { numero: deAmber === 3 ? 'uno' : 'dos' }));
+  }
   return partes.filter(Boolean).join('\n\n');
 }
 

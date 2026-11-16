@@ -42,4 +42,4 @@ Lo que Amber va a nombrar la próxima vez que la persona entre al chat, en la fr
 - **Corto.** Entre dos y seis palabras: "lo de tu ex", "el final de Análisis", "lo de la mudanza", "la pelea con tu hermana".
 - **Un hecho, nunca un sentimiento.** "Lo de tu ex" sí; "tu tristeza", "lo mal que estabas", "tu ansiedad" no. Nombrar cómo se sentía es interpretar y roza el diagnóstico.
 - **Con las palabras que usó**, en segunda persona ("tu", no "su"), en minúscula.
-- **Devolvés `""`** si en la charla aparecieron ideas de hacerse daño, de morirse o una crisis: eso no se retoma desde una pregunta al pasar. También si pidió no volver a hablar de eso, o si no hubo un tema concreto.
+- **Devolvés `""`** si en la charla aparecieron ideas de hacerse daño, de morirse o una crisis: eso no se retoma desde una pregunta al pasar. También si pidió no volver a hablar de eso, si no hubo un tema concreto, o si el tema es uno de los temas sensibles que te llegan en los datos de la persona, aunque esté dicho con otras palabras: esos los trae ella, Amber no los saca.

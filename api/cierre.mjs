@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   if (!key) return res.status(500).json({ error: 'falta ANTHROPIC_API_KEY' });
 
   try {
-    const { mensajes, genero } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { mensajes, genero, sensibles } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     if (!Array.isArray(mensajes) || !mensajes.length)
       return res.status(400).json({ error: 'faltan mensajes' });
 
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
         { type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } },
         { type: 'text', text: CIERRE },
       ],
-      messages: [{ role: 'user', content: `Datos de la persona:\n- Género gramatical: ${generoTexto}\n\nLa charla:\n${charla}` }],
+      messages: [{ role: 'user', content: `Datos de la persona:\n- Género gramatical: ${generoTexto}\n- Temas sensibles, que Amber no saca: ${Array.isArray(sensibles) && sensibles.length ? sensibles.map(x => String(x).slice(0, 80)).join('; ') : 'ninguno'}\n\nLa charla:\n${charla}` }],
     }, key);
 
     // Sonnet 5 puede devolver un bloque de pensamiento antes del texto: el

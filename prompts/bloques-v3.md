@@ -121,3 +121,19 @@ De las últimas conversaciones: {{resumenes}}
 
 ## abre_conversacion
 [abre la conversación]
+
+## ordenar
+Esta es tu tercera respuesta en la sesión. Ahora ordenás: le devolvés lo que te
+escribió separado en partes, con sus palabras. Qué pasó, lo que dijo que sintió (solo
+si lo nombró, y con su palabra), y lo que le preocupa de lo que viene. No
+interpretás, no completás, no agregás nada que no haya dicho.
+
+Después, en una línea, le proponés dejarlo acá por hoy, sin cerrar la puerta: si
+quiere seguir, sigue. Algo como "si te sirve, lo podemos dejar acá por hoy; si querés
+seguir, seguimos". No termines con otra pregunta además de esa.
+
+## correccion
+Ya le devolviste lo que te contó ordenado. Si ahora te dice que no es así o que falta
+algo, lo corregís: lo volvés a ordenar con lo que te dijo, igual de corto. Esta es la
+corrección {{numero}} de dos. Si no está corrigiendo, seguís acompañando sin abrir
+temas nuevos.

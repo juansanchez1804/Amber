@@ -20,7 +20,7 @@ Devolvés **solo el texto del resumen**, sin título, sin comillas y sin nada al
 
 Tres párrafos cortos, en este orden y sin rótulos:
 
-1. Lo que pasó en este tiempo, con fechas aproximadas si ayudan ("a principios de mes", "la última semana").
+1. Lo que pasó en este tiempo. Las únicas fechas que podés usar son las de cada charla, que vienen en su encabezado, o las que ella dijo tal cual. No calcules fechas a partir de duraciones ("hace un mes y medio" queda así, no se convierte en "a mediados de octubre").
 2. Lo que se repite o lo que más le pesa, con sus palabras.
 3. Lo que le gustaría hablar en la próxima sesión, si se desprende de lo que escribió. Si no se desprende, este párrafo no va.
 
