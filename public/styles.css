@@ -1178,3 +1178,23 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #conv .disc{opacity:.85}
 /* Con "Terminé" a la vista no entran la marca y los dos botones: la marca se corre. */
 #conv:has(#cerrar-hoy:not([hidden])) .conv-marca{display:none}
+
+/* ── el resumen para el psicólogo, a la vista (15/11) ───────────────────────── */
+/* Una franja blanca debajo de Respirar y Actividades, del ancho de la pantalla, con su
+   ícono en violeta y una flecha. Más baja que las otras: está a la vista, pero Hablar
+   sigue siendo lo principal. */
+#entrada .acceso-3{flex:none;min-height:72px;padding:14px 16px;gap:14px;border:0;border-radius:20px;
+  background:var(--fondo);box-shadow:0 1px 2px rgba(67,40,160,.06),0 6px 18px rgba(67,40,160,.07)}
+.acceso-3-ico{flex:none;width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:var(--ambar)}
+.acceso-3-ico svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#entrada .acceso-3 .acceso-textos{gap:3px;flex:1;min-width:0}
+#entrada .acceso-3 .acceso-t{font-size:18px;line-height:1.2;color:var(--texto)}
+#entrada .acceso-3 .acceso-s{font-size:13px;line-height:1.3;color:var(--gris)}
+.acceso-3-flecha{flex:none;width:20px;height:20px;fill:none;stroke:var(--ambar);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+[data-tema="oscuro"] .acceso-3-flecha{stroke:var(--ambar-claro)}
+/* Con una fila más, las tarjetas de arriba ceden un poco de alto. */
+#entrada .acceso-1{min-height:88px}
+#entrada .acceso-2{min-height:128px}
+#entrada .accesos-fila{min-height:128px}
+@media (max-height:700px){ #entrada .acceso-3{min-height:60px;padding:10px 14px} .acceso-3-ico{width:38px;height:38px} }
