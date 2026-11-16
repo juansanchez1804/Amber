@@ -1987,43 +1987,101 @@ function selloMatriculado() {
   s.setAttribute('aria-label', 'Matriculado'); s.removeAttribute('aria-hidden'); s.setAttribute('role', 'img');
   return s;
 }
+// Un posteo: autor arriba (foto, nombre, sello, matrícula, cuándo), el texto grande y
+// el tema. Tocar el autor abre su perfil.
+function tarjetaPosteo(p) {
+  const autor = AUTORES[p.autor];
+  const a = el('article', 'posteo');
+  const cab = el('button', 'posteo-cab');
+  cab.setAttribute('aria-label', 'Ver el perfil de Nombre Apellido');
+  cab.onclick = () => abrirPerfil(p.autor);
+  const quien = el('div', 'posteo-quien');
+  const linea1 = el('div', 'posteo-l1');
+  linea1.append(el('span', 'posteo-nombre', 'Nombre Apellido'), selloMatriculado());
+  quien.append(linea1, el('div', 'posteo-mat', 'Lic. en Psicología · M.N. 00000'));
+  cab.append(fotoDe(autor, 'posteo-foto'), quien, el('span', 'posteo-cuando', p.cuando));
+  // El texto es lo principal: grande, en la letra de Amber, como una reflexión.
+  a.append(cab, el('p', 'posteo-t', p.t), el('span', 'posteo-tema', p.tema));
+  return a;
+}
+
+// El filtro por tema: solo para leer lo que te toca. No se guarda.
+let temaForo = null;
 function pintarPensamientos() {
   const c = $('#pensamientos-cuerpo'); c.innerHTML = '';
 
   // Arriba, quiénes escriben: una fila de fotos, como las historias de una red
-  // social. Todavía no se tocan; cuando haya perfiles, cada foto abre el suyo.
+  // social. Cada foto abre el perfil.
   const quienes = el('section', 'foro-autores');
   quienes.setAttribute('aria-label', 'Quiénes escriben');
   quienes.append(el('div', 'foro-rotulo', 'Quiénes escriben'));
   const fila = el('div', 'foro-autores-fila');
   for (let i = 0; i < LUGARES_AUTORES; i++) {
     const a = AUTORES[i];
-    const lugar = el('div', 'autor' + (a ? '' : ' autor-pronto'));
-    if (a) { const anillo = el('div', 'autor-anillo'); anillo.append(fotoDe(a, 'autor-foto')); lugar.append(anillo, el('span', 'autor-n', 'Ejemplo ' + (i + 1))); }
-    else { lugar.append(el('div', 'autor-anillo'), el('span', 'autor-n', 'Pronto')); }
-    fila.append(lugar);
+    if (a) {
+      const lugar = el('button', 'autor');
+      lugar.setAttribute('aria-label', `Ver el perfil de Ejemplo ${i + 1}`);
+      lugar.onclick = () => abrirPerfil(i);
+      const anillo = el('div', 'autor-anillo'); anillo.append(fotoDe(a, 'autor-foto'));
+      lugar.append(anillo, el('span', 'autor-n', 'Ejemplo ' + (i + 1)));
+      fila.append(lugar);
+    } else {
+      const lugar = el('div', 'autor autor-pronto');
+      lugar.append(el('div', 'autor-anillo'), el('span', 'autor-n', 'Pronto'));
+      fila.append(lugar);
+    }
   }
   quienes.append(fila);
   c.append(quienes);
 
   c.append(el('div', 'foro-aviso', 'Por ahora son textos de ejemplo, hasta que se sumen los primeros profesionales.'));
 
-  const lista = el('div', 'foro');
-  for (const p of PENSAMIENTOS) {
-    const autor = AUTORES[p.autor];
-    const a = el('article', 'posteo');
-    const cab = el('div', 'posteo-cab');
-    const quien = el('div', 'posteo-quien');
-    const linea1 = el('div', 'posteo-l1');
-    linea1.append(el('span', 'posteo-nombre', 'Nombre Apellido'), selloMatriculado());
-    quien.append(linea1, el('div', 'posteo-mat', 'Lic. en Psicología · M.N. 00000'));
-    cab.append(fotoDe(autor, 'posteo-foto'), quien, el('span', 'posteo-cuando', p.cuando));
-    // El texto es lo principal: grande, en la letra de Amber, como una reflexión.
-    a.append(cab, el('p', 'posteo-t', p.t), el('span', 'posteo-tema', p.tema));
-    lista.append(a);
+  // Los temas, como pastillas: "Todos" y uno por cada tema que haya.
+  const temas = [...new Set(PENSAMIENTOS.map(p => p.tema))];
+  const filtro = el('div', 'foro-temas');
+  filtro.setAttribute('role', 'radiogroup'); filtro.setAttribute('aria-label', 'Filtrar por tema');
+  for (const t of [null, ...temas]) {
+    const b = el('button', 'foro-tema', t ?? 'Todos');
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(temaForo === t));
+    b.onclick = () => { temaForo = t; pintarPensamientos(); };
+    filtro.append(b);
   }
+  c.append(filtro);
+
+  const lista = el('div', 'foro');
+  for (const p of PENSAMIENTOS.filter(p => !temaForo || p.tema === temaForo)) lista.append(tarjetaPosteo(p));
   c.append(lista);
   c.append(el('div', 'foro-fin', 'Eso es todo por ahora.'));
+}
+
+// ── el perfil de un profesional ───────────────────────────────────────────────
+// Foto, nombre, matrícula, una presentación y todo lo que escribió. Sin forma de
+// contacto: si desde acá se puede contactar al profesional es una pregunta para el
+// abogado (art. 3 de la 23.277), y hasta que conteste no hay botón.
+function abrirPerfil(i) {
+  const autor = AUTORES[i];
+  if (!autor) return;
+  const cab = $('#perfil-cab'); cab.innerHTML = '';
+  const anillo = el('div', 'perfil-anillo'); anillo.append(fotoDe(autor, 'perfil-foto'));
+  const linea = el('div', 'perfil-nombre');
+  linea.append(el('span', null, 'Nombre Apellido'), selloMatriculado());
+  cab.append(anillo, linea, el('div', 'perfil-mat', 'Lic. en Psicología · M.N. 00000'));
+
+  const c = $('#perfil-cuerpo'); c.innerHTML = '';
+  const suyos = PENSAMIENTOS.filter(p => p.autor === i);
+  const sobre = el('section', 'perfil-sobre');
+  sobre.append(el('div', 'foro-rotulo', 'Sobre'),
+    el('p', 'perfil-bio', 'Perfil de ejemplo. Acá va una presentación breve, escrita por el profesional: cómo trabaja y sobre qué escribe.'));
+  const temas = el('div', 'perfil-temas');
+  for (const t of new Set(suyos.map(p => p.tema))) temas.append(el('span', 'posteo-tema', t));
+  sobre.append(temas);
+  c.append(sobre);
+  c.append(el('div', 'foro-rotulo perfil-rotulo', suyos.length === 1 ? 'Lo que escribió' : `Lo que escribió · ${suyos.length}`));
+  const lista = el('div', 'foro');
+  for (const p of suyos) lista.append(tarjetaPosteo(p));
+  c.append(lista);
+  ir('perfil');
+  c.scrollTop = 0;
 }
 
 // ── feedback ──────────────────────────────────────────────────────────────
