@@ -143,6 +143,10 @@ $('#salir-ayuda').onclick = () => ir(pantallaPrevia === 'ayuda' ? 'conv' : panta
 $('#ver-ayuda').onclick   = () => ir('ayuda');
 
 function pintarAyuda() {
+  // Sin prometer que alguien va a atender: a la madrugada el 135 está cerrado.
+  $('#ayuda-sub').textContent = linea135Abierta()
+    ? 'Tocá el número para llamar.'
+    : 'A esta hora la línea 135 está cerrada. El 911 y el 107 funcionan las 24 horas.';
   const c = $('#ayuda-cuerpo'); c.innerHTML = '';
   c.append(tarjetasRecursos());
   c.append(directorio());
@@ -734,7 +738,9 @@ function animarSaludo() {
   if (h.dataset.texto === saludoAnimado) return;
   saludoAnimado = h.dataset.texto;
   pararTecleo();
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Con la app en segundo plano el navegador frena los relojes y el saludo quedaba a
+  // medio escribir ("Hola," con la coma colgando). Ahí no se anima: aparece entero.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden) return;
 
   // Cada paso es una tecla. El espacio también se teclea: el cursor pasa al
   // principio de la palabra que sigue, aunque esa palabra baje de renglón.
@@ -770,6 +776,9 @@ function animarSaludo() {
   };
   tecleo = setTimeout(tecla, Math.max(120, 1250 - performance.now()) + TECLA.espera);
 }
+
+// Si la app pasa a segundo plano mientras escribe, el saludo se completa de una.
+document.addEventListener('visibilitychange', () => { if (document.hidden && tecleo) { clearTimeout(tecleo); tecleo = null; pararTecleo(); } });
 
 function pintarEntrada() {
   const d = new Date();
@@ -914,18 +923,28 @@ function abrirConversacion() {
 }
 function quitarAperturas() { aperturasEl?.remove(); aperturasEl = null; }
 
-const RECURSOS = [
-  ['135', '135', 'Centro de Asistencia al Suicida. CABA y GBA, de 8 a 24 h.', true],
-  ['0800 345 1435', '08003451435', 'La misma línea, desde todo el país.', false],
-  ['911', '911', 'Si es una emergencia ahora.', false],
-];
+// Los teléfonos cambian según la hora. El 135 y el 0800 atienden de 8 a 24, con
+// voluntarios: de 0 a 8 no se los pone primeros ni se promete que alguien atiende.
+// A esa hora van primero el 911 y el 107, que funcionan las 24 horas (protocolo de
+// crisis, nivel 3).
+const linea135Abierta = (h = new Date().getHours()) => h >= 8;
+function recursosDeAhora() {
+  const L135 = ['135', '135', 'Centro de Asistencia al Suicida. CABA y GBA, de 8 a 24 h.'];
+  const L0800 = ['0800 345 1435', '08003451435', 'La misma línea, desde todo el país, de 8 a 24 h.'];
+  const L911 = ['911', '911', 'Si es una emergencia ahora. Las 24 horas.'];
+  const L107 = ['107', '107', 'Emergencias médicas. Las 24 horas.'];
+  if (linea135Abierta()) return [[...L135, true], [...L0800, false], [...L911, false], [...L107, false]];
+  return [[...L911, true], [...L107, false],
+          [L135[0], L135[1], 'Ahora está cerrada: atiende de 8 a 24 h.', false, true],
+          [L0800[0], L0800[1], 'La misma línea. Abre a las 8.', false, true]];
+}
 const TUBO = '<svg class="rec-flecha" width="18" height="18" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>';
 
 // Un número que no se puede tocar no sirve de nada en un celular.
 function tarjetasRecursos() {
   const c = el('div', 'rec');
-  for (const [num, tel, desc, pri] of RECURSOS) {
-    const a = el('a', 'rec-f' + (pri ? ' pri' : ''));
+  for (const [num, tel, desc, pri, cerrada] of recursosDeAhora()) {
+    const a = el('a', 'rec-f' + (pri ? ' pri' : '') + (cerrada ? ' cerrada' : ''));
     a.href = `tel:${tel}`;
     const izq = el('div'); izq.style.cssText = 'display:flex;flex-direction:column;gap:3px';
     izq.append(el('div', 'rec-n', num), el('div', 'rec-d', desc));

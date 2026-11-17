@@ -1275,3 +1275,5 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .calma-puntos i.ahora{background:color-mix(in srgb,var(--crema) 70%,transparent);animation:punto 2.4s ease-in-out infinite}
 @keyframes punto{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
 @media (prefers-reduced-motion:reduce){ .calma-puntos i.ahora{animation:none} }
+/* Ayuda: la línea que está cerrada a esta hora se ve apagada, pero se puede tocar igual. */
+.rec-f.cerrada{opacity:.6}
