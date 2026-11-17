@@ -239,7 +239,7 @@ function guiar(texto) {
 function guiaDeLaVuelta(ciclo) {
   if (calma.dataset.tec !== 'dormir') return;
   if (ciclo >= VUELTA_LIBRE) calma.dataset.libre = ''; else delete calma.dataset.libre;
-  if (ciclo in GUIA_PROLONGADA) guiar(GUIA_PROLONGADA[ciclo]);
+  if (ciclo in GUIA_PROLONGADA) { guiar(GUIA_PROLONGADA[ciclo]); if (GUIA_PROLONGADA[ciclo]) hablarGuia(ciclo); }
 }
 // Los puntos de la corta: uno por respiración. El que está pasando late; los que
 // ya pasaron quedan llenos.
@@ -251,7 +251,38 @@ function pintarPuntosCalma() {
 function marcarPuntoCalma(n) {
   [...calmaPuntos.children].forEach((p, i) => { p.classList.toggle('hecho', i < n); p.classList.toggle('ahora', i === n); });
 }
-function callarGuia() { clearTimeout(guiaTimer); calmaGuia.classList.remove('on'); calmaGuia.textContent = ''; delete calma.dataset.libre; }
+// La voz de la guía: una grabación por frase, generada una sola vez y guardada en la
+// app (audio/meditacion/). No viaja nada a ningún lado. Suena solo con el sonido
+// prendido, por el mismo contexto de audio que la ola, medio segundo después de
+// que aparece la frase. Es provisoria: la idea es reemplazarla por una voz grabada.
+const VOZ_GUIA = { 0: 'v00', 2: 'v02', 3: 'v03', 4: 'v04', 5: 'v05', 6: 'v06', 7: 'v07',
+                   8: 'v08', 10: 'v10', 12: 'v12', 13: 'v13', fin: 'vfin' };
+const vozBuffers = {};
+let vozCargada = null, vozFuente = null;
+function precargarVozGuia() {
+  const ctx = contextoAudio();
+  if (!ctx || vozCargada) return;
+  vozCargada = Promise.all(Object.entries(VOZ_GUIA).map(async ([k, f]) => {
+    try { const r = await fetch(`audio/meditacion/${f}.m4a`); vozBuffers[k] = await ctx.decodeAudioData(await r.arrayBuffer()); }
+    catch (e) {}
+  }));
+}
+function hablarGuia(k) {
+  callarVozGuia();
+  const b = vozBuffers[k];
+  if (!b || !audioSonando()) return;
+  try {
+    const s = audio.createBufferSource(), g = audio.createGain();
+    s.buffer = b; g.gain.value = 0.9;
+    s.connect(g).connect(audio.destination);
+    s.start(audio.currentTime + 0.5);
+    vozFuente = s;
+  } catch (e) {}
+}
+function callarVozGuia() { try { vozFuente?.stop(); } catch (e) {} vozFuente = null; }
+document.addEventListener('visibilitychange', () => { if (document.hidden) callarVozGuia(); });
+
+function callarGuia() { callarVozGuia(); clearTimeout(guiaTimer); calmaGuia.classList.remove('on'); calmaGuia.textContent = ''; delete calma.dataset.libre; }
 
 // La cuenta de segundos de cada fase. Solo se ve en la corta: en la prolongada,
 // que es para soltar y muchas veces con los ojos cerrados, los números sobran.
@@ -516,6 +547,7 @@ function empezarRespiracion() {
   calmaCiclo.textContent = '';
   callarGuia();
   pintarPuntosCalma();
+  if (calma.dataset.tec === 'dormir') precargarVozGuia();
   calma.style.setProperty('--brillo', 1);
   $('#salir-calma').textContent = 'Terminar';
   calmaT.textContent = 'Acomodate como estés.';
@@ -582,7 +614,9 @@ function terminarRespiracion() {
   callarOla(2400);
   soltarPantalla();
   calmaCiclo.textContent = '';
+  const eraGuiada = calma.dataset.tec === 'dormir';
   callarGuia();
+  if (eraGuiada) hablarGuia('fin');
   marcarPuntoCalma(RESP.ciclos);
   $('#calma-otro').textContent = calma.dataset.tec === 'dormir' ? 'Otros tres minutos' : 'Otro minuto';
   calmaT.textContent = 'Ya está.';
