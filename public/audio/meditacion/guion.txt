@@ -1,0 +1,21 @@
+Guion de la meditación guiada (respiración prolongada, 3 minutos)
+
+Cada línea es un archivo. Para cambiar la voz, se graba o se genera cada frase y se
+reemplaza el archivo con el mismo nombre (.m4a; si llega en .mp3 o .wav, se convierte).
+Tono: lento, bajo, sin entusiasmo. Voseo rioplatense. Sin "conmigo" ni nada que haga
+hablar a Amber como una persona.
+
+v00   Seguí la marea. Inhalá cuando sube, soltá cuando baja.
+v02   Ahora dejá que la respiración vaya sola. No hace falta hacerla bien.
+v03   La frente.
+v04   La mandíbula, si está apretada.
+v05   Los hombros.
+v06   Las manos.
+v07   La panza, que sube y baja.
+v08   Van a aparecer pensamientos. Está bien. No hace falta seguirlos ni echarlos.
+v10   Si te fuiste lejos, volvé a la respiración. Volver es todo lo que hay que hacer.
+v12   Empezá a notar los sonidos de alrededor.
+v13   Mové un poco los dedos.
+vfin  Ya está.
+
+Cada frase tiene que durar menos de 10 segundos: entre una y otra hay 12.
