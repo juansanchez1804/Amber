@@ -453,7 +453,7 @@
           <path class="onda onda-2" d="M18.2 6.7a7.5 7.5 0 0 1 0 10.6"/>
           <path class="cruz" pathLength="1" d="M16 9.5l5 5M21 9.5l-5 5"/>
         </svg>
-        <span id="calma-sonido-t">Sumá sonido</span>
+        <span class="solo-lector" id="calma-sonido-t">Sumá sonido</span>
       </button>
     </div>
     <div class="calma-tecnicas" id="calma-tecnicas" role="radiogroup" aria-label="Cuánto respirar">
@@ -480,6 +480,14 @@
       <p class="calma-ciclo" id="calma-ciclo" aria-hidden="true"></p>
       <!-- En la corta, el progreso son puntos: uno por respiración, que se van llenando. -->
       <div class="calma-puntos" id="calma-puntos" aria-hidden="true"></div>
+    </div>
+    <!-- Antes de arrancar: no empieza de golpe. Dos recomendaciones y un botón. -->
+    <div class="calma-previo" id="calma-previo">
+      <ul>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3v5H5a1 1 0 0 1-1-1zM20 15h-3v5h2a1 1 0 0 0 1-1z"/></svg>Con auriculares se escucha mejor.</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M5 18v-4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M7 12V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/></svg>Buscá un lugar cómodo, sentado o acostado.</li>
+      </ul>
+      <button class="btn btn-noche" id="calma-comenzar">Comenzar</button>
     </div>
     <div class="crece" style="flex-grow:1.2"></div>
     <div class="calma-fin" id="calma-fin">

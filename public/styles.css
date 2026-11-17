@@ -1418,3 +1418,26 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .disc-link{display:inline;padding:0;margin:0;border:0;background:none;cursor:pointer;font:inherit;color:inherit;
   text-decoration:underline;text-decoration-color:var(--borde);text-underline-offset:2px}
 p.disc{cursor:default}
+
+/* 17/11: antes de arrancar. La escena queda quieta, sin el texto de abajo, y aparecen
+   dos recomendaciones con su ícono y el botón Comenzar. */
+.calma-previo{display:none;width:260px;max-width:100%;margin-top:22px;flex-direction:column;align-items:stretch;gap:20px;
+  position:relative;z-index:2}
+#calma[data-previo] .calma-previo{display:flex;animation:previo-entra .6s ease both}
+#calma[data-previo] .calma-pie,#calma[data-previo] .calma-fin{display:none}
+.calma-previo ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.calma-previo li{display:flex;align-items:center;gap:12px;font-family:var(--sans);font-size:14px;line-height:1.4;
+  color:var(--crema);text-shadow:0 1px 12px rgba(20,14,50,.55)}
+.calma-previo li svg{flex:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.calma-previo .btn{width:100%}
+@keyframes previo-entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){ #calma[data-previo] .calma-previo{animation:none} }
+
+/* El sonido, solo con el ícono: un círculo del mismo tamaño que el de cerrar. El texto
+   queda para el lector de pantalla. */
+.calma-sonido{width:40px;height:40px;padding:0;border-radius:50%;justify-content:center;gap:0}
+/* Las recomendaciones caen sobre el horizonte y los reflejos del agua: van en un vidrio
+   oscuro para que se lean. */
+.calma-previo ul{padding:14px 16px;border-radius:18px;background:rgba(20,14,50,.42);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08)}
+.calma-previo li{text-shadow:none}

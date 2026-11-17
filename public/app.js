@@ -108,7 +108,7 @@ function ir(id) {
   // Volver al chat después de "Terminé" abre una charla nueva, que arranca retomando
   // el tema de la última vez. La que se cerró ya quedó guardada en la historia.
   if (id === 'conv') { ajustarColchon(); if (cerrada) empezarDeNuevo(); if (!mensajes.length) climaInicial(); else $('#conv').dataset.hora = esDeNoche() ? 'noche' : 'dia'; abrirConversacion(); $('#txt').focus(); seguir(false); }
-  if (id === 'calma') empezarRespiracion(); else pararRespiracion();
+  if (id === 'calma') prepararRespiracion(); else pararRespiracion();
   if (id === 'entrada') animarSaludo();
   if (id === 'mem') pintarMemoria();
   if (id === 'historia') pintarHistoria();
@@ -350,7 +350,8 @@ tecnicasEl.querySelectorAll('.calma-tec').forEach(b => {
     vibrar(10);
     avisarCalma(`${RESP.rotulo}. ${RESP.sub}`);
     desbloquearAudio();
-    empezarRespiracion();
+    // Antes de Comenzar, elegir solo cambia la escena; ya respirando, vuelve a empezar.
+    if ('previo' in calma.dataset) prepararRespiracion(); else empezarRespiracion();
   };
 });
 function pintarTecnicas(deslizar = true) {
@@ -568,9 +569,27 @@ botonSonido.onclick = () => {
 };
 
 // ── el ejercicio ─────────────────────────────────────────────────────────────
+// Al entrar no arranca de golpe: queda la escena quieta, las dos recomendaciones
+// (auriculares, un lugar cómodo) y el botón Comenzar.
+function prepararRespiracion() {
+  clearTimeout(vueltaRespirar);
+  pararRespiracion();
+  calma.dataset.previo = '';
+  delete calma.dataset.terminado;
+  calma.dataset.tec = prefs.respirar ?? 'calmar';
+  calmaCiclo.textContent = '';
+  pintarPuntosCalma();
+  precargarVozGuia();
+  pintarTecnicas(!!$('#calma-tec-linea').style.getPropertyValue('--x'));
+  pintarSonido();
+  avisarCalma(`${RESP.rotulo}. ${RESP.sub}. Con auriculares se escucha mejor. Cuando quieras, tocá Comenzar.`);
+}
+$('#calma-comenzar').onclick = () => { desbloquearAudio(); empezarRespiracion(); };
+
 function empezarRespiracion() {
   clearTimeout(vueltaRespirar);
   pararRespiracion();
+  delete calma.dataset.previo;
   resp = { ciclo: 0, timer: null, ola: null, pausada: false };
   delete calma.dataset.terminado;
   // Cada una tiene su escena: la corta es un círculo con anillo y cuenta; la
