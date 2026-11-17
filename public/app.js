@@ -1625,8 +1625,7 @@ async function mandar(textoDirecto) {
   quitarAperturas();
   quitarOferta();
   quitarFalla();
-  $('#ver-ayuda').hidden = true;   // mientras se escribe no ocupa el lugar de escribir
-  $('#ver-privado').hidden = true;
+  $('#avisos').hidden = true;   // mientras se escribe no ocupa el lugar de escribir
   if (textoDirecto == null) { txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo'); }
   ajustarColchon();
   const propio = turno('user', t);
@@ -1657,8 +1656,7 @@ async function mandar(textoDirecto) {
   // Vuelve la puerta a los teléfonos. Se esconde mientras se manda, no para siempre:
   // adentro de la conversación no hay otra salida a los recursos, y dejarla oculta
   // la hacía depender de que el clasificador acierte, que es justo lo que no queremos.
-  $('#ver-ayuda').hidden = false;
-  $('#ver-privado').hidden = false;
+  $('#avisos').hidden = false;
   if (!cortado) txt.focus();
 }
 
