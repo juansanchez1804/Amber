@@ -1454,3 +1454,11 @@ p.disc{cursor:default}
 .calma-fin{display:flex;flex-direction:column;gap:8px}
 .calma-volver{background:none;color:var(--crema);border:1px solid color-mix(in srgb,var(--crema) 30%,transparent)}
 @media (hover:hover){ .calma-volver:hover{background:color-mix(in srgb,var(--crema) 8%,transparent)} }
+
+/* 17/11: Vaciar la cabeza, segunda salida. Ordenarlo en el chat va primero y lleno;
+   Soltarlo queda abajo, de contorno. */
+.act-ordenar{background:var(--ambar);color:#fff;border:0}
+.act-ordenar[hidden]{display:none}
+.act-ordenar:disabled{opacity:.45}
+#actividad[data-act="vaciar"] #act-soltar{background:none;color:var(--ambar);
+  border:1px solid color-mix(in srgb,var(--ambar) 40%,transparent)}

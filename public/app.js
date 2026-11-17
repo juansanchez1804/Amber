@@ -2318,7 +2318,7 @@ const ACTIVIDADES = [
   { id: 'vaciar', titulo: 'Vaciar la cabeza',
     resumen: 'Todo lo que da vueltas, un renglón por cosa.',
     intro: 'Todo lo que está dando vueltas, un renglón por cosa, sin orden y sin explicar nada. Sirve sobre todo de noche.',
-    campos: [{ placeholder: 'Lo primero que aparezca.' }], soltar: 'Soltarlo' },
+    campos: [{ placeholder: 'Lo primero que aparezca.' }], soltar: 'Soltarlo', ordenar: true },
   { id: 'sesupone', titulo: 'Lo que sé y lo que estoy suponiendo',
     resumen: 'Separar lo que pasó de lo que te imaginás.',
     intro: 'Algo que te esté pasando, partido en dos. Por ejemplo: "sé que no me contestó" y "supongo que está enojada".',
@@ -2356,12 +2356,13 @@ function pintarActividades() {
   }
   c.append(lista);
 }
-const actSoltar = $('#act-soltar'), actNota = $('#act-nota'), actCampos = $('#act-campos');
+const actSoltar = $('#act-soltar'), actOrdenar = $('#act-ordenar'), actNota = $('#act-nota'), actCampos = $('#act-campos');
 function abrirActividad(a) {
   $('#actividad').dataset.act = a.id;
   $('#act-titulo').textContent = a.titulo;
   $('#act-intro').textContent = a.intro;
   actSoltar.textContent = a.soltar; actSoltar.disabled = true; actNota.textContent = '';
+  actOrdenar.hidden = !a.ordenar; actOrdenar.disabled = true;
   actCampos.innerHTML = '';
   actCampos.classList.toggle('dos', a.campos.length > 1);
   for (const f of a.campos) {
@@ -2372,6 +2373,7 @@ function abrirActividad(a) {
     t.setAttribute('aria-label', f.rotulo ?? a.titulo);
     t.addEventListener('input', () => {
       actSoltar.disabled = ![...actCampos.querySelectorAll('textarea')].some(x => x.value.trim());
+      actOrdenar.disabled = actSoltar.disabled;
       actNota.textContent = '';
     });
     caja.append(t);
@@ -2386,9 +2388,23 @@ actSoltar.onclick = () => {
   vibrar(12);
   setTimeout(() => {
     ts.forEach(t => { t.value = ''; t.classList.remove('soltando'); });
-    actSoltar.disabled = true;
+    actSoltar.disabled = true; actOrdenar.disabled = true;
     actNota.textContent = 'Listo. No quedó guardado en ningún lado.';
   }, 900);
+};
+// Vaciar la cabeza tiene una segunda salida: llevar lo escrito al chat para que Amber
+// lo ordene. No se manda solo: queda en el campo de escribir, para que ella lo lea,
+// lo cambie si quiere y lo mande. No se guarda aparte: va a la misma charla de siempre.
+actOrdenar.onclick = () => {
+  const renglones = actCampos.querySelector('textarea').value.split('\n').map(x => x.trim()).filter(Boolean);
+  if (!renglones.length) return;
+  actCampos.querySelectorAll('textarea').forEach(t => { t.value = ''; });
+  actSoltar.disabled = true; actOrdenar.disabled = true;
+  vibrar(10);
+  ir('conv');
+  txt.value = 'Esto es lo que me está dando vueltas:\n' + renglones.map(r => '- ' + r).join('\n');
+  txt.dispatchEvent(new Event('input'));
+  setTimeout(() => { txt.focus(); txt.setSelectionRange(txt.value.length, txt.value.length); }, 300);
 };
 // Salir de una actividad sin soltarla también la borra: nada queda escrito.
 document.addEventListener('click', e => {
