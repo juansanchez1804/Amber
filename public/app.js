@@ -2214,14 +2214,27 @@ const ACTIVIDADES = [
     campos: [{ rotulo: 'Depende de mí', placeholder: 'Lo que está en tus manos.' },
              { rotulo: 'No depende de mí', placeholder: 'Lo que no.' }], soltar: 'Soltarlo' },
 ];
+// Cada actividad con su ícono: un sobre, una cabeza que se vacía, un ojo partido
+// (lo que ves y lo que imaginás) y una mano.
+const ICONO_ACT = {
+  carta:    ['M4 6.5h16v11H4z', 'M4.5 7l7.5 6 7.5-6'],
+  vaciar:   ['M7 9.5a5 5 0 1 1 9.6 1.9c-.5 1.1-1.4 1.6-1.6 2.6l-.2 1.5H9.6l-.3-2c-.2-1-1.3-1.6-1.8-2.5A5 5 0 0 1 7 9.5z', 'M10 18h4', 'M10.5 20.5h3'],
+  sesupone: ['M2.5 12C4.7 7.8 8.1 5.5 12 5.5s7.3 2.3 9.5 6.5c-2.2 4.2-5.6 6.5-9.5 6.5S4.7 16.2 2.5 12z', 'M12 9.2a2.8 2.8 0 1 0 0 5.6', 'M12 5.5v13'],
+  depende:  ['M8 11V5.5a1.5 1.5 0 0 1 3 0V10', 'M11 9.5V4.5a1.5 1.5 0 0 1 3 0v5', 'M14 9.5V6a1.5 1.5 0 0 1 3 0v7.5c0 3.6-2.4 6.5-6 6.5-2.3 0-3.7-1-5-3l-2.2-3.6a1.4 1.4 0 0 1 2.3-1.6L8 13.5'],
+};
 function pintarActividades() {
   const c = $('#actividades-cuerpo'); c.innerHTML = '';
   const lista = el('nav', 'lista');
   lista.style.paddingTop = '16px';
   lista.setAttribute('aria-label', 'Actividades');
   for (const a of ACTIVIDADES) {
-    const b = el('button', 'fila-menu');
-    b.append(el('span', 'fila-t', a.titulo), el('span', 'fila-s', a.resumen));
+    const b = el('button', 'fila-menu fila-act');
+    b.dataset.act = a.id;
+    const ico = el('span', 'act-ico');
+    ico.append(svgDe('0 0 24 24', ICONO_ACT[a.id]));
+    const textos = el('span', 'fila-textos');
+    textos.append(el('span', 'fila-t', a.titulo), el('span', 'fila-s', a.resumen));
+    b.append(ico, textos);
     b.onclick = () => abrirActividad(a);
     lista.append(b);
   }
@@ -2229,6 +2242,7 @@ function pintarActividades() {
 }
 const actSoltar = $('#act-soltar'), actNota = $('#act-nota'), actCampos = $('#act-campos');
 function abrirActividad(a) {
+  $('#actividad').dataset.act = a.id;
   $('#act-titulo').textContent = a.titulo;
   $('#act-intro').textContent = a.intro;
   actSoltar.textContent = a.soltar; actSoltar.disabled = true; actNota.textContent = '';

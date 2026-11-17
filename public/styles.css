@@ -1279,3 +1279,49 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 .rec-f.cerrada{opacity:.6}
 /* Miradas: el ícono es un ojo. Activo, el ojo se llena y la pupila queda clara. */
 .pestana[aria-current="page"] .pestana-ico svg .pestana-pupila{fill:var(--fondo);stroke:var(--fondo)}
+
+/* ── actividades, con personalidad (17/11) ──────────────────────────────────── */
+/* La lista: cada actividad con su ícono en una baldosa violeta. */
+#actividades .fila-act{flex-direction:row;align-items:center;gap:14px;padding:16px 46px 16px 14px}
+.act-ico{flex:none;width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;
+  background:var(--ambar)}
+.act-ico svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.fila-textos{display:flex;flex-direction:column;gap:4px;min-width:0}
+
+/* Adentro: fondo lavanda, y lo que se escribe va sobre papel blanco. */
+#actividad{background:var(--tarjeta)}
+#actividad .carta-pie{background:var(--tarjeta)}
+#actividad .carta-txt{background:var(--fondo);box-shadow:0 1px 2px rgba(67,40,160,.06),0 10px 26px rgba(67,40,160,.08);
+  border-radius:20px;padding:20px 20px 20px 22px}
+
+/* La carta: una hoja con renglones y un margen violeta, como de cuaderno. */
+#actividad[data-act="carta"] .carta-txt,#actividad[data-act="vaciar"] .carta-txt{
+  line-height:28px;padding-top:22px;padding-left:34px;background-attachment:local;
+  background-image:linear-gradient(90deg,transparent 22px,color-mix(in srgb,var(--ambar) 30%,transparent) 22px,color-mix(in srgb,var(--ambar) 30%,transparent) 23.5px,transparent 23.5px),
+    repeating-linear-gradient(180deg,transparent 0,transparent 27px,color-mix(in srgb,var(--ambar) 12%,transparent) 27px,color-mix(in srgb,var(--ambar) 12%,transparent) 28px);
+  background-position:0 0,0 21px}
+/* Vaciar la cabeza: los mismos renglones, en letra suelta, sin margen. */
+#actividad[data-act="vaciar"] .carta-txt{font-family:var(--sans);font-size:17px;padding-left:22px;
+  background-image:repeating-linear-gradient(180deg,transparent 0,transparent 27px,color-mix(in srgb,var(--ambar) 12%,transparent) 27px,color-mix(in srgb,var(--ambar) 12%,transparent) 28px);
+  background-position:0 21px}
+
+/* Las de dos partes: cada parte con su rótulo en pastilla y su forma.
+   Lo que sabés y lo que depende de vos: firme, con borde violeta.
+   Lo que suponés y lo que no depende de vos: punteado y más tenue, porque no es firme. */
+#actividad .act-rotulo{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:500;color:var(--ambar-claro);background:var(--fondo);border-radius:999px;padding:5px 12px 5px 10px}
+#actividad .act-rotulo::before{content:'';width:15px;height:15px;background:currentColor;
+  -webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+#actividad .act-campo:nth-child(1){--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")}
+#actividad .act-campo:nth-child(2){--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 9.5a4.3 4.3 0 0 1-.5 8.5z'/%3E%3C/svg%3E")}
+#actividad[data-act="depende"] .act-campo:nth-child(2){--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v16M4 12h16' transform='rotate(45 12 12)'/%3E%3C/svg%3E")}
+#actividad .act-campos.dos .act-campo:nth-child(1) .carta-txt{border-left:3px solid var(--ambar)}
+#actividad .act-campos.dos .act-campo:nth-child(2) .carta-txt{background:color-mix(in srgb,var(--fondo) 55%,transparent);
+  box-shadow:none;border:1.5px dashed color-mix(in srgb,var(--ambar) 35%,transparent)}
+#actividad .act-campos.dos .act-campo:nth-child(2) .act-rotulo{background:none;border:1px dashed color-mix(in srgb,var(--ambar) 40%,transparent)}
+
+/* Soltar: lo escrito sube, se achica y se disuelve, como algo que se suelta. */
+#actividad .carta-txt.soltando{opacity:0;filter:blur(8px);transform:translateY(-48px) scale(.96)}
+#actividad .carta-txt{transition:opacity 1.1s ease,filter 1.1s ease,transform 1.1s cubic-bezier(.37,0,.63,1)}
+#actividad .carta-nota{color:var(--ambar-claro);font-size:14px}
+@media (prefers-reduced-motion:reduce){ #actividad .carta-txt{transition:opacity .4s ease} #actividad .carta-txt.soltando{transform:none;filter:none} }
