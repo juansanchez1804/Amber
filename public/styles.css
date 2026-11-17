@@ -1441,3 +1441,16 @@ p.disc{cursor:default}
 .calma-previo ul{padding:14px 16px;border-radius:18px;background:rgba(20,14,50,.42);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08)}
 .calma-previo li{text-shadow:none}
+
+/* 17/11: ojos cerrados, en la prolongada. Una capa casi negra que tapa todo, botones
+   incluidos; se va con un toque. Baja en cuatro segundos, para que no se note el corte. */
+.calma-oscuro{position:absolute;inset:0;z-index:20;background:#05030A;opacity:0;pointer-events:none;
+  transition:opacity 4s ease}
+#calma[data-oscuro] .calma-oscuro{opacity:.94;pointer-events:auto;cursor:pointer}
+#calma:not([data-oscuro]) .calma-oscuro{transition-duration:.6s}
+@media (prefers-reduced-motion:reduce){ .calma-oscuro{transition:none} }
+
+/* El final: Otro rato arriba, Volver abajo, más callado. */
+.calma-fin{display:flex;flex-direction:column;gap:8px}
+.calma-volver{background:none;color:var(--crema);border:1px solid color-mix(in srgb,var(--crema) 30%,transparent)}
+@media (hover:hover){ .calma-volver:hover{background:color-mix(in srgb,var(--crema) 8%,transparent)} }

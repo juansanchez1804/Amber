@@ -612,6 +612,7 @@ function empezarRespiracion() {
   mantenerPantalla();
   avisarCalma(`${RESP.anuncio} Acomodate como estés.`);
   resp.timer = setTimeout(inhalar, RESP.acomodo);
+  if (calma.dataset.tec === 'dormir') oscurecerLuego(OSCURO_MS);
 }
 
 function inhalar() {
@@ -661,6 +662,7 @@ function soltar() {
 
 function terminarRespiracion() {
   clearTimeout(resp.timer); resp.timer = null;
+  aclararPantalla();
   fase('quieto', 2400);
   aquietarEscena(2400);
   callarOla(2400);
@@ -675,6 +677,7 @@ function terminarRespiracion() {
   calmaS.textContent = 'Quedate un momento así. Si querés, seguimos un rato más.';
   calma.dataset.terminado = '';
   $('#salir-calma').textContent = 'Volver';
+  $('#calma-volver').textContent = respiracionDesdeCharla ? 'Volver a escribir' : 'Volver';
   avisarCalma('Terminó. Podés seguir un rato más o volver.');
   // Si se entró desde la oferta de Amber, el "Ya está" se ve un momento y se
   // vuelve sola a la conversación.
@@ -747,6 +750,7 @@ function pararRespiracion() {
   fase('quieto', 600);
   for (const n of [orbeCentro, orbeHalo, orbeRastro, calmaLuz]) n.getAnimations().forEach(a => a.cancel());
   delete calma.dataset.terminado;
+  aclararPantalla();
 }
 
 // Si la app pasa a segundo plano, el navegador frena los relojes y la guía se
@@ -772,6 +776,19 @@ async function mantenerPantalla() {
 function soltarPantalla() { bloqueo?.release?.().catch(() => {}); bloqueo = null; }
 
 $('#calma-otro').onclick = () => { desbloquearAudio(); empezarRespiracion(); };
+$('#calma-volver').onclick = () => $('#salir-calma').click();
+
+// Ojos cerrados, en la prolongada: la pantalla se apaga casi del todo y guían la voz
+// y la vibración. Un toque en cualquier lado la muestra seis segundos y se vuelve a
+// apagar. Al terminar o salir, se aclara.
+const OSCURO_MS = 20000, OSCURO_TOQUE_MS = 6000;
+let oscuroTimer = null;
+function oscurecerLuego(ms) {
+  clearTimeout(oscuroTimer);
+  oscuroTimer = setTimeout(() => { if (resp && !('terminado' in calma.dataset)) calma.dataset.oscuro = ''; }, ms);
+}
+function aclararPantalla() { clearTimeout(oscuroTimer); oscuroTimer = null; delete calma.dataset.oscuro; }
+$('#calma-oscuro').onclick = () => { delete calma.dataset.oscuro; oscurecerLuego(OSCURO_TOQUE_MS); };
 
 // ── entrada ───────────────────────────────────────────────────────────────
 const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
