@@ -141,6 +141,9 @@ $('#salir-mem').onclick   = () => ir('menu');
 $('#salir-menu').onclick  = () => ir(mensajes.length && !cortado ? 'conv' : 'entrada');
 $('#salir-ayuda').onclick = () => ir(pantallaPrevia === 'ayuda' ? 'conv' : pantallaPrevia);
 $('#ver-ayuda').onclick   = () => ir('ayuda');
+// La frase de privacidad (en el chat y en el menú) lleva al detalle, en Preferencias.
+function verPrivacidad() { ir('prefs'); setTimeout(() => $('#privacidad')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350); }
+document.querySelectorAll('#ver-privado, [data-privacidad]').forEach(b => b.onclick = verPrivacidad);
 
 function pintarAyuda() {
   // Sin prometer que alguien va a atender: a la madrugada el 135 está cerrado.
@@ -1623,6 +1626,7 @@ async function mandar(textoDirecto) {
   quitarOferta();
   quitarFalla();
   $('#ver-ayuda').hidden = true;   // mientras se escribe no ocupa el lugar de escribir
+  $('#ver-privado').hidden = true;
   if (textoDirecto == null) { txt.value = ''; txt.style.height = 'auto'; enviar.classList.remove('listo'); }
   ajustarColchon();
   const propio = turno('user', t);
@@ -1654,6 +1658,7 @@ async function mandar(textoDirecto) {
   // adentro de la conversación no hay otra salida a los recursos, y dejarla oculta
   // la hacía depender de que el clasificador acierte, que es justo lo que no queremos.
   $('#ver-ayuda').hidden = false;
+  $('#ver-privado').hidden = false;
   if (!cortado) txt.focus();
 }
 
@@ -1909,6 +1914,29 @@ function pintarPreferencias() {
     HAY_CRIPTO));
 
   c.append(caja);
+
+  // Dónde queda lo que escribís, en detalle (17/11). Es lo que más se preguntó en la
+  // encuesta (15 de 33): quién puede leer lo que escriben.
+  const priv = el('section', 'privacidad');
+  priv.id = 'privacidad';
+  priv.append(el('h3', 'privacidad-t', 'Dónde queda lo que escribís'),
+    el('p', 'privacidad-intro', 'Amber no tiene cuenta ni un servidor donde guardar lo que escribís. Todo queda en este teléfono.'));
+  const PUNTOS = [
+    ['En tu teléfono', 'Tus charlas, lo que Amber recuerda de vos, la historia, tus me gusta y el PIN. Están guardados en este teléfono y en ningún otro lado.'],
+    ['Para que Amber te conteste', 'Lo que escribís en la charla viaja a la inteligencia artificial que arma la respuesta (Claude, de Anthropic) y vuelve. Amber no se queda con una copia. Según las condiciones de Anthropic, lo que llega por esa vía no se usa para entrenar modelos.'],
+    ['Lo que Amber recuerda y el resumen', 'Se arman igual: lo necesario viaja, vuelve y queda solo acá.'],
+    ['Las actividades', 'No se guardan en ningún lado, ni siquiera en el teléfono. Cuando soltás lo que escribiste, desaparece.'],
+    ['Lo único que nos llega', 'Lo que mandes en "Contanos qué falla". Por eso ahí no hace falta contar lo que te pasa.'],
+    ['Si cambiás de teléfono', 'Lo tuyo no viaja solo. Si cambiás de teléfono o borrás los datos del navegador, se pierde. Para llevártelo, usá Exportar, acá abajo.'],
+  ];
+  const lista = el('div', 'privacidad-lista');
+  for (const [t, d] of PUNTOS) {
+    const f = el('div', 'privacidad-f');
+    f.append(el('div', 'privacidad-ft', t), el('div', 'privacidad-fd', d));
+    lista.append(f);
+  }
+  priv.append(lista);
+  c.append(priv);
 
   const datos = el('div', 'grupo');
   datos.style.marginTop = '28px';

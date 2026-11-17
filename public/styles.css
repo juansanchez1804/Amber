@@ -1390,3 +1390,24 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @keyframes late{0%{transform:scale(1)}40%{transform:scale(1.28)}100%{transform:scale(1)}}
 .posteo-gusta:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){ .posteo-gusta.late svg{animation:none} }
+
+/* ── dónde queda lo que escribís (17/11) ────────────────────────────────────── */
+/* La frase corta, con un candado: en el chat, arriba del aviso; en el menú, arriba de
+   "Lo tuyo". Al tocarla, abre el detalle en Preferencias. */
+.privado{display:flex;align-items:center;gap:7px;width:100%;padding:0;margin:0;border:0;background:none;cursor:pointer;
+  text-align:left;font-family:var(--sans);font-size:13px;line-height:1.4;color:var(--ambar-claro)}
+.privado svg{flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.privado span{text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--ambar) 35%,transparent);text-underline-offset:3px}
+.privado[hidden]{display:none}
+.privado-menu{background:var(--fondo);border-radius:14px;padding:12px 14px;margin-bottom:4px;font-size:14px;
+  box-shadow:0 1px 2px rgba(67,40,160,.06),0 6px 18px rgba(67,40,160,.05)}
+
+/* El detalle, en Preferencias. */
+.privacidad{margin-top:28px;scroll-margin-top:12px}
+.privacidad-t{font-family:var(--serif);font-weight:400;font-size:22px;margin:0 0 6px;color:var(--texto)}
+.privacidad-intro{margin:0 0 14px;font-size:15px;line-height:1.55;color:var(--texto)}
+.privacidad-lista{background:var(--tarjeta);border-radius:18px;padding:4px 16px}
+.privacidad-f{padding:13px 0;border-bottom:1px solid var(--linea)}
+.privacidad-f:last-child{border-bottom:0}
+.privacidad-ft{font-size:15px;font-weight:600;color:var(--texto);margin-bottom:3px}
+.privacidad-fd{font-size:14px;line-height:1.5;color:var(--gris)}
