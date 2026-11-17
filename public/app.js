@@ -251,10 +251,11 @@ function pintarPuntosCalma() {
 function marcarPuntoCalma(n) {
   [...calmaPuntos.children].forEach((p, i) => { p.classList.toggle('hecho', i < n); p.classList.toggle('ahora', i === n); });
 }
-// La voz de la guía: una grabación por frase, generada una sola vez y guardada en la
-// app (audio/meditacion/). No viaja nada a ningún lado. Suena solo con el sonido
+// La voz de la guía: una grabación por frase, guardada en la app (audio/meditacion/,
+// con el guion al lado). Hoy es "Natali", una voz rioplatense de ElevenLabs, generada
+// una sola vez (17/11). No viaja nada a ningún lado. Suena solo con el sonido
 // prendido, por el mismo contexto de audio que la ola, medio segundo después de
-// que aparece la frase. Es provisoria: la idea es reemplazarla por una voz grabada.
+// que aparece la frase.
 const VOZ_GUIA = { 0: 'v00', 2: 'v02', 3: 'v03', 4: 'v04', 5: 'v05', 6: 'v06', 7: 'v07',
                    8: 'v08', 10: 'v10', 12: 'v12', 13: 'v13', fin: 'vfin' };
 const vozBuffers = {};
