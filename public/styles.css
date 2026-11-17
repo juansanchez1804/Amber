@@ -1277,3 +1277,5 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 @media (prefers-reduced-motion:reduce){ .calma-puntos i.ahora{animation:none} }
 /* Ayuda: la línea que está cerrada a esta hora se ve apagada, pero se puede tocar igual. */
 .rec-f.cerrada{opacity:.6}
+/* Miradas: el ícono es un ojo. Activo, el ojo se llena y la pupila queda clara. */
+.pestana[aria-current="page"] .pestana-ico svg .pestana-pupila{fill:var(--fondo);stroke:var(--fondo)}

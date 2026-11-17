@@ -2001,7 +2001,8 @@ function pintarAbout() {
 // 12/11). Se llaman pensamientos, no consejos: si un texto dice "hacé", "intentá" o
 // "probá", no sale. Hasta que se sumen los profesionales, lo que hay es de ejemplo y
 // lo dice: no se inventa un nombre ni una matrícula.
-// En pantalla se llama Foro mientras se elige el nombre definitivo. Cada posteo
+// En pantalla se llama Miradas (decisión del 16/11): una mirada es un punto de
+// vista, no una indicación, y no promete una conversación que no existe. Cada posteo
 // tiene autor con foto, como en una red social, pero no hay nada para tocar:
 // ni responder, ni me gusta, ni seguir. Más adelante, tocar el autor abre su perfil.
 // Quienes escriben: se arranca con cinco o seis matriculados fijos (pirámide del

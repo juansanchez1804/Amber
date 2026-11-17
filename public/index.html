@@ -214,17 +214,18 @@
         <span class="pestana-t">Tu espacio</span>
       </button>
       <button class="pestana" data-ir="pensamientos">
-        <span class="pestana-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h8a2.5 2.5 0 0 1 2.5 2.5v5A2.5 2.5 0 0 1 14 14H9.2L6 16.8V14a2.5 2.5 0 0 1-2.5-2.5z"/><path class="pestana-ico-2" d="M19 9.2a2.5 2.5 0 0 1 1.5 2.3v4.2a2.5 2.5 0 0 1-2.5 2.5v2.6l-3-2.6h-3.3a2.5 2.5 0 0 1-2.3-1.5"/></svg></span>
-        <span class="pestana-t">Foro</span>
+        <span class="pestana-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12C4.7 7.8 8.1 5.5 12 5.5s7.3 2.3 9.5 6.5c-2.2 4.2-5.6 6.5-9.5 6.5S4.7 16.2 2.5 12z"/><path class="pestana-pupila" d="M12 9.2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6z"/></svg></span>
+        <span class="pestana-t">Miradas</span>
       </button>
     </nav>
   </section>
 
-  <!-- FORO: solo lectura, solo publican matriculados, en su propia pestaña.
-       Por dentro sigue llamándose "pensamientos" hasta que tenga su nombre. -->
+  <!-- MIRADAS: solo lectura, solo publican matriculados, en su propia pestaña.
+       Se llama Miradas (16/11): una mirada es un punto de vista, no una indicación.
+       Por dentro el id sigue siendo "pensamientos". -->
   <section class="p" id="pensamientos">
     <div class="foro-cab">
-      <h2>Foro</h2>
+      <h2>Miradas</h2>
       <div class="sub">De psicólogos matriculados.</div>
     </div>
     <div class="cuerpo" id="pensamientos-cuerpo"></div>
@@ -234,17 +235,17 @@
         <span class="pestana-t">Tu espacio</span>
       </button>
       <button class="pestana" data-ir="pensamientos" aria-current="page">
-        <span class="pestana-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h8a2.5 2.5 0 0 1 2.5 2.5v5A2.5 2.5 0 0 1 14 14H9.2L6 16.8V14a2.5 2.5 0 0 1-2.5-2.5z"/><path class="pestana-ico-2" d="M19 9.2a2.5 2.5 0 0 1 1.5 2.3v4.2a2.5 2.5 0 0 1-2.5 2.5v2.6l-3-2.6h-3.3a2.5 2.5 0 0 1-2.3-1.5"/></svg></span>
-        <span class="pestana-t">Foro</span>
+        <span class="pestana-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12C4.7 7.8 8.1 5.5 12 5.5s7.3 2.3 9.5 6.5c-2.2 4.2-5.6 6.5-9.5 6.5S4.7 16.2 2.5 12z"/><path class="pestana-pupila" d="M12 9.2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6z"/></svg></span>
+        <span class="pestana-t">Miradas</span>
       </button>
     </nav>
   </section>
 
-  <!-- PERFIL DE UN PROFESIONAL: se abre desde el foro. Solo lectura, sin contacto. -->
+  <!-- PERFIL DE UN PROFESIONAL: se abre desde Miradas. Solo lectura, sin contacto. -->
   <section class="p" id="perfil">
     <div class="cab-violeta perfil-banda">
       <div class="barra">
-        <button class="ico" data-ir="pensamientos" aria-label="Volver al foro">
+        <button class="ico" data-ir="pensamientos" aria-label="Volver a Miradas">
           <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
         </button>
       </div>
