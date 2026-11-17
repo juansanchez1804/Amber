@@ -262,7 +262,8 @@ function guiaDeLaVuelta(ciclo, momento = '') {
   if (!g) return;
   if (!momento && g.libre != null) { if (ciclo >= g.libre) calma.dataset.libre = ''; else delete calma.dataset.libre; }
   const clave = momento ? `${ciclo}${momento}` : ciclo;
-  if (!(clave in g.frases)) return;
+  // En la corta, una frase de inhalar no queda en pantalla mientras se suelta el aire.
+  if (!(clave in g.frases)) { if (calma.dataset.tec === 'calmar' && calmaGuia.textContent) guiar(''); return; }
   guiar(g.frases[clave]);
   if (g.frases[clave]) hablarGuia(nombreVoz(g, clave));
 }

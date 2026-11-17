@@ -414,6 +414,25 @@
     <!-- La escena de atrás: una niebla que se desplaza muy lento durante todo el
          ejercicio y una luz que se aclara apenas al inhalar. -->
     <div class="calma-fondo" aria-hidden="true"><div class="calma-niebla"></div><div class="calma-luz" id="calma-luz"></div>
+      <!-- Solo en la corta: un atardecer, con el sol sobre el agua y su reflejo, que se
+           enciende al inhalar y se apaga al soltar. -->
+      <div class="calma-atardecer"></div>
+      <svg class="calma-agua" viewBox="0 0 400 300" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="agua-g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#3B2F7A"/><stop offset="1" stop-color="#151033"/>
+          </linearGradient>
+          <linearGradient id="reflejo-g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFD9C2" stop-opacity=".85"/><stop offset="1" stop-color="#FFD9C2" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="300" fill="url(#agua-g)"/>
+        <g class="reflejo" fill="url(#reflejo-g)">
+          <rect x="170" y="10" width="60" height="4" rx="2"/><rect x="160" y="30" width="80" height="4" rx="2"/>
+          <rect x="178" y="52" width="44" height="3" rx="1.5"/><rect x="150" y="76" width="100" height="3" rx="1.5"/>
+          <rect x="182" y="104" width="36" height="3" rx="1.5"/><rect x="165" y="136" width="70" height="2" rx="1"/>
+        </g>
+      </svg>
       <!-- Solo en la prolongada: un cielo de noche y una marea que sube al inhalar y baja al soltar. -->
       <div class="calma-estrellas"></div>
       <svg class="calma-marea" viewBox="0 0 400 600" preserveAspectRatio="none">

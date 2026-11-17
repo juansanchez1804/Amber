@@ -1326,3 +1326,44 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
 #actividad .carta-txt{transition:opacity 1.1s ease,filter 1.1s ease,transform 1.1s cubic-bezier(.37,0,.63,1)}
 #actividad .carta-nota{color:var(--ambar-claro);font-size:14px}
 @media (prefers-reduced-motion:reduce){ #actividad .carta-txt{transition:opacity .4s ease} #actividad .carta-txt.soltando{transform:none;filter:none} }
+
+/* ── la corta: un atardecer, sin anillo ni números (17/11) ──────────────────── */
+/* Solo el círculo que crece y se achica: ni el anillo ni la cuenta de segundos. */
+#calma[data-tec="calmar"] .anillo,#calma[data-tec="calmar"] .calma-cuenta{display:none}
+
+/* La escena: cielo de atardecer (índigo arriba, durazno en el horizonte) y agua abajo,
+   con el reflejo del sol. No todo violeta: el violeta queda arriba y en el agua. */
+#calma[data-tec="calmar"]{background:#1B1540}
+#calma[data-tec="calmar"]::before{opacity:0}
+#calma[data-tec="calmar"] .calma-niebla{opacity:.25}
+.calma-atardecer,.calma-agua{position:absolute;opacity:0;transition:opacity 1.6s ease;pointer-events:none}
+#calma[data-tec="calmar"] .calma-atardecer,#calma[data-tec="calmar"] .calma-agua{opacity:1}
+.calma-atardecer{inset:0 0 34% 0;
+  background:linear-gradient(180deg,#1B1540 0%,#3A2E86 34%,#7A5AB8 58%,#D58FA8 80%,#F6C2A2 100%)}
+.calma-agua{left:0;right:0;bottom:0;width:100%;height:34%}
+/* El reflejo respira con la persona: más brillante al inhalar, tenue al soltar. */
+.calma-agua .reflejo{opacity:.35;transition:opacity 1.2s ease}
+#calma[data-fase="inhala"] .calma-agua .reflejo{opacity:1;transition:opacity var(--dur) ease}
+#calma[data-fase="suelta"] .calma-agua .reflejo{opacity:.3;transition:opacity var(--dur) ease}
+/* El círculo es el sol: blanco tibio al centro, durazno y rosa hacia el borde. */
+#calma[data-tec="calmar"] .o2{background:radial-gradient(circle at 45% 38%,#FFF8F1 0%,#FFDCC6 45%,#F3A9A0 100%)}
+#calma[data-tec="calmar"] .o2::after{box-shadow:0 0 70px rgba(255,190,160,.65),0 0 160px rgba(245,150,150,.35)}
+#calma[data-tec="calmar"] .o1{background:radial-gradient(circle,rgba(255,214,190,.45) 0%,rgba(245,160,160,.14) 45%,transparent 70%)}
+#calma[data-tec="calmar"] .rastro{border-color:rgba(255,214,190,.6)}
+#calma[data-tec="calmar"] .pal span{color:#5A2A44}
+#calma[data-tec="calmar"] .calma-luz{background:radial-gradient(150% 115% at 50% 42%,rgba(255,220,200,.6) 0%,rgba(255,200,180,.15) 60%,transparent 100%)}
+/* El texto y los puntos quedan sobre el agua: un poco de sombra para leerse bien. */
+#calma[data-tec="calmar"] .calma-pie{text-shadow:0 1px 12px rgba(20,14,50,.55)}
+
+/* ── Terminar, más lindo: un círculo de vidrio con una cruz ─────────────────── */
+/* El texto ("Terminar" o "Volver") sigue ahí para el lector de pantalla, pero no se ve. */
+.calma-salir{width:40px;height:40px;padding:0;border-radius:50%;font-size:0;color:transparent;opacity:.9;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);box-shadow:none;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);position:relative}
+.calma-salir::before,.calma-salir::after{content:'';position:absolute;left:50%;top:50%;width:15px;height:1.6px;border-radius:1px;
+  background:#fff;transform:translate(-50%,-50%) rotate(45deg)}
+.calma-salir::after{transform:translate(-50%,-50%) rotate(-45deg)}
+@media (hover:hover){ .calma-salir:hover{background:rgba(255,255,255,.2)} }
+/* El botón de sonido, con el mismo vidrio. */
+.calma-sonido{height:40px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:.9}
