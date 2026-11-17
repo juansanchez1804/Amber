@@ -206,26 +206,45 @@ const calma = $('#calma'), calmaT = $('#calma-t'), calmaS = $('#calma-s'), calma
 const orbeHalo = $('#calma-o1'), orbeCentro = $('#calma-o2'), orbeRastro = $('#calma-rastro'), calmaLuz = $('#calma-luz');
 let resp = null, bloqueo = null;
 
-// ── la prolongada es una meditación guiada ───────────────────────────────────
-// Tres minutos: quince vueltas de doce segundos. La guía va por vuelta y no por
-// reloj, así una pausa (la app en segundo plano) no la desfasa. Las primeras dos
-// vueltas marcan el ritmo con la marea; después la respiración va sola y la palabra
-// del centro se apaga. Sin nombres de técnicas, sin promesas, sin "estoy acá".
-const GUIA_PROLONGADA = {
-  0:  'Seguí la marea. Inhalá cuando sube, soltá cuando baja.',
-  2:  'Ahora dejá que la respiración vaya sola. No hace falta hacerla bien.',
-  3:  'La frente.',
-  4:  'La mandíbula, si está apretada.',
-  5:  'Los hombros.',
-  6:  'Las manos.',
-  7:  'La panza, que sube y baja.',
-  8:  'Van a aparecer pensamientos. Está bien. No hace falta seguirlos ni echarlos.',
-  10: 'Si te fuiste lejos, volvé a la respiración. Volver es todo lo que hay que hacer.',
-  11: '',
-  12: 'Empezá a notar los sonidos de alrededor.',
-  13: 'Mové un poco los dedos.',
+// ── las dos respiraciones son guiadas (17/11) ───────────────────────────────
+// Cada una tiene su guion: una frase por momento, que aparece en pantalla y la dice
+// la voz. La guía va por vuelta y no por reloj, así una pausa (la app en segundo
+// plano) no la desfasa. La clave es la vuelta, y con una "s" el momento de soltar
+// de esa vuelta: así una frase que dice "soltá" suena cuando el aire sale.
+// Sin nombres de técnicas, sin promesas, sin "estoy acá". Cada frase dice qué hacer.
+const GUIAS = {
+  // La prolongada: tres minutos, quince vueltas de doce segundos. Las primeras dos
+  // marcan el ritmo con la marea; después la respiración va sola, la palabra del
+  // centro se apaga y la guía recorre el cuerpo de la cara a la panza.
+  dormir: { voz: 'p', libre: 2, fin: 'Ya está. Quedate un momento así, si querés.', frases: {
+    0:  'Seguí la marea con la respiración. Cuando sube, entra el aire. Cuando baja, sale.',
+    1:  'Inhalá cuando sube, soltá cuando baja. Sin apuro.',
+    2:  'Ahora dejá de seguirla. Que la respiración vaya sola, como venga.',
+    3:  'Llevá la atención a la cara. Si la frente está apretada, dejala aflojar.',
+    4:  'Fijate en la mandíbula. Separá un poco los dientes.',
+    5:  'Los hombros. Dejalos caer, un poco más abajo.',
+    6:  'Las manos. Que queden quietas y pesadas.',
+    7:  'Y la panza, que sube y baja sola con el aire.',
+    8:  'Van a aparecer pensamientos. No hace falta seguirlos ni echarlos. Dejalos pasar.',
+    9:  '',
+    10: 'Si te fuiste lejos, no pasa nada. Volvé a la marea.',
+    11: 'Sentí el aire entrando y saliendo. Nada más.',
+    12: 'Empezá a notar los sonidos de alrededor.',
+    13: 'Mové despacio los dedos de las manos.',
+    14: '',
+  } },
+  // La corta: un minuto, seis vueltas. Una frase en cada una, en el momento justo:
+  // las de inhalar al entrar el aire, las de soltar al salir.
+  calmar: { voz: 'c', libre: null, fin: 'Ya está.', frases: {
+    0:    'Inhalá por la nariz mientras el círculo crece.',
+    '1s': 'Soltá despacio. Que salir dure más que entrar.',
+    2:    'Otra vez. Llená el pecho sin forzar.',
+    '3s': 'Si te distraés, volvé al círculo.',
+    '4s': 'Dejá caer los hombros mientras soltás.',
+    '5s': 'La última. Soltá todo el aire.',
+  } },
 };
-const VUELTA_LIBRE = 2;
+const guiaActual = () => GUIAS[calma.dataset.tec];
 const calmaGuia = $('#calma-guia');
 let guiaTimer = null;
 function guiar(texto) {
@@ -236,10 +255,16 @@ function guiar(texto) {
     if (texto) { calmaGuia.classList.add('on'); avisarCalma(texto); }
   }, 700);
 }
-function guiaDeLaVuelta(ciclo) {
-  if (calma.dataset.tec !== 'dormir') return;
-  if (ciclo >= VUELTA_LIBRE) calma.dataset.libre = ''; else delete calma.dataset.libre;
-  if (ciclo in GUIA_PROLONGADA) { guiar(GUIA_PROLONGADA[ciclo]); if (GUIA_PROLONGADA[ciclo]) hablarGuia(ciclo); }
+// La frase de la vuelta `ciclo`, al inhalar (momento '') o al soltar ('s').
+const nombreVoz = (g, clave) => g.voz + (clave === 'fin' ? 'fin' : String(clave).replace(/^(\d+)/, n => n.padStart(2, '0')));
+function guiaDeLaVuelta(ciclo, momento = '') {
+  const g = guiaActual();
+  if (!g) return;
+  if (!momento && g.libre != null) { if (ciclo >= g.libre) calma.dataset.libre = ''; else delete calma.dataset.libre; }
+  const clave = momento ? `${ciclo}${momento}` : ciclo;
+  if (!(clave in g.frases)) return;
+  guiar(g.frases[clave]);
+  if (g.frases[clave]) hablarGuia(nombreVoz(g, clave));
 }
 // Los puntos de la corta: uno por respiración. El que está pasando late; los que
 // ya pasaron quedan llenos.
@@ -256,15 +281,17 @@ function marcarPuntoCalma(n) {
 // una sola vez (17/11). No viaja nada a ningún lado. Suena solo con el sonido
 // prendido, por el mismo contexto de audio que la ola, medio segundo después de
 // que aparece la frase.
-const VOZ_GUIA = { 0: 'v00', 2: 'v02', 3: 'v03', 4: 'v04', 5: 'v05', 6: 'v06', 7: 'v07',
-                   8: 'v08', 10: 'v10', 12: 'v12', 13: 'v13', fin: 'vfin' };
+// Los archivos se llaman como la guía y la clave: p00, p01… pfin para la prolongada;
+// c00, c01s… cfin para la corta (la "s" es el momento de soltar).
 const vozBuffers = {};
 let vozCargada = null, vozFuente = null;
 function precargarVozGuia() {
   const ctx = contextoAudio();
   if (!ctx || vozCargada) return;
-  vozCargada = Promise.all(Object.entries(VOZ_GUIA).map(async ([k, f]) => {
-    try { const r = await fetch(`audio/meditacion/${f}.m4a`); vozBuffers[k] = await ctx.decodeAudioData(await r.arrayBuffer()); }
+  const nombres = Object.values(GUIAS).flatMap(g =>
+    [...Object.keys(g.frases).filter(k => g.frases[k]), 'fin'].map(k => nombreVoz(g, k)));
+  vozCargada = Promise.all(nombres.map(async f => {
+    try { const r = await fetch(`audio/meditacion/${f}.m4a`); if (r.ok) vozBuffers[f] = await ctx.decodeAudioData(await r.arrayBuffer()); }
     catch (e) {}
   }));
 }
@@ -548,7 +575,7 @@ function empezarRespiracion() {
   calmaCiclo.textContent = '';
   callarGuia();
   pintarPuntosCalma();
-  if (calma.dataset.tec === 'dormir') precargarVozGuia();
+  precargarVozGuia();
   calma.style.setProperty('--brillo', 1);
   $('#salir-calma').textContent = 'Terminar';
   calmaT.textContent = 'Acomodate como estés.';
@@ -605,6 +632,7 @@ function soltar() {
   ola('suelta', RESP.suelta);
   vibrar(12);
   if (!calma.hasAttribute('data-libre')) avisarCalma('Soltá');
+  guiaDeLaVuelta(resp.ciclo, 's');
   resp.timer = setTimeout(() => { resp.ciclo++; resp.ciclo < RESP.ciclos ? inhalar() : terminarRespiracion(); }, RESP.suelta);
 }
 
@@ -615,9 +643,9 @@ function terminarRespiracion() {
   callarOla(2400);
   soltarPantalla();
   calmaCiclo.textContent = '';
-  const eraGuiada = calma.dataset.tec === 'dormir';
+  const g = guiaActual();
   callarGuia();
-  if (eraGuiada) hablarGuia('fin');
+  if (g) hablarGuia(nombreVoz(g, 'fin'));
   marcarPuntoCalma(RESP.ciclos);
   $('#calma-otro').textContent = calma.dataset.tec === 'dormir' ? 'Otros tres minutos' : 'Otro minuto';
   calmaT.textContent = 'Ya está.';

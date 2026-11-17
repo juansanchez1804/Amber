@@ -1136,7 +1136,8 @@ h2{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;lette
   font-family:var(--serif);font-size:21px;line-height:1.38;color:var(--crema);text-wrap:balance;
   opacity:0;transform:translateY(6px);transition:opacity 1.4s ease,transform 1.4s ease;pointer-events:none}
 .calma-guia.on{opacity:.95;transform:none}
-#calma:not([data-tec="dormir"]) .calma-guia{display:none}
+/* La guía ahora está en las dos respiraciones. En la corta va un poco más chica. */
+#calma[data-tec="calmar"] .calma-guia{font-size:19px}
 /* Cuando la respiración ya va sola, la palabra del centro se apaga: queda la luna y la marea. */
 #calma[data-libre] .pal span{opacity:0!important}
 #calma[data-tec="dormir"] .calma-ciclo{opacity:.4}

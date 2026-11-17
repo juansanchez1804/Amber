@@ -1,21 +1,35 @@
-Guion de la meditación guiada (respiración prolongada, 3 minutos)
+Guion de las respiraciones guiadas (17/11)
 
-Cada línea es un archivo. Para cambiar la voz, se graba o se genera cada frase y se
-reemplaza el archivo con el mismo nombre (.m4a; si llega en .mp3 o .wav, se convierte).
+Voz: "Natali - Bienestar y Corporativo", de ElevenLabs, modelo Eleven Multilingual v2.
+Cada línea es un archivo. Para cambiar la voz, se genera o se graba cada frase y se
+guarda con el mismo nombre (.m4a; si llega en .mp3 o .wav, se convierte).
 Tono: lento, bajo, sin entusiasmo. Voseo rioplatense. Sin "conmigo" ni nada que haga
 hablar a Amber como una persona.
 
-v00   Seguí la marea. Inhalá cuando sube, soltá cuando baja.
-v02   Ahora dejá que la respiración vaya sola. No hace falta hacerla bien.
-v03   La frente.
-v04   La mandíbula, si está apretada.
-v05   Los hombros.
-v06   Las manos.
-v07   La panza, que sube y baja.
-v08   Van a aparecer pensamientos. Está bien. No hace falta seguirlos ni echarlos.
-v10   Si te fuiste lejos, volvé a la respiración. Volver es todo lo que hay que hacer.
-v12   Empezá a notar los sonidos de alrededor.
-v13   Mové un poco los dedos.
-vfin  Ya está.
+PROLONGADA (3 minutos, 15 vueltas de 12 segundos). Cada frase, menos de 10 segundos.
 
-Cada frase tiene que durar menos de 10 segundos: entre una y otra hay 12.
+p00   Seguí la marea con la respiración. Cuando sube, entra el aire. Cuando baja, sale.
+p01   Inhalá cuando sube, soltá cuando baja. Sin apuro.
+p02   Ahora dejá de seguirla. Que la respiración vaya sola, como venga.
+p03   Llevá la atención a la cara. Si la frente está apretada, dejala aflojar.
+p04   Fijate en la mandíbula. Separá un poco los dientes.
+p05   Los hombros. Dejalos caer, un poco más abajo.
+p06   Las manos. Que queden quietas y pesadas.
+p07   Y la panza, que sube y baja sola con el aire.
+p08   Van a aparecer pensamientos. No hace falta seguirlos ni echarlos. Dejalos pasar.
+p10   Si te fuiste lejos, no pasa nada. Volvé a la marea.
+p11   Sentí el aire entrando y saliendo. Nada más.
+p12   Empezá a notar los sonidos de alrededor.
+p13   Mové despacio los dedos de las manos.
+pfin  Ya está. Quedate un momento así, si querés.
+
+CORTA (1 minuto, 6 vueltas). Las que terminan en "s" suenan al soltar el aire, y
+tienen que durar menos de 5 segundos; las otras, al inhalar, menos de 4.
+
+c00   Inhalá por la nariz mientras el círculo crece.
+c01s  Soltá despacio. Que salir dure más que entrar.
+c02   Otra vez. Llená el pecho sin forzar.
+c03s  Si te distraés, volvé al círculo.
+c04s  Dejá caer los hombros mientras soltás.
+c05s  La última. Soltá todo el aire.
+cfin  Ya está.
