@@ -1847,7 +1847,7 @@ $('#cerrar-sesion').onclick = () => {
     return;
   }
   clearTimeout(confirmandoSalir); confirmandoSalir = null;
-  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS, LLAVE_CHARLA]) localStorage.removeItem(k); } catch (e) {}
+  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS, LLAVE_CHARLA, 'amber.miradas.gusta.v1']) localStorage.removeItem(k); } catch (e) {}
   location.href = location.pathname;
 };
 
@@ -2018,7 +2018,7 @@ $('#pin-olvide').onclick = () => {
     confirmandoOlvido = setTimeout(() => { confirmandoOlvido = null; b.textContent = 'Me olvidé el PIN'; }, 4000);
     return;
   }
-  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS, LLAVE_CHARLA]) localStorage.removeItem(k); } catch (e) {}
+  try { for (const k of [LLAVE, 'amber.memoria.v1', LLAVE_HIST, LLAVE_PREFS, LLAVE_CHARLA, 'amber.miradas.gusta.v1']) localStorage.removeItem(k); } catch (e) {}
   location.href = location.pathname;
 };
 // Si la app estuvo más de un minuto en segundo plano, al volver pide el PIN de nuevo.
@@ -2079,10 +2079,10 @@ const AUTORES = [
 ];
 const LUGARES_AUTORES = 6;
 const PENSAMIENTOS = [
-  { autor: 0, tema: 'Separaciones', cuando: 'hace 2 h', t: 'Muchas veces lo que más pesa de una separación no es la persona que se fue, sino la versión de uno que existía con ella. Eso también se extraña, y tiene sentido que se extrañe.' },
-  { autor: 1, tema: 'Amistades', cuando: 'ayer', t: 'Contarle siempre lo mismo a la misma amiga no es ser una carga. A veces es la forma que encontramos de ir entendiendo algo de a poco, en voz alta.' },
-  { autor: 2, tema: 'Los tiempos', cuando: 'hace 3 días', t: 'Que algo te siga afectando después de un tiempo no quiere decir que estés haciendo algo mal. Los tiempos de cada uno no se eligen.' },
-  { autor: 0, tema: 'Lo que no se dice', cuando: 'hace 5 días', t: 'Hay cosas que no contamos porque todavía no tienen palabras. No es que no queramos decirlas: es que recién se están armando.' },
+  { id: 'e1', autor: 0, tema: 'Separaciones', cuando: 'hace 2 h', t: 'Muchas veces lo que más pesa de una separación no es la persona que se fue, sino la versión de uno que existía con ella. Eso también se extraña, y tiene sentido que se extrañe.' },
+  { id: 'e2', autor: 1, tema: 'Amistades', cuando: 'ayer', t: 'Contarle siempre lo mismo a la misma amiga no es ser una carga. A veces es la forma que encontramos de ir entendiendo algo de a poco, en voz alta.' },
+  { id: 'e3', autor: 2, tema: 'Los tiempos', cuando: 'hace 3 días', t: 'Que algo te siga afectando después de un tiempo no quiere decir que estés haciendo algo mal. Los tiempos de cada uno no se eligen.' },
+  { id: 'e4', autor: 0, tema: 'Lo que no se dice', cuando: 'hace 5 días', t: 'Hay cosas que no contamos porque todavía no tienen palabras. No es que no queramos decirlas: es que recién se están armando.' },
 ];
 const SVG = 'http://www.w3.org/2000/svg';
 function svgDe(viewBox, paths, clase) {
@@ -2106,6 +2106,29 @@ function selloMatriculado() {
 }
 // Un posteo: autor arriba (foto, nombre, sello, matrícula, cuándo), el texto grande y
 // el tema. Tocar el autor abre su perfil.
+// "Me gusta" (17/11): un corazón en cada posteo. Queda guardado solo en este
+// teléfono, para que la persona encuentre lo que le sirvió. No hay contador ni lo ve
+// nadie: el profesional no se entera y no viaja a ningún servidor.
+const LLAVE_GUSTA = 'amber.miradas.gusta.v1';
+const cargarGustas = () => { try { return new Set(JSON.parse(localStorage.getItem(LLAVE_GUSTA)) ?? []); } catch (e) { return new Set(); } };
+function botonMeGusta(id) {
+  const b = el('button', 'posteo-gusta');
+  b.dataset.id = id;
+  const marcar = (x, on) => { x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-label', on ? 'Te gusta. Tocá para sacarlo' : 'Me gusta'); };
+  b.append(svgDe('0 0 24 24', ['M12 20.3l-1.2-1.1C6 14.9 3 12.2 3 8.8 3 6.1 5.1 4 7.8 4c1.6 0 3.1.8 4.2 2 1.1-1.2 2.6-2 4.2-2C18.9 4 21 6.1 21 8.8c0 3.4-3 6.1-7.8 10.4z']));
+  marcar(b, cargarGustas().has(id));
+  b.onclick = (e) => {
+    e.stopPropagation();
+    const g = cargarGustas();
+    const on = !g.has(id);
+    on ? g.add(id) : g.delete(id);
+    try { localStorage.setItem(LLAVE_GUSTA, JSON.stringify([...g])); } catch (err) {}
+    // El mismo posteo puede estar en Miradas y en el perfil: quedan los dos iguales.
+    document.querySelectorAll(`.posteo-gusta[data-id="${id}"]`).forEach(x => marcar(x, on));
+    if (on) { b.classList.remove('late'); void b.offsetWidth; b.classList.add('late'); vibrar(10); }
+  };
+  return b;
+}
 function tarjetaPosteo(p) {
   const autor = AUTORES[p.autor];
   const a = el('article', 'posteo');
@@ -2118,7 +2141,9 @@ function tarjetaPosteo(p) {
   quien.append(linea1, el('div', 'posteo-mat', 'Lic. en Psicología · M.N. 00000'));
   cab.append(fotoDe(autor, 'posteo-foto'), quien, el('span', 'posteo-cuando', p.cuando));
   // El texto es lo principal: grande, en la letra de Amber, como una reflexión.
-  a.append(cab, el('p', 'posteo-t', p.t), el('span', 'posteo-tema', p.tema));
+  const pie = el('div', 'posteo-pie');
+  pie.append(el('span', 'posteo-tema', p.tema), botonMeGusta(p.id));
+  a.append(cab, el('p', 'posteo-t', p.t), pie);
   return a;
 }
 
